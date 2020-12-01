@@ -3,7 +3,7 @@
 #include "class_allcandle.mqh"
 #define USE_MYFUNC_IND_ENTRY_EXIT
 #ifdef USE_MYFUNC_IND_ENTRY_EXIT
-#include <動的エントリー監視LIB\\Lib_Myfunc_Ind_entry_exit.mqh>
+#include <_inc\\動的エントリー監視LIB\\Lib_Myfunc_Ind_entry_exit.mqh>
 #endif//USE_MYFUNC_IND_ENTRY_EXIT
 allcandle *pac;//allcandle pointer
 struct struct_pt_data{
