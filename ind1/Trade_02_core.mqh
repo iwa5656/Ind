@@ -57,9 +57,11 @@
                     dd_c2_c0 = MathAbs(v2-v0);
 
                     bool isVji= (c0.no == c1.no+1);// V字回復しているか
+                    if(Inp_VjiUse==false){isVji=true;}//V字判断入れないときは無条件で成立側へ（条件無効になるようにする） 
                     //エントリー比率がOKか？
                     bool isOk_tp_per_sl_hiritu=false;
-                    double tp_per_sl=dd_c2_c0/dd_c0_c1;// 伸び幅/損切幅
+//                    double tp_per_sl=dd_c2_c0/dd_c0_c1;// 伸び幅/損切幅
+                    double tp_per_sl=dd_c2_c0*nobiritu/dd_c0_c1*songiriritu;// 伸び幅/損切幅
                     
                     if(tp_per_sl>Inp_tp_per_sl_hiritu){// 1倍以上など
                         isOk_tp_per_sl_hiritu = true;
