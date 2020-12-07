@@ -1,2 +1,2 @@
-*.mqh=text
-*.mq5=text
+*.mqh diff=text
+*.mq5 diff=text
