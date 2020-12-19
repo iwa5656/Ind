@@ -58,7 +58,8 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
     //#include"Trade_01_core.mqh"
     #include"Trade_02_core.mqh"
 
-
+    //debug test
+    #include"Trade_debug.mqh"
 
 //#ifdef aaaaa    
     peri = PERIOD_H1;
