@@ -61,7 +61,7 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
     //debug test
     #include"Trade_debug.mqh"
 
-//#ifdef aaaaa    
+#ifdef aaaaa    
     peri = PERIOD_H1;
     ret= chk_pt_mesen(peri,ret_match_zigcount,ret_pt_katachi);
     if(ret == true){
@@ -77,7 +77,7 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
                 reg_pt(peri,ret_match_zigcount,ret_pt_katachi);
             }
     }    
-//#endif //aaaa    
+#endif //aaaa    
 
 
 //entry exit ctrl syori
