@@ -6,6 +6,7 @@
 #include <_inc\\動的エントリー監視LIB\\Lib_Myfunc_Ind_entry_exit.mqh>
 #endif//USE_MYFUNC_IND_ENTRY_EXIT
 allcandle *pac;//allcandle pointer
+bool flag_is_entry;//エントリー中か　trueエントリー中　false未エントリー
 struct struct_pt_data{
     //Zigzagcount
     //pt種別
@@ -60,7 +61,7 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
     #include"Trade_05_core.mqh"
 
     //debug test
-    #include"Trade_debug.mqh"
+    //#include"Trade_debug.mqh"
 
 #ifdef aaaaa    
     peri = PERIOD_H1;
