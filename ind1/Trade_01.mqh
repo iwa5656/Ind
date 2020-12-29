@@ -56,7 +56,8 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
 
     //エントリー判断・エントリー
     //#include"Trade_01_core.mqh"
-    #include"Trade_02_core.mqh"
+    //#include"Trade_02_core.mqh"
+    #include"Trade_05_core.mqh"
 
     //debug test
     #include"Trade_debug.mqh"
