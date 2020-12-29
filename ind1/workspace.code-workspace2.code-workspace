@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "..\\..\\..\\Include\\_inc\\動的エントリー監視LIB"
+		},
+		{
+			"path": "..\\..\\..\\Experts\\_Exp\\EA開発\\Indtest用\\20201120_ind_entry"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.mqh": "cpp",
+			"*.mq4": "cpp",
+			"*.mq5": "cpp"
+		}
+	}
+}
