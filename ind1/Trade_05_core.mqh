@@ -180,11 +180,12 @@ if(isnew_bar == true){
                     }
                 }
             }else if(pt_case==2){
+                b_bandwalk=false;
+                b_exit_all = false;
                 // close[0]=get_close[0],close[1]
                 double close0=c.get_close(0);
                 double close1=c.get_close(1);
                 double close2=c.get_close(2);
-                b_bandwalk=false;
                 //１σをまたぐとき　＆＆　２σいない
                 if(close1 < b_1sig_up && close0 >b_1sig_up && close0 < b_2sig_up && h_dir==1){
                     h_dir = 1;
@@ -198,7 +199,13 @@ if(isnew_bar == true){
                 if(b_bandwalk==true){
                     b_exit_all = false;
                 }else{
-                    b_exit_all = true;
+                    if(//Exit 判断　　　前回値がバンド内から出たらExit
+                        (close1 >b_1sig_up && close1 <b_2sig_up &&(close0>b_2sig_up||close0<b_1sig_up))
+                        ||
+                        (close1 <b_1sig_dn && close1 >b_2sig_dn &&(close0<b_2sig_dn||close0>b_1sig_dn))
+                    ){
+                        b_exit_all = true;
+                    }
                 }
             }else if(pt_case==3){
                 b_ok_entry = b_bandwalk;
