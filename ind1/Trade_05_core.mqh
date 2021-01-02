@@ -42,8 +42,10 @@ if(isnew_bar == true){
    
    
    //Step3
+   double b_3sig_up=0.0;
+   double b_3sig_dn=0.0;
    double b_2sig_up=0.0;
-   double b_2sig_dn=0.0;
+   double b_2sig_dn=0.0;   
    double b_1sig_up=0.0;
    double b_1sig_dn=0.0;
    double ema=0.0;
@@ -61,6 +63,8 @@ if(isnew_bar == true){
            b_1sig_dn=mid_sma20-sig*1;
            b_2sig_up=mid_sma20+sig*2;
            b_2sig_dn=mid_sma20-sig*2;
+           b_3sig_up=mid_sma20+sig*3;
+           b_3sig_dn=mid_sma20-sig*3;
            b_step3 =true;
        }
    
@@ -141,14 +145,14 @@ if(isnew_bar == true){
 #ifdef commmmm 
             pt_case           
               １：バンドウォーク中のみ  1シグマから2σ
-              
               ２：１＋Step12(h_dirに従う)
-              ３：１＋Step3　（直近のCnを超えた場合）
+              ３：１＋Step4　（直近の頂点を超えた場合）
               ４：全部
               ５：バンドウォーク中はエントリの時に見るだけで、Exitは外側のラインは見ない
               ６：Exitの外側が３シグマを超えたらExitとする。（行き過ぎ）
+              7：3のExit外なし
 #endif // commmmm
-            int pt_case=1;
+            int pt_case=7;
             if(pt_case==1){
                 b_bandwalk = false;
                 b_exit_all = false;
@@ -208,12 +212,63 @@ if(isnew_bar == true){
                     }
                 }
             }else if(pt_case==3){
-                b_ok_entry = b_bandwalk;
+                b_bandwalk = false;
+                b_exit_all = false;
+                // close[0]=get_close[0],close[1]
+                double new_v=v;
+                double close0=c.get_close(0);
+                double close1=c.get_close(1);
+//                double close2=c.get_close(2);
+                //１σをまたぐとき　＆＆　２σいない
+                if(close1 < b_1sig_up && close0 >b_1sig_up && close0 < b_2sig_up){
+                    h_dir = 1;
+                    b_bandwalk = true;
+                }
+                if(close1 > b_1sig_dn && close0 < b_1sig_dn && close0 > b_2sig_dn){
+                    h_dir = -1;
+                    b_bandwalk = true;
+                }
+                //b_step4_1
+                b_step4_1=false;
+                //直近の上の山の値
+                if(aud[1]==1){
+                   tyokkinn_yama = ay[1];
+                }else{
+                   tyokkinn_yama = ay[2];
+                }
+                //さらに上にいるか？
+                if(tyokkinn_yama< v){
+                   b_step4_1=true;
+                   h_dir = 1;
+                }
+                //直近の下の山の値
+                if(aud[1]==-1){
+                   tyokkinn_yama = ay[1];
+                }else{
+                   tyokkinn_yama = ay[2];
+                }
+                //さらに下にいるか？
+                if(tyokkinn_yama> v){
+                   b_step4_1=true;
+                   h_dir = -1;
+                }
+   
+                b_ok_entry = false;
+                if(b_step4_1==true && b_bandwalk==true){
+                    b_ok_entry = true;
+                }
                 if(b_bandwalk==true){
                     b_exit_all = false;
                 }else{
-                    b_exit_all = true;
+                    if(
+                        (close1 >b_1sig_up && close1 <b_2sig_up &&(close0>b_2sig_up||close0<b_1sig_up))
+                        ||
+                        (close1 <b_1sig_dn && close1 >b_2sig_dn &&(close0<b_2sig_dn||close0>b_1sig_dn))
+                    ){
+                        b_exit_all = true;
+                    }
                 }
+
             }else if(pt_case==4){
                 b_ok_entry = b_bandwalk;
                 if(b_bandwalk==true){
@@ -222,19 +277,127 @@ if(isnew_bar == true){
                     b_exit_all = true;
                 }
             }else if(pt_case==5){
+                b_bandwalk = false;
+                b_exit_all = false;
+                // close[0]=get_close[0],close[1]
+                double new_v=v;
+                double close0=c.get_close(0);
+                double close1=c.get_close(1);
+//                double close2=c.get_close(2);
+                //１σをまたぐとき　＆＆　２σいない
+                if(close1 < b_1sig_up && close0 >b_1sig_up && close0 < b_2sig_up){
+                    h_dir = 1;
+                    b_bandwalk = true;
+                }
+                if(close1 > b_1sig_dn && close0 < b_1sig_dn && close0 > b_2sig_dn){
+                    h_dir = -1;
+                    b_bandwalk = true;
+                }
+
                 b_ok_entry = b_bandwalk;
                 if(b_bandwalk==true){
                     b_exit_all = false;
                 }else{
-                    b_exit_all = true;
+                    if(flag_is_entry==true && (
+                        (close1 >b_1sig_up && (close0<b_1sig_up))
+                        ||
+                        (close1 <b_1sig_dn && close0>b_1sig_dn)
+                        )
+                    ){
+                        b_exit_all = true;
+                    }
                 }
             }else if(pt_case==6){
+                b_bandwalk = false;
+                b_exit_all = false;
+                // close[0]=get_close[0],close[1]
+                double new_v=v;
+                double close0=c.get_close(0);
+                double close1=c.get_close(1);
+//                double close2=c.get_close(2);
+                //１σをまたぐとき　＆＆　２σいない
+                if(close1 < b_1sig_up && close0 >b_1sig_up && close0 < b_2sig_up){
+                    h_dir = 1;
+                    b_bandwalk = true;
+                }
+                if(close1 > b_1sig_dn && close0 < b_1sig_dn && close0 > b_2sig_dn){
+                    h_dir = -1;
+                    b_bandwalk = true;
+                }
+
                 b_ok_entry = b_bandwalk;
                 if(b_bandwalk==true){
                     b_exit_all = false;
                 }else{
-                    b_exit_all = true;
+                    if(flag_is_entry==true && (
+                        (close1 >b_1sig_up && (close0<b_1sig_up||close0>b_3sig_up))
+                        ||
+                        (close1 <b_1sig_dn && (close0>b_1sig_dn ||close0<b_3sig_dn))
+                        )
+                    ){
+                        b_exit_all = true;
+                    }
                 }
+            
+            }else if(pt_case==7){//3のExit外なし
+                b_bandwalk = false;
+                b_exit_all = false;
+                // close[0]=get_close[0],close[1]
+                double new_v=v;
+                double close0=c.get_close(0);
+                double close1=c.get_close(1);
+//                double close2=c.get_close(2);
+                //１σをまたぐとき　＆＆　２σいない
+                if(close1 < b_1sig_up && close0 >b_1sig_up && close0 < b_2sig_up){
+                    h_dir = 1;
+                    b_bandwalk = true;
+                }
+                if(close1 > b_1sig_dn && close0 < b_1sig_dn && close0 > b_2sig_dn){
+                    h_dir = -1;
+                    b_bandwalk = true;
+                }
+                //b_step4_1
+                b_step4_1=false;
+                //直近の上の山の値
+                if(aud[1]==1){
+                   tyokkinn_yama = ay[1];
+                }else{
+                   tyokkinn_yama = ay[2];
+                }
+                //さらに上にいるか？
+                if(tyokkinn_yama< v){
+                   b_step4_1=true;
+                   h_dir = 1;
+                }
+                //直近の下の山の値
+                if(aud[1]==-1){
+                   tyokkinn_yama = ay[1];
+                }else{
+                   tyokkinn_yama = ay[2];
+                }
+                //さらに下にいるか？
+                if(tyokkinn_yama> v){
+                   b_step4_1=true;
+                   h_dir = -1;
+                }
+   
+                b_ok_entry = false;
+                if(b_step4_1==true && b_bandwalk==true){
+                    b_ok_entry = true;
+                }
+                if(b_bandwalk==true){
+                    b_exit_all = false;
+                }else{
+                    if(flag_is_entry==true && (
+                        (close1 >b_1sig_up && (close0<b_1sig_up))
+                        ||
+                        (close1 <b_1sig_dn && close0>b_1sig_dn)
+                        )
+                    ){
+                        b_exit_all = true;
+                    }
+                }
+
             }
 
    
