@@ -20,6 +20,9 @@ struct struct_pt_data{
 #define PT_RANGE_LAST_TOP   2 //レンジ　最後のZigが上にある（上で反発するかも）
 #define PT_MESEN_UP         3 //目線が上に切り替わり
 #define PT_MESEN_DN         4 //目線が下に切り替わり
+#define PT_ZOKUSIN_UP         50 //上方向に続伸の形
+#define PT_ZOKUSIN_DN         60 //下方向に続伸の形
+
 
 
 void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
@@ -54,6 +57,24 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
                 reg_pt(peri,ret_match_zigcount,ret_pt_katachi);
             }
     }
+    //続伸の形か？
+    peri==PERIOD_M15;
+//    int ret_match_dn_zokusin =0;
+    ret=chk_pt_zokusin(peri,ret_match_zigcount,ret_pt_katachi);//★１
+    if(ret == true){
+        //pt成立
+            //既存？//新規？
+            bool r=false;bool rr=false;
+            r=Is_pt_zigcount_katachi(ret_pt_katachi,ret_match_zigcount);//★１
+            if(r==false){
+                //Pt表示（レクタングル＋名前（時間＋パターン名）
+                view_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+                //★データの格納・記憶
+                    //pt追加
+                reg_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+            }
+    }
+
 
     //エントリー判断・エントリー
     //#include"Trade_01_core.mqh"
@@ -182,6 +203,25 @@ bool view_pt(ENUM_TIMEFRAMES period_,int zigcount,int pt_katachi){
             TrendCreate(0,name,0,at[1],ay[1],at[2],ay[2],cc,STYLE_SOLID,4);
 //            TrendCreate(0,name,0,at[1],ay[1],at[2],ay[2],clrMagenta,STYLE_SOLID,4);
         }
+        if(pt_katachi == PT_ZOKUSIN_UP ||
+            pt_katachi == PT_ZOKUSIN_DN
+        ){
+            string name1="zokushin_up"+zigcount+PeriodToString(period_);
+            string name2="zokushin_dn"+zigcount+PeriodToString(period_);
+            int cc=GetTimeColor(period_);
+            if(pt_katachi == PT_ZOKUSIN_UP){
+              TrendCreate(0,name1,0,at[1],ay[1],at[5],ay[5],cc,STYLE_SOLID,4);
+              TrendCreate(0,name2,0,at[2],ay[2],at[4],ay[4],cc,STYLE_SOLID,4);
+            }
+            if(pt_katachi == PT_ZOKUSIN_DN){
+              TrendCreate(0,name1,0,at[2],ay[2],at[4],ay[4],cc,STYLE_SOLID,4);
+              TrendCreate(0,name2,0,at[1],ay[1],at[5],ay[5],cc,STYLE_SOLID,4);
+            }
+              
+            
+        }
+
+
     }else{return false;}
     return true;
 }
@@ -264,6 +304,61 @@ bool chk_pt_range(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
         }else{
             ret = false;//未成立
         }
+    }else{return false;}
+    return ret;
+}
+bool chk_pt_zokusin(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
+    // 上、下方向に続伸か
+#ifdef commentt
+    pt_katachi ==60   1が下の方にある
+              ４
+        5        
+                            2
+          　　　   3                    V  
+                                1
+    or
+    pt_katachi ==50　　1が上の方にある
+                                   1
+          　　　   3                    V  
+                            2
+        5        
+              ４
+#endif//comenntt
+    bool ret=false;
+    double ay[MAX_GET_ZIGZAGDATA_NUM+1];// 価格Zigzag　１からデータ入っている。０は使わない
+    int aud[MAX_GET_ZIGZAGDATA_NUM+1];
+    datetime at[MAX_GET_ZIGZAGDATA_NUM+1];
+    double gosa = 0.1;
+    int offset = 1;
+    candle_data *c=pac.get_candle_data_pointer(period_);
+    if(c!=NULL){
+        bool r=false;
+        bool s=false;
+        r = get_ZigY_array_org(ay,period_,offset);
+        if(r==false){return false;}
+        r = get_ZigX_array_org(at,period_,offset);
+        if(r==false){return false;}
+        r = get_ZigUD_array_org(aud,period_,offset);
+        if(r==false){return false;}
+
+        if(
+            (aud[1]==-1)
+            &&(ay[5]>ay[3]&& ay[3]>ay[1] && ay[4]>ay[2])
+        ){
+          ret = true;
+          pt_katachi = 60;
+        }
+        if(
+            (aud[1]==1)
+            &&(ay[5]<ay[3]&& ay[3]<ay[1] && ay[4]<ay[2])
+        ){
+          ret = true;
+          pt_katachi = 50;
+        }
+        if(ret == true){
+            zigcount=c.zigzagdata_count-offset;
+        }
+
     }else{return false;}
     return ret;
 }
