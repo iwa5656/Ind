@@ -22,6 +22,16 @@ struct struct_pt_data{
 #define PT_MESEN_DN         4 //目線が下に切り替わり
 #define PT_ZOKUSIN_UP         50 //上方向に続伸の形
 #define PT_ZOKUSIN_DN         60 //下方向に続伸の形
+#define PT_ZOKUSIN_DN_6    61//続伸下　61
+#define PT_ZOKUSIN_UP_6    51//続伸上　51
+#define PT_ZOKUSIN_DN_Low_3tenLine    71//　下向きで下辺3点が直線上にある
+#define PT_ZOKUSIN_DN_Squeeze      72//　下向きスクイーズ（下辺3点と上辺2点）
+#define PT_ZOKUSIN_DN_KAKUDAI      73//　下向き拡大（下辺3点と上辺2点）
+#define PT_ZOKUSIN_DN_HEIKOU      70//　下向き平行（下辺3点と上辺2点）
+#define PT_ZOKUSIN_UP_Top_3tenLine    81//　上向きで上辺3点が直線上にある
+#define PT_ZOKUSIN_UP_Squeeze      82//　上向きスクイーズ（上辺3点と下辺2点）
+#define PT_ZOKUSIN_UP_KAKUDAI      83//　上向き拡大（上辺3点と下辺2点）
+#define PT_ZOKUSIN_UP_HEIKOU      80//　上向き平行（上辺3点と下辺2点）
 
 
 
@@ -58,9 +68,10 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
             }
     }
     //続伸の形か？
-    peri==PERIOD_M15;
+    peri=PERIOD_M15;
 //    int ret_match_dn_zokusin =0;
     ret=chk_pt_zokusin(peri,ret_match_zigcount,ret_pt_katachi);//★１
+    ret =false;//debug not view
     if(ret == true){
         //pt成立
             //既存？//新規？
@@ -75,7 +86,56 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
             }
     }
 
-
+    //heikouの形か？
+    peri=PERIOD_H4;
+//    int ret_match_dn_zokusin =0;
+    ret=chk_pt_heikou(peri,ret_match_zigcount,ret_pt_katachi);//★１
+    if(ret == true){
+        //pt成立
+            //既存？//新規？
+            bool r=false;bool rr=false;
+            r=Is_pt_zigcount_katachi(ret_pt_katachi,ret_match_zigcount);//★１
+            if(r==false){
+                //Pt表示（レクタングル＋名前（時間＋パターン名）
+                view_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+                //★データの格納・記憶
+                    //pt追加
+                reg_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+            }
+    }
+    peri=PERIOD_H1;
+//    int ret_match_dn_zokusin =0;
+    ret=chk_pt_heikou(peri,ret_match_zigcount,ret_pt_katachi);//★１
+    if(ret == true){
+        //pt成立
+            //既存？//新規？
+            bool r=false;bool rr=false;
+            r=Is_pt_zigcount_katachi(ret_pt_katachi,ret_match_zigcount);//★１
+            if(r==false){
+                //Pt表示（レクタングル＋名前（時間＋パターン名）
+                view_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+                //★データの格納・記憶
+                    //pt追加
+                reg_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+            }
+    }    
+       
+    peri=PERIOD_M15;
+//    int ret_match_dn_zokusin =0;
+    ret=chk_pt_heikou(peri,ret_match_zigcount,ret_pt_katachi);//★１
+    if(ret == true){
+        //pt成立
+            //既存？//新規？
+            bool r=false;bool rr=false;
+            r=Is_pt_zigcount_katachi(ret_pt_katachi,ret_match_zigcount);//★１
+            if(r==false){
+                //Pt表示（レクタングル＋名前（時間＋パターン名）
+                view_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+                //★データの格納・記憶
+                    //pt追加
+                reg_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+            }
+    }
     //エントリー判断・エントリー
     //#include"Trade_01_core.mqh"
     //#include"Trade_02_core.mqh"
@@ -217,7 +277,24 @@ bool view_pt(ENUM_TIMEFRAMES period_,int zigcount,int pt_katachi){
               TrendCreate(0,name1,0,at[2],ay[2],at[4],ay[4],cc,STYLE_SOLID,4);
               TrendCreate(0,name2,0,at[1],ay[1],at[5],ay[5],cc,STYLE_SOLID,4);
             }
-              
+        }
+        if(
+            pt_katachi == PT_ZOKUSIN_DN_6 ||
+            pt_katachi == PT_ZOKUSIN_UP_6 ||
+            pt_katachi == PT_ZOKUSIN_DN_Low_3tenLine ||
+            pt_katachi == PT_ZOKUSIN_DN_Squeeze ||
+            pt_katachi == PT_ZOKUSIN_DN_KAKUDAI ||
+            pt_katachi == PT_ZOKUSIN_DN_HEIKOU ||
+            pt_katachi == PT_ZOKUSIN_UP_Top_3tenLine ||
+            pt_katachi == PT_ZOKUSIN_UP_Squeeze ||
+            pt_katachi == PT_ZOKUSIN_UP_KAKUDAI ||
+            pt_katachi == PT_ZOKUSIN_UP_HEIKOU 
+        ){              
+              string name1=IntegerToString(pt_katachi)+":heikou"+zigcount+PeriodToString(period_);
+              string name2=IntegerToString(pt_katachi)+":heikou_"+zigcount+PeriodToString(period_);
+              int cc=GetTimeColor(period_);
+              TrendCreate(0,name1,0,at[5],ay[5],at[3],ay[3],cc,STYLE_SOLID,4);
+              TrendCreate(0,name2,0,at[2],ay[2],at[6],ay[6],cc,STYLE_SOLID,4);
             
         }
 
@@ -358,6 +435,130 @@ bool chk_pt_zokusin(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
         if(ret == true){
             zigcount=c.zigzagdata_count-offset;
         }
+
+    }else{return false;}
+    return ret;
+}
+
+
+bool chk_pt_heikou(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
+    // 上、下方向に平行・スクイーズ・拡大判断（６－２で判断１は除く）（６－４ー２，５－３）
+#ifdef commentt
+    1を除く形について分類
+    0該当なし
+    61続伸下　61
+    51続伸上　51
+    71　下向きで下辺3点が直線上にある
+      72　下向きスクイーズ（下辺3点と上辺2点）
+      73　下向き拡大（下辺3点と上辺2点）
+      70　下向き平行（下辺3点と上辺2点）
+    81　上向きで上辺3点が直線上にある
+      82　上向きスクイーズ（上辺3点と下辺2点）
+      83　上向き拡大（上辺3点と下辺2点）
+      80　上向き平行（上辺3点と下辺2点）
+
+    pt_katachi ==70   1が下の方にある　かつ2つ平行、3点が直線７１、3点＋２点でスクイーズ７２
+              5
+        6        
+                            3
+          　　　   4                    1  
+                                2
+    or
+    pt_katachi ==80　　1が上の方にある　かつ2つ平行、3点が直線81、3点＋２点でスクイーズ82
+                                   2
+          　　　   4                    1  
+                            3
+        6        
+              5
+#endif//comenntt
+    bool ret=false;
+    double ay[MAX_GET_ZIGZAGDATA_NUM+1];// 価格Zigzag　１からデータ入っている。０は使わない
+    int aud[MAX_GET_ZIGZAGDATA_NUM+1];
+    datetime at[MAX_GET_ZIGZAGDATA_NUM+1];
+    double gosa = 0.1;
+    int offset = 0;//Zigzagの１も利用したいので、最新点（不確定）も含める
+    int pt_katachi_tmp=0;
+    candle_data *c=pac.get_candle_data_pointer(period_);
+    if(c!=NULL){
+        bool r=false;
+        bool s=false;
+        bool s2=false;
+        r = get_ZigY_array_org(ay,period_,offset);
+        if(r==false){return false;}
+        r = get_ZigX_array_org(at,period_,offset);
+        if(r==false){return false;}
+        r = get_ZigUD_array_org(aud,period_,offset);
+        if(r==false){return false;}
+
+        if(
+            (aud[1]==1)
+            &&(ay[6]>ay[4]&& ay[4]>ay[2] && ay[5]>ay[3])
+        ){
+          s2 = true;
+          pt_katachi_tmp = 61;//続伸下向き
+        }
+        if(
+            (aud[1]==-1)
+            &&(ay[6]<ay[4]&& ay[4]<ay[2] && ay[5]<ay[3])
+        ){
+          s2 = true;
+          pt_katachi_tmp = 51;//続伸上向き
+        }
+        if(s2 == true){//続伸の形か？
+          //Zigzagの辺のサイズの平均を取得（絶対値）
+          bool r1=false,r2=false;
+          double gosabairitu=0.2;//平均Zig高さの何パーセントか？（誤差率）1で１００％
+          double ave_zigheikin_value;
+          r1=c.get_zigzag_average_dist(0,ave_zigheikin_value);
+          r2=c.Is_3point_same_online((double)at[6],ay[6],(double)at[4],ay[4],(double)at[2],ay[2], chgPrice2Pips(ave_zigheikin_value*gosabairitu));
+          if(r1==true&&r2==true){// 直線上にある
+            if(pt_katachi_tmp == 61){
+              pt_katachi_tmp = 71;//下向きで下辺3点が直線上にある
+            }
+            if(pt_katachi_tmp == 51){
+              pt_katachi_tmp = 81;//上向きで上辺3点が直線上にある
+            }
+              //途中結果を格納
+              ret = true;
+              pt_katachi = pt_katachi_tmp;
+              zigcount=c.zigzagdata_count-offset;            
+            bool r3=false;
+            r3=c.Is_heikou_2line((double)at[6],ay[6],(double)at[2],ay[2],(double)at[5],ay[5],(double)at[3],ay[3]);
+            if(r3==true){//平行？
+              if(pt_katachi_tmp == 71){
+                pt_katachi_tmp = 70;//下向き平行（下辺3点と上辺2点）
+              }
+              if(pt_katachi_tmp == 81){
+                pt_katachi_tmp = 80;//上向き平行（上辺3点と下辺2点）
+              }              
+              ret = true;
+              pt_katachi = pt_katachi_tmp;
+              zigcount=c.zigzagdata_count-offset;
+            }else{//拡大？スクイーズ？
+              int ttt=c.get_heikou_2line_katamuki_kannkei((double)at[6],ay[6],(double)at[2],ay[2],(double)at[5],ay[5],(double)at[3],ay[3]);
+              if(ttt == -1){//-1スクイーズ
+                if(pt_katachi_tmp == 71){
+                  pt_katachi_tmp = 72;//下向きスクイーズ（下辺3点と上辺2点）
+                }
+                if(pt_katachi_tmp == 81){
+                  pt_katachi_tmp = 82;//上向きスクイーズ（上辺3点と下辺2点）
+                }              
+              }else if(ttt == 1){//１拡大？
+                if(pt_katachi_tmp == 71){
+                  pt_katachi_tmp = 73;//下向き拡大（下辺3点と上辺2点）
+                }
+                if(pt_katachi_tmp == 81){
+                  pt_katachi_tmp = 83;//上向き拡大（上辺3点と下辺2点）
+                }              
+              }
+              if(ttt==1 || ttt==-1){
+                ret = true;
+                pt_katachi = pt_katachi_tmp;
+                zigcount=c.zigzagdata_count-offset;                
+              }
+            }//end 拡大？スクイーズ？
+          }//end 直線上にある 
+        }//end /続伸の形か？
 
     }else{return false;}
     return ret;
