@@ -33,6 +33,7 @@ struct struct_pt_data{
 #define PT_ZOKUSIN_UP_KAKUDAI      83//　上向き拡大（上辺3点と下辺2点）
 #define PT_ZOKUSIN_UP_HEIKOU      80//　上向き平行（上辺3点と下辺2点）
 
+#define PT_FLAG_DN          90//下向きフラッグ８点（２が４を超えない（弱さ見えたとき））
 
 
 void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
@@ -136,6 +137,25 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
                 reg_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
             }
     }
+    //下フラグ
+    peri=PERIOD_M15;
+//    int ret_match_dn_zokusin =0;
+    ret=chk_shita_flag(peri,ret_match_zigcount,ret_pt_katachi);//★１
+    if(ret == true){
+        //pt成立
+            //既存？//新規？
+            bool r=false;bool rr=false;
+            r=Is_pt_zigcount_katachi(ret_pt_katachi,ret_match_zigcount);//★１
+            if(r==false){
+                //Pt表示（レクタングル＋名前（時間＋パターン名）
+                view_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+                //★データの格納・記憶
+                    //pt追加
+                reg_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+            }
+    }    
+
+
     //エントリー判断・エントリー
     //#include"Trade_01_core.mqh"
     //#include"Trade_02_core.mqh"
@@ -563,6 +583,77 @@ bool chk_pt_heikou(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
     }else{return false;}
     return ret;
 }
+bool chk_shita_flag(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
+  //下方向フラッグ
+  //  A：左が一番長い。その右はAの５０％以内の高さ
+  //　8－１の６は４より下がっている
+  //　８－７は一番長い、
+  //    1以降２まで上方向に切り上げていく  上辺６＜４、下辺７＜５＜３
+    bool ret=false;
+    double ay[MAX_GET_ZIGZAGDATA_NUM+1];// 価格Zigzag　１からデータ入っている。０は使わない
+    int aud[MAX_GET_ZIGZAGDATA_NUM+1];
+    datetime at[MAX_GET_ZIGZAGDATA_NUM+1];
+    double adist[MAX_GET_ZIGZAGDATA_NUM+1];
+    double gosa = 0.1;
+    int offset = 0;//Zigzagの１も利用したいので、最新点（不確定）も含める
+    int pt_katachi_tmp=0;
+    candle_data *c=pac.get_candle_data_pointer(period_);
+    if(c!=NULL){
+        bool r=false;
+        bool s=false;
+        bool s2=false;
+        r = get_ZigY_array_org(ay,period_,offset);
+        if(r==false){return false;}
+        r = get_ZigX_array_org(at,period_,offset);
+        if(r==false){return false;}
+        r = get_ZigUD_array_org(aud,period_,offset);
+        if(r==false){return false;}
+        r = get_ZigDist_array_org(adist,period_,offset);
+        if(r==false){return false;}
+        int baseidx=8;
+        if(
+            (aud[baseidx-1]==-1)
+            // 8baseなら下辺７，５，３上辺６，４
+            &&(ay[baseidx-1]<ay[baseidx-3]&& ay[baseidx-3]<ay[baseidx-5] && ay[baseidx-2]<ay[baseidx-4])
+            //
+        ){
+          bool yowai=false;
+          // ２が４まで到達していない（戻りが弱くなった証拠あるか？）
+          if(ay[baseidx-6]<ay[baseidx-4]){
+            yowai = true;
+          }
+          bool tyokkin3wokoeru =false;
+          if(ay[1]<ay[3]){
+            tyokkin3wokoeru = true;  
+          }else{
+            tyokkin3wokoeru = false;
+          }
+          bool tyokkin5wokoeru =false;
+          if(ay[1]<ay[5]){
+            tyokkin5wokoeru = true;  
+          }else{
+            tyokkin5wokoeru = false;
+          }
+          //8-7の長い辺の７０％以内のフラッグ
+          bool hannbunnika70=false;
+          if(ay[8]-adist[7]*0.3 > ay[4]){
+            hannbunnika70=true;
+          } 
+          //8-7の長い辺の30％以内のフラッグ
+          bool hannbunnika30=false;
+          if(ay[8]-adist[7]*0.7 > ay[4]){
+            hannbunnika30=true;
+          } 
+          if(yowai==true ){
+            ret =true;
+            pt_katachi = 90;//下向きフラッグ
+          }
+        }
+
+    }  
+  return ret;
+
+}
 //Zigzagdataの配列データを得る
 bool get_ZigY_array(double &data[],ENUM_TIMEFRAMES period_){// 最後のZigzagPointを扱うとき　基準はZigzagcount
     return(get_ZigY_array_org(data,period_,0));
@@ -596,6 +687,26 @@ bool get_ZigX_array_org(datetime &data[],ENUM_TIMEFRAMES period_,int offset){
 }
 bool get_ZigUD_array(int &data[],ENUM_TIMEFRAMES period_){
     return(get_ZigUD_array_org(data,period_,0));
+}
+bool get_ZigDist_array_org(double &data[],ENUM_TIMEFRAMES period_,int offset){//　基準Zigzagcount　は最後からどれだけ移動するかを表すOffset＝最後のZigzagCount－基準のZigzagcountで求めること　//add 20210110
+//距離を求める（価格差）data[idx]は  右記の絶対値（ZigX(idx)-ZigY(idx+1)）
+// data[0]は使わない１－MAX_GET_ZIGZAGDATA_NUMのidxに格納
+//　data[1]がZigzag1-2の線分の長さ
+
+    candle_data *c=pac.get_candle_data_pointer(period_);
+    bool ret=false;
+    int n=MAX_GET_ZIGZAGDATA_NUM;//とりあえず固定
+    if(c!=NULL){
+        for(int i = 1;i<=MAX_GET_ZIGZAGDATA_NUM;i++){
+            double a=0.0,b=0.0;
+            a=c.ZigY(i+offset);
+            b=c.ZigY(i+offset+1);
+            if(a==0.0||b==0.0){return false;}
+            data[i] = MathAbs(a-b);
+            if(data[i]==0){return false;}
+        }
+    }else{return false;}    
+    return(true);
 }
 bool get_ZigUD_array_org(int &data[],ENUM_TIMEFRAMES period_,int offset){
     // offset 0の時は、ZigXX(1) 
