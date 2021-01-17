@@ -1,6 +1,7 @@
 //#define USE_Tick_bar  //Tick barをりようする
 #define USE_OnDEinit_Fractals
 //#define USE_Fractals
+//#define USE_OnDeinit_output_zigzag_output_each_period   //ファイルへZigzagデータを出力
 
 
 input double Inp_nobiritu =1.0;// tp d12率
@@ -21,8 +22,8 @@ input int use_calc_pass_kako_num=5000;  // 過去何bar分計算するか（一�
 #define USE_ZIGZAG_M15
 
 //#define USE_ZIGZAG_M30
-//#define USE_ZIGZAG_H1
-//#define USE_ZIGZAG_H4
+#define USE_ZIGZAG_H1
+#define USE_ZIGZAG_H4
  
  
 
@@ -158,7 +159,9 @@ void OnDeinit(const int reason)
     m_hyouka.view_kekka_youso_flag(n);
    }
    printf("Ondeinit...");
+#ifdef USE_OnDeinit_output_zigzag_output_each_period   
    zigzag_output();//debug Zigzagout 20200809
+#endif// USE_OnDeinit_output_zigzag_output_each_period
    if(reason == REASON_CHARTCHANGE){//チャートが変更
         #ifdef USE_OnDEinit_Fractals
            //OnDeinit_Fractals(reason);
@@ -176,15 +179,6 @@ int OnInit()
   {
    //debug
    init_ema_bolinger();//Ing表示
-   
-   double ggg[5];//]
-   ggg[0]=10;
-   ggg[1]=20;
-   ggg[2]=30;
-   test_arrays(ggg);
-   double aaaa=0.0;
-   printf(DoubleToString(ggg[0]));
-   aaaa=ggg[0];
    
     nobiritu =  Inp_nobiritu;// tp d12率
     songiriritu =  Inp_songiriritu;//　sl d12率
@@ -478,7 +472,7 @@ if(use_calc_pass_kako == true) {
 #endif//debug20201230
                 
                 //Zigzag作成処理　足確定した分を渡す（ここでは1つ分）　　　　　　　・・・確定、未確定のイメージ
-                int ret3 = p_allcan dle.Oncalculate_ZIGZAG(peri);
+                int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
 #ifdef USE_Fractals                
                 int ret4 = p_allcandle.Oncalculate_Fractals(peri);
 #endif //USE_Fractals                
