@@ -1,6 +1,8 @@
 #ifndef class_candle_data
 #define class_candle_data
 
+#define debug20210112   //debug zigzag printf zigadd chg
+
 #include <_inc\\My_function_lib2.mqh>
 //#include "class_allcandle.mqh"
 #include ".\Fractals\Fractals_Input.mqh"
@@ -201,7 +203,7 @@ public:
 	bool add_new_bar    (
         datetime &now_bar_time// 
     );
-    int  Oncalculate_ZIGZAG(void);
+	bool get_gigzagbufferdata(double &out_v[],datetime &out_t[],int &out_dir[],int &out_num_max);    int  Oncalculate_ZIGZAG(void);
     int  Oncalculate_Fractals(void);
     void OnDeinit(const int reason);
     void Oninit(void);
@@ -214,6 +216,14 @@ public:
 		datetime &t,
 		int &k// k 1:peak -1:bottom
 	);
+	void set_Zigzagdata(
+		int ope,// chg 0,add 1、del　-1
+		double &v,
+		datetime &t,
+		int &k,// k 1:peak -1:bottom
+		int idx// Zigzag idx( 最新Zigzagを０とする)  add の場合は任意
+	);
+
     void clean_up_arrays_zigzag(void);
     
     void view_zigzag_Zi_line(
@@ -534,7 +544,7 @@ public:
 			if(count_mesen_C > 2){// xx=6
 				
 				if(flag_mesen_chg == true){
-					printf("「"+PeriodToString(period)+";"+IntegerToString(zigzagdata[now_zigzagcount-1].mesen.dir+"」"));
+					printf("「"+PeriodToString(period)+";"+IntegerToString(zigzagdata[now_zigzagcount-1].mesen.dir)+"」");
 				    zigzag_mesen_chg_at_count_mesen_C= now_zigzagcount;
 				}
 				if(flag_mesen_zokushin == true){
@@ -675,6 +685,7 @@ void candle_data::OnDeinit(const int reason){
     OnDeinit_Fractals(reason);
 }
 void candle_data::Oninit(void){
+		clean_up_arrays_zigzag();//add 20210112
        zigzagdata_count=0;
 	   init_mem_zigzagdata();
        candle_bar_count = 0;
@@ -777,15 +788,151 @@ bool candle_data::add_new_bar(datetime &now_bar_time){
 }
 
 
+#define NUM_OF_A 13
+bool candle_data::get_gigzagbufferdata(double &out_v[],datetime &out_t[],int &out_dir[],int &out_num_max){
+	//ZigzagPeakBuffer、zigzagBottomBufferの0.0以外の点を取得する
+	//id[0]が古いものを格納
+	//
+	bool ret =false;
+	int bbbb_num_max = CANDLE_BUFFER_MAX_NUM-1;
+	double ttmp_v[NUM_OF_A+1];
+	int ttmp_num_max=0;
+	datetime ttmp_t[NUM_OF_A+1];
+	int ttmp_dir[NUM_OF_A+1];
+	// tmp_* [0] 古いものが入っている。
+	for(int b=bbbb_num_max ;b>=0 && b>bbbb_num_max-candle_bar_count;b--){ //最新足から検索していく
+		if(ZigzagPeakBuffer[b]!=0.0){
+			ttmp_v[ttmp_num_max]=ZigzagPeakBuffer[b];
+			ttmp_t[ttmp_num_max]=time[b];
+			ttmp_dir[ttmp_num_max]=1;			
+			ttmp_num_max++;
+		}else if(ZigzagBottomBuffer[b]!=0.0){
+			ttmp_v[ttmp_num_max]=ZigzagBottomBuffer[b];
+			ttmp_t[ttmp_num_max]=time[b];
+			ttmp_dir[ttmp_num_max]=-1;			
+			ttmp_num_max++;
+		}
+		if(ZigzagPeakBuffer[b]!=0.0 && (ZigzagBottomBuffer[b]!=0.0)){
+			printf("ありえない peakAndBottom !=0.0: "+IntegerToString(zigzagdata_count));
+		}
+		if(ttmp_num_max >NUM_OF_A){
+			break;
+		}
+	}
+
+	if(ttmp_num_max >=1){
+		for(int a=0;a<ttmp_num_max;a++){
+			int i=ttmp_num_max-1-a;
+			out_v[a]=ttmp_v[i];
+			out_t[a]=ttmp_t[i];
+			out_dir[a]=ttmp_dir[i];
+		}
+		for(int a=ttmp_num_max;a<NUM_OF_A+1;a++){
+			out_v[a]=0.0;
+			out_t[a]=0.0;
+			out_dir[a]=0.0;
+		}
+	   out_num_max = ttmp_num_max;	
+	   ret = true;
+	}
+	return ret;
+}
+
 
 int candle_data::Oncalculate_ZIGZAG(void){
-//printf("@@Oncalculate_ZIGZAG:"+"close="+DoubleToString(close[299])+"t="+TimeToString(time[299]));//debug 20210105
+bool b_chg_debug=false;
+int debug_zc = zigzagdata_count;
+#ifdef debug20210112
+printf("@@Oncalculate_ZIGZAG:"+"close="+DoubleToString(close[299])+"t="+TimeToString(time[299])+"zc="+IntegerToString(zigzagdata_count));//debug 20210105
+
+datetime d1=D'2019.12.31 16:45';
+if(zigzagdata_count == 312){
+	time[299]=time[299];
+   b_chg_debug=true;
+}
+if(time[299]==d1){
+	b_chg_debug=true;
+	time[299]=time[299];
+}
+#endif //debug20210112
     int ret=CANDLE_BUFFER_MAX_NUM-1;
     int rates_total=CANDLE_BUFFER_MAX_NUM;
     int prev_calculated=CANDLE_BUFFER_MAX_NUM-1;
 
 
    int i,limit=0;
+	//辺か前の情報を取得（バッファから取得）
+	double a_v[NUM_OF_A+1];
+	int a_num_max=0;
+	datetime a_t[NUM_OF_A+1];
+	int a_dir[NUM_OF_A+1];
+	double b_v[NUM_OF_A+1];
+	int b_num_max=0;
+	datetime b_t[NUM_OF_A+1];
+	int b_dir[NUM_OF_A+1];
+	int idxa=999;
+	int idxb=999;
+	get_gigzagbufferdata(a_v,a_t,a_dir,a_num_max);
+
+//debug 20210112 start
+#ifdef dellll
+#define NUM_OF_A 13
+double a_v[NUM_OF_A+1];
+int a_num_max=0;
+datetime a_t[NUM_OF_A+1];
+int a_dir[NUM_OF_A+1];
+
+   double b_v[NUM_OF_A+1];
+   int b_num_max=0;
+   datetime b_t[NUM_OF_A+1];
+   int b_dir[NUM_OF_A+1];
+		int idxa=999;
+		int idxb=999;
+		
+	int bbbb_num_max = CANDLE_BUFFER_MAX_NUM-1;
+	double ttmp_v[NUM_OF_A+1];
+	int ttmp_num_max=0;
+	datetime ttmp_t[NUM_OF_A+1];
+	int ttmp_dir[NUM_OF_A+1];
+	// tmp_* [0] 古いものが入っている。
+	if(debug_zc==312){//debug 
+	   a_v[0]=0;
+	}
+	for(int b=bbbb_num_max ;b>=0;b--){ //最新足から検索していく
+		if(ZigzagPeakBuffer[b]!=0.0){
+			ttmp_v[ttmp_num_max]=ZigzagPeakBuffer[b];
+			ttmp_t[ttmp_num_max]=time[b];
+			ttmp_dir[ttmp_num_max]=1;			
+			ttmp_num_max++;
+		}else if(ZigzagBottomBuffer[b]!=0.0){
+			ttmp_v[ttmp_num_max]=ZigzagBottomBuffer[b];
+			ttmp_t[ttmp_num_max]=time[b];
+			ttmp_dir[ttmp_num_max]=-1;			
+			ttmp_num_max++;
+		}
+		if(ZigzagPeakBuffer[b]!=0.0 && (ZigzagBottomBuffer[b]!=0.0)){
+			printf("ありえない peakAndBottom !=0.0: "+IntegerToString(zigzagdata_count));
+		}
+		if(ttmp_num_max >=NUM_OF_A){
+			break;
+		}
+	}
+	if(ttmp_num_max >=NUM_OF_A){
+		for(int a=0;a<=NUM_OF_A;a++){
+			a_v[a]=ttmp_v[NUM_OF_A-a];
+			a_t[a]=ttmp_t[NUM_OF_A-a];
+			a_dir[a]=ttmp_dir[NUM_OF_A-a];
+		}
+	   a_num_max = ttmp_num_max;	
+	}
+
+	if(candle_bar_count <CANDLE_BUFFER_MAX_NUM){
+      return 0;
+   	}
+//debug 20210112 end
+#endif //dellll
+
+
 
 #ifdef debug20210105
 	int debug_num=0;
@@ -1158,6 +1305,421 @@ if(dd==time[299]){//debug 20210105
 		}
 	}	
 #endif//debug20210105
+
+
+
+#define debug20210105_a //Zigzagdata　A　と　　描画バッファのデータを比較する　どう違うか確認する。
+#ifdef debug20210105_a
+#endif//debug20210105_a	
+      //変更後のデータ取得ｂ
+		get_gigzagbufferdata(b_v,b_t,b_dir,b_num_max);
+		int b_key_idx = 5;//key のデフォルトidx
+		int chg_switch_calc = 2;//デフォルト　旧追加方式1、2新方式の格納
+		if(b_num_max >0){
+			//keyを探す
+			if(a_num_max>NUM_OF_A){
+				chg_switch_calc = 2;
+			}
+		}	
+		if(chg_switch_calc == 2){
+			//新方式
+			bool ret_findkey=false;// keyが見つかったか？
+//★　5個ないときのキー→同一性の確認　bのキーを０からb_num_maxにずらして、あるかどうかを探す。見つかったらいつもの処理、ないときは？（一つも一致しない。時どうするか？
+         //同一キーの検索　b_key_idx(b),idxa 検索開始位置idx　配列要素なし・同一なしの時は０
+			for(int b=0;b<=b_num_max-1;b++){
+				b_key_idx=b;
+				for(int a=0;a<=NUM_OF_A&& a<a_num_max;a++){
+//					if(b_t[b_key_idx]==a_t[a]&& b_v[b_key_idx] == a_v[a]&& b_dir[b_key_idx] == a_dir[a]){
+					if(b_t[b_key_idx]==a_t[a]&& b_v[b_key_idx] == a_v[a]&& b_dir[b_key_idx] == a_dir[a] && b_t[b_key_idx]!=0){
+						ret_findkey=true;
+						idxa=a;// b[5](※1）と同じ要素のあるaのidx　　※1：検索したキー
+						break;
+					}
+				}
+				if(ret_findkey==true){break;}
+			}
+			bool badd_youso=false;
+			if(ret_findkey==false){
+//				if(a_num_max!=0&&b_num_max!=0){
+//					//追加処理へ
+//					badd_youso=true;
+					idxa=0;
+//					idxb=0;
+					b_key_idx=0;
+//				}else if(){  2つが異なるときの想定がなかった。　同じように処理する必要がある。　add以外にchg　Delもあるはず。　普通の流れに流した方が良かった。badd_yousoは使わない。idxa,b、key_idxを０にすればよい
+				      
+				
+//				}
+				printf("key が見つからない");//
+			}
+
+			//同じ内容から初めの異なるｉｄｘの決定　　B:idxb　A:idxa_notstart決定　　a,bから順に違うところを見つける。
+			bool notflag=false;// a,bで順にみて行って異なるものがあったか？あったtrue
+			int idxa_notstart=0;//　異なるものがある若い方からのidx
+			idxb=0;
+			int max_ab_num_max=MathMax(a_num_max,b_num_max);	
+			//　異なる値となるa,bのidxを求める　　（idxa_notstart,idxb）
+//			if(ret_findkey==true || badd_youso==true){//keyが見つかったか？or　キー見つからない＆追加処理（aが０この時＆ｂがあるとき）
+			if(ret_findkey==true ){//keyが見つかったか？
+//				for(int i=idxa;i<=NUM_OF_A;i++){//　ｂとaの同じ要素である　aのidxaから異なるidx　を探す
+				for(int ii=idxa;ii<=max_ab_num_max-1;ii++){//　ｂとaの同じ要素である　aのidxaから異なるidx　を探す
+//				for(int i=idxa;i<=a_num_max-1;i++){//　ｂとaの同じ要素である　aのidxaから異なるidx　を探す
+//					if(i-idxa+b_key_idx>NUM_OF_A){// bの上限超えたか？　超えた場合、ｂが短いので　エリア外のNUM_OF_A＋１＝１４が入る
+					if(ii-idxa+b_key_idx>b_num_max-1){// bの上限超えたか？　超えた場合、ｂが短いので　エリア外のNUM_OF_A＋１＝１４が入る
+								notflag=true;
+							idxb=ii-idxa+b_key_idx;//i-idxa+1;//検査したつぎのidxを設定　
+							idxa_notstart=ii;//ｂが短いと話短いとわかって、次のidx
+						break;
+					}
+					if(b_t[ii-idxa+b_key_idx]==a_t[ii] && b_v[ii-idxa+b_key_idx]==a_v[ii]){
+						if(b_dir[ii-idxa+b_key_idx]==a_dir[ii]){
+							//次を確認する
+						}else{
+							notflag=true;
+							idxb=ii-idxa+b_key_idx;//異なったidxを保持
+							idxa_notstart=ii;//異なったidxを保持
+							break;
+						}
+					}else{
+						notflag = true;
+						idxb=ii-idxa+b_key_idx;//ｂのidx　aと異なるはじめのidx　//異なったidxを保持
+						idxa_notstart=ii;//異なったidxを保持
+						break;
+					}
+//						if(i>=NUM_OF_A){// aの上限超えたか？　　　ｂの対応するaがない。状態
+					if(ii>=a_num_max-1){// aの上限超えたか？　　　ｂの対応するaがない。状態
+						idxb=ii-idxa+b_key_idx+1;//i-idxa+1; 今見ているところの次をさすようにする
+//						idxa_notstart=ii+1;//a超過なので、領域外とする。
+						idxa_notstart=ii+1;//a超過なので、領域外とする。
+						//notflag =true;
+//							if(idxb <=NUM_OF_A ){
+						if(idxb <=b_num_max-1 ){
+						#ifdef debug20210112
+						printf("add ");
+						#endif //debug20210112
+						}
+						break;
+					}
+
+				}
+				
+//				if(badd_youso==true){ //key見つからないが、追加の時
+//					//追加処理へ
+//					notflag=false;
+//					idxa_notstart=0;
+//					idxb=0;
+//					
+//				}
+			}//end 異なる値となるa,bのidxを求める　　（idxa_notstart,idxb）
+
+			if(max_ab_num_max>0){// a,b要素あれば
+				//異なった部分を出力　						//a,bで違うところから順に対応するものを表示させる
+				bool isout_not=false;
+//				if(notflag == true){// a,bどっちか短いとき、異なるところで終わった個所から出力
+            if(true){
+//					int max_ab_num_max=MathMax(a_num_max,b_num_max);	
+//					for(int i = 0;i<=NUM_OF_A;i++){
+					for(int ii = 0;ii<=max_ab_num_max-1;ii++){//両方のバッファの数を最大に回す
+//						if(i+idxa_notstart >NUM_OF_A && i+idxb>NUM_OF_A){
+						if(ii+idxa_notstart >NUM_OF_A && ii+idxb>NUM_OF_A){//両方のサイズを超えたらbreak　いらないかも・・・
+							break;
+						}
+						//A
+//						if(i+idxa_notstart <=NUM_OF_A){
+						if(ii+idxa_notstart <=a_num_max-1){
+							printf("A["+IntegerToString(ii+idxa_notstart)+"]\t"+
+								TimeToString(a_t[ii+idxa_notstart])+"\t"+
+								DoubleToString(a_v[ii+idxa_notstart],6)+"\t"+
+								IntegerToString(a_dir[ii+idxa_notstart])
+							);
+							isout_not=true;
+						}else{
+						   if(notflag==true){
+							   printf("A["+IntegerToString(ii+idxa_notstart)+"]\t"
+							   );
+							}
+							
+						}
+
+						//B
+//						if(i+idxb <=NUM_OF_A){
+						if(ii+idxb <=b_num_max-1){
+							printf("B["+IntegerToString(ii+idxb)+"]\t"+
+								TimeToString(b_t[ii+idxb])+"\t"+
+								DoubleToString(b_v[ii+idxb],6)+"\t"+
+								IntegerToString(b_dir[ii+idxb])
+							);
+							isout_not=true;
+						}else{
+						   if(notflag==true){
+   							printf("B["+IntegerToString(ii+idxb)+"]\t"
+			   				);
+			   			}	
+							
+						}
+					}
+					if(isout_not == true){
+//						printf("#####右から異なる番目"+"a:="+IntegerToString(NUM_OF_A-idxa_notstart)+"b:="+IntegerToString(NUM_OF_A-idxb));
+						printf("#####右から異なる番目"+"a:="+IntegerToString(a_num_max-1-idxa_notstart)+"b:="+IntegerToString(b_num_max-1-idxb));
+					}else{
+						//異なるものがない場合　まったく同じ結果の場合
+						isout_not=isout_not;
+					}
+				}
+//				int ia =NUM_OF_A-idxa_notstart; //0から正数は変化対象あり、-1はなし　変化対象（バッファの右から）
+//				int ib =NUM_OF_A-idxb;//0から正数は変化対象あり、-1はなし　
+				int ia =a_num_max-1-idxa_notstart; //0から正数は変化対象あり、-1はなし　変化対象（バッファの右から）
+				int ib =b_num_max-1-idxb;//0から正数は変化対象あり、-1はなし　
+				//-1  -1 なし
+				// 0	0 変化	既存の最後が変化
+				//-1	0　追加　Zig最後に追加（ｂの1つ目追加）
+				//-1	1　追加　Zig最後に追加（ｂの1つ目追加）
+				// 0	1  特殊　Zig最後を変更（ｂの2つ目）、ｂの1つ目（最後）を追加　
+				// 1	0  特殊　Zig最後二つに対して、削除。ｂの最後を追加　or　最後削除、その前をB最後にChg
+				//-1	1	要確認★
+				// 1	2　ｂ3点あり、既存の最後二つをｂ３変更ｂ２変更し、b1つ目追加
+				if(ia == -1 && ib== -1){
+
+				}else if(ia == 0 && ib== 0){
+				}else if(ia == -1 && ib== 0 ){
+				}else if(ia ==-1  && ib==1 ){
+
+				}else if(ia ==0  && ib==1 ){
+
+				}else if(ia ==1  && ib==0 ){
+					
+				}else if(ia ==-1  && ib==1 ){
+					printf("不具合->未出現？"+"a:="+IntegerToString(ia)+"b:="+IntegerToString(ib));
+				}else if(ia ==1  && ib==2 ){
+
+				}else if(ia ==1  && ib==-1 ){
+					printf("不具合？"+"a:="+IntegerToString(ia)+"b:="+IntegerToString(ib));
+
+				}else if(ia ==0  && ib==-1 ){
+					printf("不具合？Bがへって、差分がないことになっている。"+"a:="+IntegerToString(ia)+"b:="+IntegerToString(ib));
+				}else {
+					printf("想定外"+"a:="+IntegerToString(ia)+"b:="+IntegerToString(ib));
+				}
+				int an=ia-(-1),bn=ib-(-1);
+				int chg_start_idx=0;//変更開始位置　Zigzag最新を０とする。
+				int chg_num=0;//既存のバッファを変える数。（Chg分）
+				int add_num=0;//追加数
+				int del_num=0;
+				if(an!=0||bn!=0){
+					if(an==bn){
+						//変更
+//						chg_start_idx=an;
+						chg_start_idx=an-1;
+						chg_num=an;
+						add_num=0;
+						del_num=0;
+					}else if(an<bn){
+						//anの数分変更、bn-an数分追加
+//						chg_start_idx=an;
+						chg_start_idx=an-1;
+						chg_num=an;
+						add_num=bn-an;
+						del_num=0;
+
+					}else if(an>bn){
+						//an-bnの数分削除、削除後の後ろからbn数分変更
+						chg_start_idx=an-bn;
+						chg_num=an-bn;
+						add_num=0;
+						del_num=an-bn;
+					}
+					double v=0.0;datetime t=0;int k=0;
+					for(int g=0;g<del_num;g++){
+						set_Zigzagdata(-1,v,t,k,chg_start_idx+g);
+//								int ope,// chg 0,add 1、del　-1
+//								double &v,
+//								datetime &t,
+//								int &k,// k 1:peak -1:bottom
+//								int idx// Zigzag idx( 最新Zigzagを０とする)  add の場合は任意						
+					}
+					for(int g=0;g<chg_num;g++){
+//						v=ZigY(1+chg_num-g-1);//1が一番右端
+//						t=Zigtime(1+chg_num-g-1);//1が一番右端
+//						k=(int)ZigUD(1+chg_num-g-1);//1が一番右端
+//						int q=b_num_max-1-(chg_num-1+g);
+						int q=b_num_max-1-(chg_num-1+g)-add_num;//変更。。＋追加の順なので取得先に加味する
+						v = b_v[q];//NUM_OF_Aがidxの一番右
+						t = b_t[q];//NUM_OF_Aがidxの一番右
+						k = b_dir[q];//NUM_OF_Aがidxの一番右
+						set_Zigzagdata(0,v,t,k,chg_start_idx-g);
+					}
+					for(int g=0;g<add_num;g++){
+//						v=b_v[NUM_OF_A-add_num-1-g];//NUM_OF_Aがidxの一番右
+//						t=b_t[NUM_OF_A-add_num-1-g];//NUM_OF_Aがidxの一番右
+//						k=b_dir[NUM_OF_A-add_num-1-g];//NUM_OF_Aがidxの一番右
+						int q=b_num_max-1-(add_num-1+g);
+						v = b_v[q];//NUM_OF_Aがidxの一番右
+						t = b_t[q];//NUM_OF_Aがidxの一番右
+						k = b_dir[q];//NUM_OF_Aがidxの一番右
+						set_Zigzagdata(1,v,t,k,chg_start_idx-g);
+					}
+               chk_zigzag_debug_handle_zigzagdata();//debug20210117 zigzag
+				}
+
+//1-1
+			}else {
+				//配列がa,bともにない
+				//printf("key見つからない");
+			}
+
+		}else if(chg_switch_calc == 1){}
+//#define delll_zigzag_debug 
+#ifdef delll_zigzag_debug
+if(zigzagdata_count>13 && true){
+#ifdef aaaaaa
+	for(int a=0;a<NUM_OF_A+1;a++){
+		a_v[NUM_OF_A-a]=zigzagdata[zigzagdata_count-a-1].value;
+		a_t[NUM_OF_A-a]=zigzagdata[zigzagdata_count-a-1].time;
+		a_dir[NUM_OF_A-a]=zigzagdata[zigzagdata_count-a-1].kind;
+		a_num_max++;
+	}
+#endif// aaaaa	
+	int bbb_num_max = CANDLE_BUFFER_MAX_NUM-1;
+	double tmp_v[NUM_OF_A+1];
+	int tmp_num_max=0;
+	datetime tmp_t[NUM_OF_A+1];
+	int tmp_dir[NUM_OF_A+1];
+	// tmp_* [0] 古いものが入っている。
+	for(int b=bbb_num_max;b>=0;b--){ //最新足から検索していく
+		if(ZigzagPeakBuffer[b]!=0.0){
+			tmp_v[tmp_num_max]=ZigzagPeakBuffer[b];
+			tmp_t[tmp_num_max]=time[b];
+			tmp_dir[tmp_num_max]=1;			
+			tmp_num_max++;
+		}else if(ZigzagBottomBuffer[b]!=0.0){
+			tmp_v[tmp_num_max]=ZigzagBottomBuffer[b];
+			tmp_t[tmp_num_max]=time[b];
+			tmp_dir[tmp_num_max]=-1;			
+			tmp_num_max++;
+		}
+		if(ZigzagPeakBuffer[b]!=0.0 && (ZigzagBottomBuffer[b]!=0.0)){
+			printf("ありえない peakAndBottom !=0.0: "+IntegerToString(zigzagdata_count));
+		}
+		if(tmp_num_max >=NUM_OF_A){
+			break;
+		}
+	}
+	if(tmp_num_max >=NUM_OF_A){
+		for(int a=0;a<=NUM_OF_A;a++){
+			b_v[a]=tmp_v[NUM_OF_A-a];
+			b_t[a]=tmp_t[NUM_OF_A-a];
+			b_dir[a]=tmp_dir[NUM_OF_A-a];
+		}
+		b_num_max = a_num_max;
+
+		//b_key==5 と同じAでのidxaを見つける
+		#define b_key_idx 5
+		bool ret_findkey=false;
+
+		for(int a=0;a<=NUM_OF_A;a++){
+			if(b_t[b_key_idx]==a_t[a]&& b_v[b_key_idx] == a_v[a]&& b_dir[b_key_idx] == a_dir[a]){
+				ret_findkey=true;
+				idxa=a;// b[5]と同じ要素のあるaのidx
+				break;
+			}
+		}
+		//B:1　A:idxa　　から順に違うところを見つける
+		bool notflag=false;
+		int idxa_notstart=999;
+		if(ret_findkey==true){
+			for(int i=idxa;i<=NUM_OF_A;i++){//　ｂとaの同じ要素である　aのidxaから異なるidx　を探す
+			   if(i-idxa+b_key_idx>NUM_OF_A){// bの上限超えたか？　超えた場合、ｂが短いので　エリア外のNUM_OF_A＋１＝１４が入る
+					idxb=i-idxa+b_key_idx;//i-idxa+1;//検査したつぎのidxを設定　
+					idxa_notstart=i;//ｂが短いと話短いとわかって、次のidx
+			      break;
+			   }
+				if(b_t[i-idxa+b_key_idx]==a_t[i] && b_v[i-idxa+b_key_idx]==a_v[i]){
+					if(b_dir[i-idxa+b_key_idx]==a_dir[i]){
+						//次を確認する
+					}else{
+						notflag=true;
+						idxb=i-idxa+b_key_idx;//異なったidxを保持
+						idxa_notstart=i;//異なったidxを保持
+						break;
+					}
+				}else{
+					notflag = true;
+					idxb=i-idxa+b_key_idx;//ｂのidx　aと異なるはじめのidx　//異なったidxを保持
+					idxa_notstart=i;//異なったidxを保持
+					break;
+				}
+			   if(i>=NUM_OF_A){// aの上限超えたか？　　　ｂの対応するaがない。状態
+					idxb=i-idxa+b_key_idx+1;//i-idxa+1; 今見ているところの次をさすようにする
+					idxa_notstart=i+1;//a超過なので、領域外とする。
+				   notflag =true;
+					if(idxb <=NUM_OF_A ){
+					   #ifdef debug20210112
+					   printf("add ");
+					   #endif //debug20210112
+					}
+			      break;
+			   }
+
+			}
+			
+			
+			//異なった部分を出力
+			bool isout_not=false;
+			if(notflag == true){// a,bどっちか短いとき、異なるところで終わった個所から出力
+				for(int i = 0;i<=NUM_OF_A;i++){
+				   if(i+idxa_notstart >NUM_OF_A && i+idxb>NUM_OF_A){
+				      break;
+				   }
+					//A
+					if(i+idxa_notstart <=NUM_OF_A){
+						printf("A["+IntegerToString(i+idxa_notstart)+"]\t"+
+							TimeToString(a_t[i+idxa_notstart])+"\t"+
+							DoubleToString(a_v[i+idxa_notstart],6)+"\t"+
+							IntegerToString(a_dir[i+idxa_notstart])
+						);
+						isout_not=true;
+					}else{
+						printf("A["+IntegerToString(i+idxa_notstart)+"]\t"
+						);
+						
+					}
+
+					//B
+					if(i+idxb <=NUM_OF_A){
+						printf("B["+IntegerToString(i+idxb)+"]\t"+
+							TimeToString(b_t[i+idxb])+"\t"+
+							DoubleToString(b_v[i+idxb],6)+"\t"+
+							IntegerToString(b_dir[i+idxb])
+						);
+						isout_not=true;
+					}else{
+						printf("B["+IntegerToString(i+idxb)+"]\t"
+						);
+						
+					}
+				}
+				if(isout_not == true){
+					printf("#####右から異なる番目"+"a:="+IntegerToString(NUM_OF_A-idxa_notstart)+"b:="+IntegerToString(NUM_OF_A-idxb));
+				}else{
+					//異なるものがない場合　まったく同じ結果の場合
+					isout_not=isout_not;
+				}
+			}
+
+		}
+
+
+
+
+
+	}
+
+}
+#endif //delll 
+
+
+//処理を変更　addzigzagdata、chgzigzagdata、into_Zigzagdata廃止→あらたにset_Zigzagdataへ
+#ifdef chg_zigzag_data_setting_logic1	//処理を変更　addzigzagdata、chgzigzagdata、into_Zigzagdata廃止→あらたにset_Zigzagdataへ
     //本当に変化したかの確認 addorChgの判断
     bool b_chgpeak = false;
     bool b_chgbottom = false;
@@ -1242,6 +1804,7 @@ if(dd==time[299]){//debug 20210105
         	}
 		}
 	}
+#endif// chg_zigzag_data_setting_logic1	//処理を変更　addzigzagdata、chgzigzagdata、into_Zigzagdata廃止→あらたにset_Zigzagdataへ
 //---　目線の計算処理
 	calc_mesen_C();// 目線の計算Cn、変化フラグの更新
 
@@ -1257,7 +1820,9 @@ if(dd==time[299]){//debug 20210105
 
 
 void candle_data::addzigzagdata(string s,int k,double &v,datetime &t){// k 1:peak -1:bottom
-//printf("@@addzigzagdata:"+"s="+s+"k="+IntegerToString(k)+"v="+DoubleToString(v)+"t="+TimeToString(t));//debug 20210105
+#ifdef debug20210112
+printf("@@addzigzagdata:"+"s="+s+"k="+IntegerToString(k)+"v="+DoubleToString(v)+"t="+TimeToString(t));//debug 20210105
+#endif//debug20210112
 	
 #ifdef  USE_debug_zigzag
                 printf("set "+s+ "   \t"+DoubleToString(v)+"   \t"+TimeToString(t));
@@ -1274,7 +1839,10 @@ void candle_data::addzigzagdata(string s,int k,double &v,datetime &t){// k 1:pea
 }
 
 void candle_data::chgzigzagdata(string s,int k,double &pre_v,datetime &pre_t,double &v,datetime &t){// k 1:peak -1:bottom
-//printf("@@chgzigzagdata:"+"s="+s+"k="+IntegerToString(k)+"Pre_v="+DoubleToString(pre_v)+"pre_t="+TimeToString(pre_t)+"v="+DoubleToString(v)+"t="+TimeToString(t));//debug 20210105
+#ifdef debug20210112
+printf("@@chgzigzagdata:"+"s="+s+"k="+IntegerToString(k)+"Pre_v="+DoubleToString(pre_v)+"pre_t="+TimeToString(pre_t)+"v="+DoubleToString(v)+"t="+TimeToString(t));//debug 20210105
+#endif// debug20210112
+
 #ifdef  USE_debug_zigzag
                 printf("set "+s+ "   \t"+DoubleToString(v)+"   \t"+TimeToString(t)     
                 + "←←   \t"+DoubleToString(pre_v)+"   \t"+TimeToString(pre_t));
@@ -1306,7 +1874,55 @@ void debug_zigzag(	ENUM_TIMEFRAMES period,	int insert_idx,// chg true,add false
 		"%%prev_=%%\t"+IntegerToString(golobal_prev_calculated));
 			
 }
-
+void candle_data::set_Zigzagdata(
+		int ope,// chg 0,add 1、del　-1
+		double &v,
+		datetime &t,
+		int &k,// k 1:peak -1:bottom
+		int idx// Zigzag idx( 最新Zigzagを０とする)  add の場合は任意
+){
+#define debug_zigzag_set_data
+#ifdef debug_zigzag_set_data
+   printf(__FUNCTION__+":"+"ope=#"+IntegerToString(ope)+"#"+"v="+DoubleToString(v) +"t="+TimeToString(t)+"k="+ IntegerToString(k)+"zc="+IntegerToString(zigzagdata_count));
+#endif//debug_zigzag_set_data
+	int insert_idx =zigzagdata_count-1-idx;
+	int regIsChg=-99;
+	if(ope==0){
+		//chg
+		zigzagdata[insert_idx].value = v;
+		zigzagdata[insert_idx].time = t;
+		zigzagdata[insert_idx].kind = k;
+		zigzagdata[insert_idx].idx = insert_idx;		
+		regIsChg=true;
+	}else if(ope == 1){
+		//add
+		printf("pre zigcount = "+IntegerToString(zigzagdata_count));//debug 20210117
+		zigzagdata_count++;
+		printf("aft zigcount = "+IntegerToString(zigzagdata_count));//debug 20210117
+		chk_mem_zigzagdata(zigzagdata_count);
+		insert_idx =zigzagdata_count-1;
+		zigzagdata[insert_idx].value = v;
+		zigzagdata[insert_idx].time = t;
+		zigzagdata[insert_idx].kind = k;
+		zigzagdata[insert_idx].idx = insert_idx;
+		regIsChg=false;		
+	}else if(ope == -1){
+		zigzagdata_count--;
+		insert_idx =zigzagdata_count-1+1;
+		//del
+		zigzagdata[insert_idx].value = 0.0;
+		zigzagdata[insert_idx].time = 0;
+		zigzagdata[insert_idx].kind = 0;
+		zigzagdata[insert_idx].idx = 0;	
+      int pre_idx=insert_idx-1;
+		del_view_zigzag_Zi_line(pre_idx,insert_idx);	
+	}
+	if(ope !=-1){
+		view_zigzag_Zi_line(insert_idx,regIsChg);
+		zigzagSetOtherInfo(insert_idx,t,v);
+	}
+	zigzag_chg_flag=true;
+}
 void candle_data::into_Zigzagdata(
 		int regIsChg,// chg true,add false
 		double &v,

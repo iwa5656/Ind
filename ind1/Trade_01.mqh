@@ -152,6 +152,17 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
                 //★データの格納・記憶
                     //pt追加
                 reg_pt(peri,ret_match_zigcount,ret_pt_katachi);//★１
+                
+                //1の起点の表示
+                string name;
+                datetime tt;
+                double pp;
+                name=IntegerToString(ret_pt_katachi)+":↓Flag　"+PeriodToString(peri)+"zig:"+IntegerToString(ret_match_zigcount);
+                int cc=GetTimeColor(peri);
+                pp = ay[1];
+                tt= at[1];
+              
+                CreateArrowRightPrice(0,name,0,tt,pp,cc,nSize);
             }
     }    
 
@@ -647,6 +658,7 @@ bool chk_shita_flag(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
           if(yowai==true ){
             ret =true;
             pt_katachi = 90;//下向きフラッグ
+            zigcount=c.zigzagdata_count;
           }
         }
 
@@ -940,3 +952,32 @@ void ChangeTrendEmptyPoints(datetime &time1,double &price1,
   if(!price2)
      price2=price1;
  }
+
+void CreateArrowRightPrice //CreateArrowRightPrice(0,"",0,Time,Price,Color,3)
+(
+ long   chart_id,         // chart ID
+ string name,             // object name
+ int    nwin,             // window index
+ datetime Time,           // position of price label by time
+ double Price,            // position of price label by vertical
+ color  Color,            // text color
+ uint    Size             // font size
+ //,int idx            // ０最新のidx
+ )
+//---- 
+  {
+//----
+//	datetime idxtime = TimeCurrent()-idx * timePerbar;
+	//not use tick so
+//	idxtime = Time;
+//	idxtime = time[idx];
+	
+//string new_name = 
+   bool ret=false;
+   ret=ObjectCreate(chart_id,name,OBJ_ARROW_RIGHT_PRICE,nwin,Time,Price);
+//   ObjectCreate(chart_id,name,OBJ_ARROW_RIGHT_PRICE,nwin,idxtime,Price);
+   ObjectSetInteger(chart_id,name,OBJPROP_COLOR,Color);
+   ObjectSetInteger(chart_id,name,OBJPROP_WIDTH,Size);
+//ObjectSetInteger(chart_id,name,OBJPROP_BACK,true);
+//----
+  }

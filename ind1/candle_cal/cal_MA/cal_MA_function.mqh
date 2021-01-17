@@ -76,7 +76,7 @@ double MAkatamuki(int ma_period,ENUM_MA_METHOD mode,int shift){ // maの差　�
 				}
 				ma=ma/(double)ma_period;
 			}
-			if(candle_bar_count-shift > period+1+ma_pre_shift){
+			if(candle_bar_count-shift > ma_period+1+ma_pre_shift){
 				for(i=CANDLE_BUFFER_MAX_NUM-1-ma_period-ma_pre_shift-shift;i<CANDLE_BUFFER_MAX_NUM-1-ma_pre_shift-shift;i++){
 					ma2=ma2+close[i];
 				}
