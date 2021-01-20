@@ -27,8 +27,10 @@ input int use_calc_pass_kako_num=5000;  // 過去何bar分計算するか（一�
  
  
 
-input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_M5;// 評価時間軸
+//input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_M5;// 評価時間軸
+input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_M15;// 評価時間軸
 //input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_H1;// 評価時間軸
+//input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_H4;// 評価時間軸
 
 //#define Lib_iunima_mtf_ru
 
@@ -148,6 +150,9 @@ allcandle *p_allcandle;
 //MethodPattern *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
 //MethodPattern_range *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
 MethodPattern_flag *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
+
+//debug用
+int debug_i1;
 //+------------------------------------------------------------------+
 //| Custom indicator deinitialization function                         |
 //+------------------------------------------------------------------+
@@ -1292,7 +1297,7 @@ bool ontick_zigzag_debug(void){
 }
 int pre_zigaag_count;
 void chk_zigzag_debug_handle_zigzagdata(void){
-    #define NUM_OF_A 13
+    #define NUM_OF_A 10
 	double a_v[NUM_OF_A+1];
 	int a_num_max=0;
 	datetime a_t[NUM_OF_A+1];
