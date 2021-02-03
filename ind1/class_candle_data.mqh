@@ -8,6 +8,10 @@
 //#define USE_Debug_Check_zigzag_remake_after_samepoint	//同一方向を丸めた後、処理漏れがないかをチェック
 //#define USE_debug_zigzag_add_num_break_point	//Zigzag追加あるときのBreakPoint用
 //#define USE_debug_zigzag_check_make_c_after_samecheck //check zigzagdata格納が正しいか確認（ｃに格納とｂが同じかを確認）
+//------LCn利用
+#define USE_LCn	//目線確定Cnからの逆の目線発生後、Cn方向へ向いたときを検知する
+//------押し戻し率
+//#define USE_oshimodoshi_ritu
 //------
 
 #include <_inc\\My_function_lib2.mqh>
@@ -107,6 +111,9 @@ public:
 	    //m_allcandle = parent;
 	    period = p;candle_bar_count=0;zigzagdata_count=0;new_bar_flag=false;
 	    sma_make_handle(20, handle_sma_20);sma_make_handle(8,handle_sma_8);
+#ifdef USE_LCn
+		init_LCn();
+#endif //USE_LCn
 	   };
 	~candle_data(void){
 	   // ((allcandle*) m_allcandle).rest_new_bar_flag();
@@ -199,8 +206,198 @@ public:
 		int d_num_max;
 		datetime d_t[NUM_OF_A+1];
 		int d_dir[NUM_OF_A+1];
+#ifdef USE_LCn
+		//Lcnデータ
+			//Lcnデータ　ローカルの目線切り替わりのデータ。
+			int LCn_status;//0初期値
+			double Cn_sv;
+			double Cn_ev;
+			datetime Cn_st,Cn_et;
+			int Cn_zigzagidx_ev,Cn_dir;
+			ENUM_TIMEFRAMES Cn_period_;
+
+			int LCn_count,LCn_mesen_chg_count;
+			double LCn_sv,LCn_ev;
+			datetime LCn_st,LCn_et;//0初期化（未設定かどうかを判断する。）
+			int LCn_s_zigzagidx,LCn_e_zigzagidx;
+			bool bLCn_notfinded_LCn;//初期検索したが見つからないときTrue。（毎回検索しないようにする）Cnの時初期化
+
+			//前回確定目線がCn方向に変わった時のLCnのデータ
+			double preLCn_sv,preLCn_ev;
+			datetime preLCn_st,preLCn_et;
+			int preLCn_s_zigzagidx,preLCn_e_zigzagidx;
+
+			void init_LCn(void){
+				LCn_status=0;
+				Cn_sv=0;Cn_ev=0;Cn_st=0;Cn_et=0;Cn_zigzagidx_ev=0;Cn_dir=0;
+				LCn_count=0;LCn_mesen_chg_count=0;
+				LCn_sv=0.0;LCn_ev=0.0;
+				LCn_st=0;LCn_et=0;
+				LCn_s_zigzagidx=0;LCn_e_zigzagidx=0;
+
+				//前回確定目線がCn方向に変わった時のLCnのデータ
+				preLCn_sv=0.0;preLCn_ev=0.0;
+				preLCn_st=0;preLCn_et=0;
+				preLCn_s_zigzagidx=0;preLCn_e_zigzagidx=0;
+				
+			}
+			void set_LCn_set_Cn_data(int paraCn_zigzagidx_ev,ENUM_TIMEFRAMES paraCn_period_,
+			double paraCn_sv,double paraCn_ev,datetime paraCn_st,datetime paraCn_et,int paraCn_dir){
+				Cn_sv=paraCn_sv;
+				Cn_ev=paraCn_ev;
+				Cn_st=paraCn_st;
+				Cn_et=paraCn_et;//endは右側（時間が最新に近い）
+				Cn_zigzagidx_ev = paraCn_zigzagidx_ev;
+				Cn_period_=paraCn_period_;
+				Cn_dir=paraCn_dir;
+				LCn_status=1;//Cn設定時に動作するようにする。
+				LCn_et=0;//0初期化（未設定かどうかを判断する。）
+				LCn_st=0;//0初期化（未設定かどうかを判断する。）
+				bLCn_notfinded_LCn=false;//LCn検索していない状態
+			}
+		void calc_LCn(void){
+			
+			//LCnの計算（状態を更新する）
+
+			//呼び出す前提　Zigzag確定後
+			//	Zigzag変化フラグ	zigzag_chg_flag==true
+			//Zig変化があるとき＋Vとの比較
+			//状態
+			//0：ハラミ抜け判断はじめへ
+			//	なしからCnデータありなら→1へ
+			//	ないならEnd
+			//	ハラミを抜けた状態ならEnd（CnのS/Eを抜けた状態）
+			if(Cn_et==0 || LCn_status==4){return;}
+
+			//1：LCn初期出現まち+処理最後のZigzagidxまで状態を見ていく(LCn count更新)
+			//	CnE時間以降の時間の次のZigzagを探すidx。idxから最後まで処理する
+			bool find_start_idx=false;
+			int start_zigzagidx=0;
+			find_start_idx=zigzagdata_count-1;//見つからないときは最後とする
+			if(bLCn_notfinded_LCn==false){//LCnがない場合、検索して探す。それでもないなら出現するまで待つ
+				//対応idxを探す（Ｃｎ時間の次の辺をさす。最後なら最後にする
+				for(int i=zigzagdata_count-1;i>0;i--){
+					if(zigzagdata[i].time < Cn_et ){//Cnより古いZig発見
+						find_start_idx=true;
+						if(i+1<=zigzagdata_count-1){//次のidxをStartidxとする。最後なら最後にする
+							start_zigzagidx=i+1;
+						}else{
+							start_zigzagidx=i;
+						}
+						break;
+					}
+				}
+				bLCn_notfinded_LCn=true;//検索したので、2回目は通さないようにする
+				
+			}
+			// LCnの評価を順に行う
+			//for idx-> zigzag_count-1まで繰り返し
+			for(int i=start_zigzagidx;i<zigzagdata_count && i>0 ;i++){
+					//Cn_dir方向と逆のZigzag辺が出現した時、LCn出現
+					//初期の処理
+					if(LCn_et !=0 &&  			// LCn無い かつ
+						zigzagdata[i].kind != Cn_dir){//Cnと逆方向の辺が見つかる
+						//LCnを登録
+						//ローカル目線切り替わりのカウント更新
+						LCn_count=1;
+						LCn_mesen_chg_count=0;
+						LCn_sv=zigzagdata[i-1].value;
+						LCn_ev=zigzagdata[i].value;
+						LCn_st=zigzagdata[i-1].time;
+						LCn_et=zigzagdata[i].time;
+						LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
+						LCn_e_zigzagidx=zigzagdata[i].idx-1;
+						LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
+					}else {
+					//初期以外の処理
+					//LCnの計算
+						//2：LCn抜け判断・更新中 （逆方向へ続伸中）
+						//						
+						if(LCn_status==2){//Cnに対して逆方向に行っているとき　
+							if(LCn_e_zigzagidx!=i ){
+								//目線切り替わり判断
+								if( (zigzagdata[i].kind == Cn_dir) && 
+										( ((Cn_dir==1) && (LCn_sv < zigzagdata[i].value)) //起点超えたら逆に抜けた
+											|| ((Cn_dir==-1) && (LCn_sv > zigzagdata[i].value))) //起点超えたら逆に抜けた
+								){
+									LCn_status=3;//LCn逆に抜けた
+									LCn_count++;// 
+									LCn_mesen_chg_count++;// 目線変化
+									LCn_sv=zigzagdata[i-1].value;
+									LCn_ev=zigzagdata[i].value;
+									LCn_st=zigzagdata[i-1].time;
+									LCn_et=zigzagdata[i].time;
+									LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
+									LCn_e_zigzagidx=zigzagdata[i].idx-1;
+								}
+								//続伸判断
+								if(zigzagdata[i].kind != Cn_dir && 
+										( ((Cn_dir==1) && (LCn_ev > zigzagdata[i].value)) //起点超えたら逆に抜けた
+											|| ((Cn_dir==-1) && (LCn_ev < zigzagdata[i].value))) //起点超えたら逆に抜けた
+								){
+									LCn_count++;// 
+									//LCn_mesen_chg_count++;// 目線変化
+									LCn_sv=zigzagdata[i-1].value;
+									LCn_ev=zigzagdata[i].value;
+									LCn_st=zigzagdata[i-1].time;
+									LCn_et=zigzagdata[i].time;
+									LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
+									LCn_e_zigzagidx=zigzagdata[i].idx-1;
+								}
+
+							}
+
+						//3：LCn逆に抜けた（基準Cn方向へ伸びていっている最中）
+						//	
+						}else if(LCn_status==3){//LCn逆に抜けた （基準Cn方向へ伸びていっている最中）
+							if(LCn_e_zigzagidx!=i ){
+								if(zigzagdata[i].kind != Cn_dir &&
+										( (Cn_dir==1 && Cn_sv > zigzagdata[i].value) //起点超えたら逆に抜けた
+											|| (Cn_dir==-1 && Cn_sv < zigzagdata[i].value)) //起点超えたら逆に抜けた
+								){
+									LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
+									LCn_count++;// 
+									LCn_mesen_chg_count++;
+									LCn_sv=zigzagdata[i-1].value;
+									LCn_ev=zigzagdata[i].value;
+									LCn_st=zigzagdata[i-1].time;
+									LCn_et=zigzagdata[i].time;
+									LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
+									LCn_e_zigzagidx=zigzagdata[i].idx-1;
+								}
+								//続伸判断
+								if(zigzagdata[i].kind == Cn_dir && 
+										( (Cn_dir==1 && Cn_ev < zigzagdata[i].value) //起点超えたら逆に抜けた
+											|| (Cn_dir==-1 && Cn_ev > zigzagdata[i].value)) //起点超えたら逆に抜けた
+								){
+									LCn_count++;// 
+									//LCn_mesen_chg_count++;// 目線変化
+									LCn_sv=zigzagdata[i-1].value;
+									LCn_ev=zigzagdata[i].value;
+									LCn_st=zigzagdata[i-1].time;
+									LCn_et=zigzagdata[i].time;
+									LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
+									LCn_e_zigzagidx=zigzagdata[i].idx-1;
+								}
+							}
+						}
+					//4：CnのS/Eを抜けた状態
+					//
+					double v=zigzagdata[zigzagdata_count -1].value;
+					if( (Cn_dir == 1 && (Cn_ev< v || Cn_sv> v)) ||
+						(Cn_dir == -1 && (Cn_ev> v || Cn_sv< v))
+					){ 
+						LCn_status=4;//CnのS/Eを抜けた状態
+					}
+					
+				}//初期・初期以外	
+					
+			}// for Zigzag全部の処理
+						
+		}// end function calc_LCn
 
 
+#endif//USE_LCn
         double get_now_price(){
 			return(close[CANDLE_BUFFER_MAX_NUM-1]);
 		}
@@ -226,13 +423,15 @@ public:
 		int pre_zigzagdata_count_mesen_C;
 		int count_mesen_C;//目線注目辺の数（辺右の点）
 		int zigzag_mesen_chg_at_count_mesen_C;//目線が変化したZigzag　カウント（idではない。数）（辺右の点）
-		
+		int CnStatusFlag;// 0 初期値、１逆のCn発生、２続伸
+		int Cndir;//0 初期値、１ue、-1 sita
+		int Cn_zokusin_count;// 続伸の数(0 初期値):　初めての逆への切り替わりで0とする、N型になったとき1とする(続伸の1つ目ができたなのでN型できた印)
 	
 	//I/F
 	bool add_new_bar    (
         datetime &now_bar_time// 
     );
-	bool get_gigzagbufferdata(double &out_v[],datetime &out_t[],int &out_dir[],int &out_num_max);    int  Oncalculate_ZIGZAG(void);
+	bool get_zigzagbufferdata(double &out_v[],datetime &out_t[],int &out_dir[],int &out_num_max);    int  Oncalculate_ZIGZAG(void);
     int  Oncalculate_Fractals(void);
     void OnDeinit(const int reason);
     void Oninit(void);
@@ -317,6 +516,9 @@ public:
         calc_pt_range();
         calc_pt_flag();
         calc_pt_sup();
+#ifdef USE_LCn
+		calc_LCn();
+#endif//USE_LCn
     }
 	double ZigX(int inp_idx){// 単位は秒数のdatetime
 	    int base_idx = zigzagdata_count-1;
@@ -325,10 +527,10 @@ public:
 		}		
 		int idx1 = chgKijun2Idx(base_idx,inp_idx);
 	    //bool ret = false;
-	    double v1,v2;
-	    datetime t1,t2;
-	    int k1,k2;
-	    int c1,c2;//最大数
+	    double v1;
+	    datetime t1;
+	    int k1;
+	    int c1;//最大数
 	    bool bret1;
 	    bret1=get_zigzagdata(period,idx1,v1,t1,k1,c1);
 	    if(bret1==false){
@@ -344,10 +546,10 @@ public:
 		}		
 		int idx1 = chgKijun2Idx(base_idx,inp_idx);
 	    //bool ret = false;
-	    double v1,v2;
-	    datetime t1,t2;
-	    int k1,k2;
-	    int c1,c2;//最大数
+	    double v1;
+	    datetime t1;
+	    int k1;
+	    int c1;//最大数
 	    bool bret1;
 	    bret1=get_zigzagdata(period,idx1,v1,t1,k1,c1);
 	    if(bret1==false){
@@ -363,10 +565,10 @@ public:
 		}		
 		int idx1 = chgKijun2Idx(base_idx,inp_idx);
 	    //bool ret = false;
-	    double v1,v2;
-	    datetime t1,t2;
-	    int k1,k2;
-	    int c1,c2;//最大数
+	    double v1;
+	    datetime t1;
+	    int k1;
+	    int c1;//最大数
 	    bool bret1;
 	    bret1=get_zigzagdata(period,idx1,v1,t1,k1,c1);
 	    if(bret1==false){
@@ -382,10 +584,10 @@ public:
 		}		
 		int idx1 = chgKijun2Idx(base_idx,inp_idx);
 	    //bool ret = false;
-	    double v1,v2;
-	    datetime t1,t2;
-	    int k1,k2;
-	    int c1,c2;//最大数
+	    double v1;
+	    datetime t1;
+	    int k1;
+	    int c1;//最大数
 	    bool bret1;
 	    bret1=get_zigzagdata(period,idx1,v1,t1,k1,c1);
 	    if(bret1==false){
@@ -414,6 +616,9 @@ public:
 		pre_zigzagdata_count_mesen_C = 0;
 		count_mesen_C=0;
 		zigzag_mesen_chg_at_count_mesen_C=0;
+		CnStatusFlag=0;
+		Cndir=0;
+		Cn_zokusin_count=0;
 		for(int i=0;i< zigzagdata_count;i++){//chg mem
 			zigzagdata[i].mesen.dir = 0;
 		}
@@ -489,6 +694,8 @@ public:
 		bool flag_mesen_zokushin = false;//　続伸したとき
 		
 		int now_zigzagcount = zigzagdata_count;
+		CnStatusFlag=0;// 初期化
+		
 		if( now_zigzagcount <4){ return;}
 		
 		
@@ -527,6 +734,7 @@ public:
 					count_mesen_C++;
 				}
 				flag_mesen_chg=true;
+				Cndir=-1;
 			}else if ( c0.up < y0 ){// 続伸
 				zigzagdata[now_zigzagcount-1].mesen.up = y0;
 				zigzagdata[now_zigzagcount-1].mesen.dn = y1;
@@ -538,6 +746,7 @@ public:
 					zigzagdata[now_zigzagcount-1].mesen.dir = 1;
 					count_mesen_C++;
 				}
+				Cndir=1;
 				
 			}
 			
@@ -552,6 +761,8 @@ public:
 					count_mesen_C++;
 				}
 				flag_mesen_chg=true;
+				Cndir=1;
+
 			}else if ( c0.dn > y0 ){// 続伸した？
 				zigzagdata[now_zigzagcount-1].mesen.up = y1;
 				zigzagdata[now_zigzagcount-1].mesen.dn = y0;
@@ -563,7 +774,8 @@ public:
 					zigzagdata[now_zigzagcount-1].mesen.dir = -1;
 					count_mesen_C++;
 				}
-				
+				Cndir=-1;
+
 			}
 		}
 
@@ -573,13 +785,16 @@ public:
 			if(count_mesen_C > 2){// xx=6
 				
 				if(flag_mesen_chg == true){
-					printf("「"+PeriodToString(period)+";"+IntegerToString(zigzagdata[now_zigzagcount-1].mesen.dir)+"」");
+					printf("「"+PeriodToString(period)+";"+"逆へ"+IntegerToString(zigzagdata[now_zigzagcount-1].mesen.dir)+"」");
 				    zigzag_mesen_chg_at_count_mesen_C= now_zigzagcount;
+					CnStatusFlag=1;//逆のCn発生
+					Cn_zokusin_count=0;
 				}
 				if(flag_mesen_zokushin == true){
 					printf("「"+PeriodToString(period)+";"+"続伸"+"」");
 					zigzag_mesen_chg_at_count_mesen_C= now_zigzagcount;
-					
+					CnStatusFlag=2;//続伸Cnが発生
+					Cn_zokusin_count++;
 				}
 			}
 			
@@ -698,6 +913,7 @@ bool chk_mesen_C_zigcount_updn(int zigcount,int &out_dir){
 	}
 	return(ret);
 }	
+bool	get_oshimodoshi_ritu(int zigidxno,double v,double out_ritu);
 
 
 //	double MAprice(int period,ENUM_MA_METHOD mode);//MODE_SMA,単純平均。,MODE_EMA,指数移動平均。,MODE_SMMA,平滑平均。,MODE_LWMA,線形加重移動平均。
@@ -709,7 +925,7 @@ bool chk_mesen_C_zigcount_updn(int zigcount,int &out_dir){
     #include ".\candle_pattern\pt_flag.mqh"
     #include ".\candle_pattern\pt_sup.mqh"
 
-};
+};// end class candle_data  def
 void candle_data::OnDeinit(const int reason){
     OnDeinit_Fractals(reason);
 }
@@ -818,7 +1034,7 @@ bool candle_data::add_new_bar(datetime &now_bar_time){
 
 
 
-bool candle_data::get_gigzagbufferdata(double &out_v[],datetime &out_t[],int &out_dir[],int &out_num_max){
+bool candle_data::get_zigzagbufferdata(double &out_v[],datetime &out_t[],int &out_dir[],int &out_num_max){
 	//ZigzagPeakBuffer、zigzagBottomBufferの0.0以外の点を取得する
 	//id[0]が古いものを格納
 	//
@@ -893,7 +1109,7 @@ if(time[299]==d1){
 
 	int idxa=999;
 	int idxb=999;
-	get_gigzagbufferdata(a_v,a_t,a_dir,a_num_max);
+	get_zigzagbufferdata(a_v,a_t,a_dir,a_num_max);
 
 
 #ifdef debug20210105
@@ -1177,7 +1393,7 @@ if(dd==time[299]){//debug 20210105
 
 
       //変更後のデータ取得ｂ
-		get_gigzagbufferdata(b_v,b_t,b_dir,b_num_max);
+		get_zigzagbufferdata(b_v,b_t,b_dir,b_num_max);
 		int b_key_idx = 5;//key のデフォルトidx
 		int chg_switch_calc = 2;//デフォルト　旧追加方式1、2新方式の格納
 		if(b_num_max >0){
@@ -1696,7 +1912,7 @@ if(dd==time[299]){//debug 20210105
 
    return(rates_total);
     	
-}
+}//end Oncalculate_ZIGZAG
 
 
 void candle_data::addzigzagdata(string s,int k,double &v,datetime &t){// k 1:peak -1:bottom
@@ -2280,7 +2496,54 @@ int candle_data::Oncalculate_Fractals(void){
     return(ret);    
 }
 
+#ifdef USE_oshimodoshi_ritu
+bool candle_data::get_oshimodoshi_ritu(int zigidx,double v,double out_ritu){
+	//指定Zigzagidxを先頭とする線分と　価格ｖの位置関係を比率で返す: 全戻しが100％　もっと戻すと100％を超える
+	//zigidx は配列のidx、out_rituは１が100%
+	#ifdef commenttt			
+		ある指定した辺（Aを指定ーZigzagNo(idx））、評価価格渡すと		
+			ABが上向きのとき(A上でBが下の時)	
+				Aより上は
+					Aは０％
+					Aより下は  
 
+					-XX%					150%
+				  A	0%				B		100%
+					50%						50%
+				B	100%				A   0%
+					150%					-XX%
+	#endif //commenttt
+	bool ret = false;
+	if( zigidx >= zigzagdata_count|| zigzagdata_count<2){
+		printf(__FUNCTION__+"out of zigidx");
+		return false;
+	}
+	//A,B取得
+	double av,bv,disab,disav=0.0;
+	int dir=0;
+	int zigno=zigzagdata_count-1 +1 -zigidx;   // Zigno は最新が１・・・Zigidxはzigzagdata_count-1
+	av=ZigY(zigno);
+	bv=ZigY(zigno+1);
+	if(av>bv){dir = 1;}else if(av<bv){dir=-1;}else{ printf(__FUNCTION__+"same price");return false;}
+	disab=MathAbs(av-bv);
+	disav=MathAbs(av-v);
+	if(dir==1){
+		if(v>av){
+			out_ritu= (-1)*disav/disab;
+		}else {
+			out_ritu= disav/disab;
+		}
+	}else if(dir == -1){
+		if(v<av){
+			out_ritu= (-1)*disav/disab;
+		}else {
+			out_ritu= disav/disab;
+		}
+	}else {}
+	return true;
+}
+
+#endif//USE_oshimodoshi_ritu
 
 #endif//class_candle_data
   

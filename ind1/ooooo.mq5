@@ -1,8 +1,20 @@
+//----------option
+//#define USE_CALC_PASS_kako
+//#define USE_HYOUKA
+//#define USE_ZIGZAG_M1 
+//#define USE_ZIGZAG_M5 
+#define USE_ZIGZAG_M15
+
+//#define USE_ZIGZAG_M30
+#define USE_ZIGZAG_H1
+#define USE_ZIGZAG_H4
+
 //#define USE_Tick_bar  //Tick barをりようする
 #define USE_OnDEinit_Fractals
 //#define USE_Fractals
 //#define USE_OnDeinit_output_zigzag_output_each_period   //ファイルへZigzagデータを出力
-
+//#define USE_out_candle_debug
+//#define USE_debug_candle_date_view    //ファイル出力
 
 input double Inp_nobiritu =1.0;// tp d12率
 input double Inp_songiriritu= 1.15;//　sl d12率
@@ -13,19 +25,10 @@ input bool Inp_VjiUse=false;// \Vjiつかうｔ、使わないF
 double nobiritu;
 double songiriritu;
 
-//#define USE_CALC_PASS_kako
 input bool use_calc_pass_kako=true;  // 過去全部計算F:一部T
 input int use_calc_pass_kako_num=5000;  // 過去何bar分計算するか（一部計算の時有効）
-//#define USE_HYOUKA
-//#define USE_ZIGZAG_M1 
-//#define USE_ZIGZAG_M5 
-#define USE_ZIGZAG_M15
+ 
 
-//#define USE_ZIGZAG_M30
-#define USE_ZIGZAG_H1
-#define USE_ZIGZAG_H4
- 
- 
 
 //input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_M5;// 評価時間軸
 input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_M15;// 評価時間軸
@@ -147,9 +150,11 @@ datetime pre_timeM1;
 //allcandle
 allcandle *p_allcandle;
 // hyouka
+#ifdef USE_HYOUKA
 //MethodPattern *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
 //MethodPattern_range *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
 MethodPattern_flag *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
+#endif//USE_HYOUKA
 
 //debug用
 int debug_i1;
@@ -159,10 +164,13 @@ int debug_i1;
 void OnDeinit(const int reason)
   {
    Comment("");
+#ifdef USE_HYOUKA
    m_hyouka.kekka_calc_out_all();
    for(int n =0;n<7;n++){
     m_hyouka.view_kekka_youso_flag(n);
    }
+#endif//USE_HYOUKA   
+
    printf("Ondeinit...");
 #ifdef USE_OnDeinit_output_zigzag_output_each_period   
    zigzag_output();//debug Zigzagout 20200809
@@ -193,6 +201,7 @@ printf("%%%&&&Start_Inp_nobiritu="+DoubleToString(Inp_nobiritu,3)+" Inp_songirir
 init_zigzag_debug();//debug 20200603  
     //パターン（Trade)初期化
     init_pt();
+    init_Trace();
 
 #ifdef USE_Lib_Myfunc_Ind_entry_exit
     init_entry_check_tick();
@@ -205,8 +214,10 @@ init_zigzag_debug();//debug 20200603
 	p_allcandle.Oninit();
 //	m_hyouka = new MethodPattern_range("Wtop",PERIOD_M1,p_allcandle.get_candle_data_pointer(PERIOD_M1),p_allcandle);
 //	m_hyouka = new MethodPattern_range("Wtop",Inp_base_time_frame,p_allcandle.get_candle_data_pointer(Inp_base_time_frame),p_allcandle);
+#ifdef USE_HYOUKA
 	m_hyouka = new MethodPattern_flag("Wtop",Inp_base_time_frame,p_allcandle.get_candle_data_pointer(Inp_base_time_frame),p_allcandle);
 	m_hyouka.Oninit();
+#endif//USE_HYOUKA
 //--- indicator buffers mapping
 //Assign the arrays with the indicator buffers
    SetIndexBuffer(0,buffer_open	,INDICATOR_DATA);
@@ -517,6 +528,7 @@ if(use_calc_pass_kako == true) {
 			ENUM_TIMEFRAMES peri=PERIOD_H1;
             if(timeframe_hidari_ijou(Inp_base_time_frame,peri)){//現在時間軸足以上の足のみ処理する。　
                 datetime t = time[i];
+#ifdef delll
     	        if(t==1515020400){//2018.01.03 23:00
     	            t=t;debug_candle_data( PERIOD_H1);
     	            debug_H1_candle_copyfuffer(1515020400,PERIOD_H1);
@@ -525,19 +537,25 @@ if(use_calc_pass_kako == true) {
     	            //t=t;debug_candle_data( PERIOD_H1);
     	            debug_H1_candle_copyfuffer(1515020400+3600,PERIOD_H1);
     	        }    	        
+#endif//delll
                 bool rr = p_allcandle.add_new_bar( peri,t);// ローソク作成
                 //Zigzag作成処理　足確定した分を渡す（ここでは1つ分）　　　　　　　・・・確定、未確定のイメージ
                 int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
 //                int ret4 = p_allcandle.Oncalculate_Fractals(peri);
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+#ifdef USE_HYOUKA
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
     	        }
+#endif//USE_HYOUKA
+
     	        
+#ifdef delll
     	        //debug 2020/08/13 candle naiyou kakuninn
     	        if(t==1515020400){//2018.01.03 23:00
     	            debug_candle_data( PERIOD_H1);
     	        }
+#endif//delll
     	        
     	        
     	    }
@@ -591,9 +609,11 @@ if(use_calc_pass_kako == true) {
                 int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
                 //int ret4 = p_allcandle.Oncalculate_Fractals(peri);
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+#ifdef USE_HYOUKA                
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
     	        }
+#endif//USE_HYOUKA                
     	    }
 #endif // USE_ZIGZAG_H4
 
@@ -1296,6 +1316,7 @@ bool ontick_zigzag_debug(void){
         return ret_out;
 }
 int pre_zigaag_count;
+#ifdef debug20210112
 void chk_zigzag_debug_handle_zigzagdata(void){
     #define NUM_OF_A 10
 	double a_v[NUM_OF_A+1];
@@ -1515,7 +1536,9 @@ void chk_zigzag_debug_handle_zigzagdata(void){
             }
     
 }
+#endif//debug20210112
 void chk_zigzag_debug(void){
+#ifdef delllll
     //allcandle *p_allcandle;
     
     candle_data *c =  p_allcandle.get_candle_data_pointer(PERIOD_M15);
@@ -1621,8 +1644,9 @@ void chk_zigzag_debug(void){
         printf("##########_end");
     }
     pre_zigaag_count = c.zigzagdata_count;
+#endif //delllll    
 }
-
+#ifdef USE_OnDeinit_output_zigzag_output_each_period
 void zigzag_output_period(ENUM_TIMEFRAMES period){
     candle_data *c =  p_allcandle.get_candle_data_pointer(period);
     int num=0;
@@ -1672,7 +1696,8 @@ void zigzag_output_period(ENUM_TIMEFRAMES period){
     }
 
 }
-
+#endif//USE_OnDeinit_output_zigzag_output_each_period
+#ifdef USE_OnDeinit_output_zigzag_output_each_period
 void zigzag_output(void){
     zigzag_output_period(PERIOD_M5); 
     zigzag_output_period(PERIOD_M15); 
@@ -1682,7 +1707,9 @@ void zigzag_output(void){
     zigzag_output_period(PERIOD_D1); 
 
 }
+#endif//USE_OnDeinit_output_zigzag_output_each_period
 
+#ifdef USE_out_candle_debug
 void out_candle_debug(datetime t,int rates_total,int prev_calculated,
     const datetime &time[],
     const double &open[],const double &high[],const double &low[],const double &close[]){
@@ -1722,7 +1749,9 @@ void out_candle_debug(datetime t,int rates_total,int prev_calculated,
 
     
 }
+#endif//USE_out_candle_debug
 
+#ifdef USE_debug_candle_date_view
 void debug_candle_data(ENUM_TIMEFRAMES period){
     candle_data *c =  p_allcandle.get_candle_data_pointer(period);
     int num=0;
@@ -1759,6 +1788,8 @@ void debug_candle_data(ENUM_TIMEFRAMES period){
     }
 
 }
+#endif//USE_debug_candle_date_view
+
 //debug_H1_candle_copyfuffer(1515020400,PERIOD_H1);
 void debug_H1_candle_copyfuffer(datetime now_bar_time,ENUM_TIMEFRAMES period){
             datetime times[];int ret = 0;int error_count =0;

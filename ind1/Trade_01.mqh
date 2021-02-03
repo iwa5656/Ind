@@ -15,6 +15,10 @@ struct struct_pt_data{
 //input double nobiritu=1.0;// tp d12率
 //input double songiriritu = 1.15;//　sl d12率
 
+//option
+#define USE_VIEW_printf_katachiNo //形の番号と時間を出力
+
+
 //Zigパターンは最新Zigは含めないこととする
 #define PT_RANGE_LAST_LOW   1 //レンジ　最後のZigが下にある（上で反発するかも）
 #define PT_RANGE_LAST_TOP   2 //レンジ　最後のZigが上にある（上で反発するかも）
@@ -227,6 +231,14 @@ void init_pt(void){
 #endif//USE_MYFUNC_IND_ENTRY_EXIT
 
 }
+
+//Trade xx   Trade_xx_core (Tick処理の記述)
+//Trade_xx_func_def (ライブラリ定義、データ定義、初期値の設定関数定義)
+#include "Trade_06_func_def.mqh"
+void init_Trace(void){
+  init_Trade_06_func_def();
+
+}
 bool reg_pt(ENUM_TIMEFRAMES period_,int zigcount,int pt_katachi){
     bool ret=false;
     ptdata[ptdata_count].period_ = period_;
@@ -277,7 +289,10 @@ bool view_pt(ENUM_TIMEFRAMES period_,int zigcount,int pt_katachi){
         if(r==false){return false;}
         r = get_ZigUD_array_org(aud,period_,c.zigzagdata_count-zigcount);
         if(r==false){return false;}
-
+#ifdef USE_VIEW_printf_katachiNo
+        printf("katachi★=\t"+IntegerToString(pt_katachi)+"\t"+TimeToString(at[1]));
+#endif// USE_VIEW_printf_katachiNo
+        
         if(pt_katachi == PT_RANGE_LAST_LOW ||
             pt_katachi == PT_RANGE_LAST_TOP
         ){
@@ -626,11 +641,11 @@ bool chk_shita_flag(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
             (aud[baseidx-1]==-1)
             // 8baseなら下辺７，５，３上辺６，４
             &&(ay[baseidx-1]<ay[baseidx-3]&& ay[baseidx-3]<ay[baseidx-5] && ay[baseidx-2]<ay[baseidx-4])
-            //
+            // 7<5                                5<3        6<4
         ){
           bool yowai=false;
           // ２が４まで到達していない（戻りが弱くなった証拠あるか？）
-          if(ay[baseidx-6]<ay[baseidx-4]){
+          if(ay[baseidx-6]<ay[baseidx-4]){// 2 < 4
             yowai = true;
           }
           bool tyokkin3wokoeru =false;
