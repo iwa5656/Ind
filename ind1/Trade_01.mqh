@@ -7,6 +7,7 @@
 #endif//USE_MYFUNC_IND_ENTRY_EXIT
 allcandle *pac;//allcandle pointer
 bool flag_is_entry;//エントリー中か　trueエントリー中　false未エントリー
+bool b_ok_entry;
 struct struct_pt_data{
     //Zigzagcount
     //pt種別
@@ -17,7 +18,7 @@ struct struct_pt_data{
 
 //option
 #define USE_VIEW_printf_katachiNo //形の番号と時間を出力
-
+#define USE_debug_Cn_Lcn   //
 
 //Zigパターンは最新Zigは含めないこととする
 #define PT_RANGE_LAST_LOW   1 //レンジ　最後のZigが下にある（上で反発するかも）
@@ -40,10 +41,11 @@ struct struct_pt_data{
 #define PT_FLAG_DN          90//下向きフラッグ８点（２が４を超えない（弱さ見えたとき））
 
 
-void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
+void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
     double ay[MAX_GET_ZIGZAGDATA_NUM+1];// 価格Zigzag　１からデータ入っている。０は使わない
     int aud[MAX_GET_ZIGZAGDATA_NUM+1];
     datetime at[MAX_GET_ZIGZAGDATA_NUM+1];
+    ay[0]=0.0;aud[0]=0;at[0]=0;
     pac = pallcandle;
     //各パターンが成立したかの調査
         //各パターンが成立後、不成立になったかの調査も含めること
@@ -174,10 +176,289 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
     //エントリー判断・エントリー
     //#include"Trade_01_core.mqh"
     //#include"Trade_02_core.mqh"
-    #include"Trade_05_core.mqh"
-
+    //#include"Trade_05_core.mqh"
+    //#include "Trade_06_core.mqh"
     //debug test
     //#include"Trade_debug.mqh"
+////////////////////////////////////////////////    
+////////////////////////////////////////////////    
+////////////////////////////////////////////////    
+////////////////////////////////////////////////
+#ifdef aaaaa
+    //#include "Trade_06_core.mqh"
+//Trade_06_core.mqh
+
+//void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
+#ifdef commmment
+［STEP１］上位目線の切り替わり後、上位の時間軸でLCnがいったん逆に行ってから、戻ったときにエントリー
+    H4、H1、M15
+
+［STEP２-1］
+上位目線の切り替わり時に、押し戻しを確認して（下位足で逆方向に行ってから、ローカル目線切り替わり（切り上げ確認））エントリー
+［STEP２-2］上（［STEP２-1］）＋
+できれば１５０ー１００％
+できればだましとなる
+上位足の押し戻り位置が100-60％で発生したとき
+上位足の押し戻り位置が100-80％で発生したとき
+上位足の押し戻り位置が60-20％で発生したとき
+上位足の押し戻り位置が20-0％で発生したとき
+
+
+上位目線の切り替わり時　or　　上位足続伸時に、押し戻しを確認して（下位足の切り上げ確認）エントリー
+
+押し戻し
+    上位足の切り上げの辺を基準に、そこから下位足でいったん逆方向に行ってから、元の方向へ戻るところでエントリー
+    H4、H1
+    H4,M15
+    H1、M15
+［STEP１］
+［STEP２］
+［STEP３］
+［STEP４］
+#endif // commmmment
+
+int TradeStep;
+TradeStep=1;
+
+bool isnew_bar = false;
+double tp;
+double sl;
+int e_dir;
+
+b_ok_entry=false;
+
+//新規バーのチェック
+isnew_bar=isNewBar(_Symbol, peri);
+if(isnew_bar == true){
+
+
+
+    //上位足の目線切り替わり？
+    ENUM_TIMEFRAMES peri_h=PERIOD_H1;
+    //ENUM_TIMEFRAMES 
+    peri=PERIOD_M15;
+
+
+    candle_data *c_h=pac.get_candle_data_pointer(peri_h);
+    candle_data *c_l=pac.get_candle_data_pointer(peri);
+    int out_status=0,out_zigzagidx=0, out_dir=0;
+    bool ret_isChg_mesen=false;
+    int paraCn_zigzagidx_ev;
+    ENUM_TIMEFRAMES paraCn_period_;
+	double paraCn_sv;double paraCn_ev;datetime paraCn_st;datetime paraCn_et;int paraCn_dir;
+
+    if(c_h!=NULL && c_l!=NULL){
+    
+        //----mesenn変わったか？
+        //下位足でLCnの条件が成立したか？（上位の逆に行っていたのが、上位方向となった時
+        //デバッグとして、成立したらマーキングすることで、あとで戦略考えるときに使えるはず。
+        //    目線切り変わりとなったLCn
+        int gigzagidx_l;
+        bool ret_isChg_LCn_mesen=false;
+        ret_isChg_LCn_mesen=c_l.isChg_LCn_mesen(gigzagidx_l);
+        if(ret_isChg_LCn_mesen==true){
+            string name1;             // object name
+            int    nwin=0;             // window index
+            datetime tt;           // position of price label by time
+            double pp=0.0;            // position of price label by vertical
+            color  Color=clrAqua;            // text color
+//            uint    Size;             // font size
+
+            pp=c_l.zigzagdata[gigzagidx_l].value;
+            tt=c_l.zigzagdata[gigzagidx_l].time;
+            double d_oshimodori_ritu=oshimodori_ritu(c_l.Cn_sv,c_l.Cn_ev,pp,c_l.Cn_dir);//Cn　end　が０の押し戻り率（１が１００％）
+            int percent=(int)(d_oshimodori_ritu*100);//１００％表記
+            name1="LCnchg"+ IntegerToString(c_l.zigzagdata[gigzagidx_l].kind)+":"
+                +"zigidx="+IntegerToString(gigzagidx_l)+":"
+                +"os="+IntegerToString(percent)+":"
+                +"t="+TimeToString(tt)+":"
+                +"p="+DoubleToString(pp,5);
+            CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,3);
+#ifdef USE_debug_Cn_Lcn
+            printf(__FUNCTION__+":目線切り変わりとなったLCn:zigc="+IntegerToString(c_l.zigzagdata_count)+
+              " LCnstatus="+IntegerToString(c_l.LCn_status)+
+              " LCn_e_zigzagidx="+IntegerToString(c_l.LCn_e_zigzagidx)+
+              " LCn_mesen_chg_count="+IntegerToString(c_l.LCn_mesen_chg_count)+
+              " Cn_ev"+DoubleToString(c_l.Cn_ev)+
+              "");
+#endif //USE_debug_Cn_Lcn            
+            //エントリー処理
+            //ｔｐはＮの100％
+            //ＳＬはＣｎのｓを超えたら終了
+            //    or　c_lのLCnのｓを超えたら終了
+            //フィルタ
+                //上位が続伸の形　続伸継続を狙う
+
+            b_ok_entry=true;
+            //sl=
+            //tp=
+
+            
+            
+        }
+
+        //上位目線で目線が変わったor新しく続伸した→　Cn　LCnのために登録
+        ret_isChg_mesen=c_h.isChg_mesen(out_status,out_zigzagidx, out_dir);
+		//目線がきりかわった、変化があった　true.　　　目線の切り替わりなしは　false
+		// Status  目線切り替わり１、続伸２
+        if(ret_isChg_mesen==true){
+            paraCn_zigzagidx_ev=c_h.zigzagdata_count-1;
+            if(paraCn_zigzagidx_ev != out_zigzagidx){
+                printf("error zigzag ret_isChg_mesen"+"  Cn_zigzagidx_ev="+IntegerToString(paraCn_zigzagidx_ev)+"out_zigzagidx="+IntegerToString(out_zigzagidx));
+                
+            }
+#ifdef USE_debug_Cn_Lcn
+            printf(__FUNCTION__+":Status  目線切り替わり１、続伸２LCn:zigc="+IntegerToString(c_l.zigzagdata_count)+
+              "LCnstatus="+IntegerToString(c_l.LCn_status)+
+              "LCn_e_zigzagidx="+IntegerToString(c_l.LCn_e_zigzagidx)+
+              "LCn_mesen_chg_count="+IntegerToString(c_l.LCn_mesen_chg_count)+
+              " Cn_ev"+DoubleToString(c_l.Cn_ev)+
+              "");
+#endif //USE_debug_Cn_Lcn            
+
+            paraCn_period_=peri_h;
+            paraCn_ev=c_h.ZigY(1);
+            paraCn_et=c_h.Zigtime(1);
+            paraCn_dir=(int)c_h.ZigUD(1);
+
+            paraCn_sv=c_h.ZigY(2);
+            paraCn_st=c_h.Zigtime(2);
+            
+            string name1;             // object name
+            int    nwin=0;             // window index
+            datetime tt;           // position of price label by time
+            double pp=0.0;            // position of price label by vertical
+            color  Color=clrGreenYellow;            // text color
+            //HYOUJI Cn
+            pp =  paraCn_ev;
+            tt =  paraCn_et;
+            name1 = "Cn_e"+IntegerToString(c_h.zigzagdata_count-1) +"tt="+TimeToString(tt)+" pp="+DoubleToString(pp);
+            CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,3);
+            pp =  paraCn_sv;
+            tt =  paraCn_st;
+            Color=clrHotPink;            // text color
+            name1 = "Cn_s"+IntegerToString(c_h.zigzagdata_count-1-1) +"tt="+TimeToString(tt)+" pp="+DoubleToString(pp);
+            CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,3);
+            //下位足へCn通知する
+            c_l.set_LCn_set_Cn_data(paraCn_zigzagidx_ev, paraCn_period_,
+			                  paraCn_sv, paraCn_ev, paraCn_st, paraCn_et, paraCn_dir);
+        }
+#ifdef aaaaaaaaa        
+        //Cn値更新下化の確認
+        if( c_l.Cn_zigzagidx_ev >= c_h.zigzagdata_count){
+            printf(__FUNCTION__+"Cn zigzagidx out of range--->restart time["+ TimeToString(t)
+               +"] 現状は途中の処理をリセットするLCnは破棄　次のCn発見するまで処理を飛ばす");
+            
+            
+            // Cn,LCnを初期化
+            c_l.resetLCn();
+            c_h.resetCn();
+        }
+#endif//aaaaaaaaa        
+        if(c_l.Cn_ev!=c_h.zigzagdata[c_l.Cn_zigzagidx_ev].value //値が異なるか？
+            && c_l.Cn_zigzagidx_ev == c_h.zigzagdata_count-1)   //最後のZigzagとおなじか？
+            {
+#ifdef USE_debug_Cn_Lcn
+            printf(__FUNCTION__+":Status  Cn値更新下化の確認 LCn:zigc="+IntegerToString(c_l.zigzagdata_count)+
+              "LCnstatus="+IntegerToString(c_l.LCn_status)+
+              "LCn_e_zigzagidx="+IntegerToString(c_l.LCn_e_zigzagidx)+
+              "LCn_mesen_chg_count="+IntegerToString(c_l.LCn_mesen_chg_count)+
+              " Cn_ev"+DoubleToString(c_l.Cn_ev)+
+              "");
+              printf(" c_l.Cn_ev="+DoubleToString(c_l.Cn_ev));
+              printf(" ZigdataHi="+DoubleToString(c_h.zigzagdata[c_l.Cn_zigzagidx_ev].value));
+#endif //USE_debug_Cn_Lcn
+            //c_l.LCn_status
+            //ev値変化があれば再登録
+            //下位足へCn通知する
+            paraCn_period_=peri_h;
+            paraCn_ev=c_h.ZigY(1);
+            paraCn_et=c_h.Zigtime(1);
+            paraCn_dir=(int)c_h.ZigUD(1);
+
+            paraCn_sv=c_h.ZigY(2);
+            paraCn_st=c_h.Zigtime(2);
+            paraCn_zigzagidx_ev= c_l.Cn_zigzagidx_ev;           
+
+
+            string name1;             // object name
+            int    nwin=0;             // window index
+            datetime tt;           // position of price label by time
+            double pp=0.0;            // position of price label by vertical
+            color  Color=clrGreenYellow;            // text color
+            //HYOUJI Cn
+            pp =  paraCn_ev;
+            tt =  paraCn_et;
+            name1 = "Cn_e"+IntegerToString(c_h.zigzagdata_count-1) +"tt="+TimeToString(tt)+" pp="+DoubleToString(pp);
+            CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,1);
+            //pp =  paraCn_sv;
+            //tt =  paraCn_st;
+            //name1 = "Cn_s"+IntegerToString(c_h.zigzagdata_count-1-1) +"tt="+TimeToString(tt)+" pp="+DoubleToString(pp);
+            //CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,3);
+            //下位足へCn通知する
+            c_l.set_LCn_set_Cn_data(paraCn_zigzagidx_ev, paraCn_period_,
+			                  paraCn_sv, paraCn_ev, paraCn_st, paraCn_et, paraCn_dir);
+        }
+
+            double entryprice;
+            double tpprice;
+            double slprice;
+            bool b_exit_all; 
+            flag_is_entry=false;//tp slなので、つねにエントリー
+            if(b_ok_entry == true && flag_is_entry == false){
+                //SetSendData_forEntry_sokuji(e_dir,0,0,0.0,0.0,0.0,0.1);
+#ifdef USE_debug_Cn_Lcn
+            double tmpt=v-c_l.Cn_ev;
+            if (tmpt!=0.0){tmpt=(v-c_l.Cn_sv)/(v-c_l.Cn_ev);}else{tmpt=-99999;}
+            printf(__FUNCTION__+":エントリー LCn:zigc="+IntegerToString(c_l.zigzagdata_count)+
+              "LCnstatus="+IntegerToString(c_l.LCn_status)+
+              "LCn_e_zigzagidx="+IntegerToString(c_l.LCn_e_zigzagidx)+
+              "LCn_mesen_chg_count="+IntegerToString(c_l.LCn_mesen_chg_count)+
+              " Cn_ev"+DoubleToString(c_l.Cn_ev)+
+              "sl/tp"+DoubleToString(MathAbs( tmpt )));
+#endif //USE_debug_Cn_Lcn
+
+                tpprice=c_l.Cn_ev;
+                slprice=c_l.Cn_sv;
+                entryprice=v;
+                e_dir=c_l.Cn_dir;
+                SetSendData_forEntry_tpsl_direct_ctrl(
+                  e_dir,1,1,
+                  entryprice,//double EntryPrice,
+                  tpprice,//double Tp_Price,
+                  slprice,//double Sl_Price,
+                  0.1); //lots){
+                  printf("SetSendData_forEntry_tpsl_direct_ctrl"+":dir="+IntegerToString(e_dir)+":entryp="+DoubleToString(entryprice,5)+":tp="+DoubleToString(tpprice,5)+":sl="+DoubleToString(slprice));
+
+//                flag_is_entry=true;
+                flag_is_entry=false;//tp sl なので、毎回下す
+                b_ok_entry=false;
+                uint total=PositionsTotal();
+                if(total >1){
+                    printf("エントリー後"+IntegerToString(total)+"以上　あるのはおかしい");
+                }
+            }else
+            if(b_exit_all == true && flag_is_entry == true){
+                SetSendData_forExitAll();
+                flag_is_entry = false;
+                uint total=PositionsTotal();
+                if(total >0){
+                    printf("削除後"+IntegerToString(total)+"以上　あるのはおかしい");
+                }
+            }
+            
+
+
+    }
+}    //end if(isnew_bar
+#endif// aaaaaa
+////////////////////////////////////////////////    
+////////////////////////////////////////////////    
+////////////////////////////////////////////////    
+////////////////////////////////////////////////    
+    
+    
+    
 
 #ifdef aaaaa    
     peri = PERIOD_H1;
@@ -199,8 +480,8 @@ void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
 
 
 //entry exit ctrl syori
-	double bid;
-	double ask;
+//	double bid;
+//	double ask;
 	//RefreshPrice(bid, ask);
       //
 	//entry_exit_ctr_tick_exe(ask,bid);
@@ -296,14 +577,14 @@ bool view_pt(ENUM_TIMEFRAMES period_,int zigcount,int pt_katachi){
         if(pt_katachi == PT_RANGE_LAST_LOW ||
             pt_katachi == PT_RANGE_LAST_TOP
         ){
-            string name="range"+zigcount+PeriodToString(period_);
+            string name="range"+IntegerToString(zigcount)+PeriodToString(period_);
             RectangleCreate(0,name,0,at[1],ay[1],at[4],ay[4]);
             
         }
         if(pt_katachi == PT_MESEN_DN ||
             pt_katachi == PT_MESEN_UP
         ){
-            string name="mesen"+zigcount+PeriodToString(period_);
+            string name="mesen"+IntegerToString(zigcount)+PeriodToString(period_);
             //RectangleCreate(0,name,0,0,time1,price1,time2,price2,,,,)
             int cc=GetTimeColor(period_);
             TrendCreate(0,name,0,at[1],ay[1],at[2],ay[2],cc,STYLE_SOLID,4);
@@ -312,8 +593,8 @@ bool view_pt(ENUM_TIMEFRAMES period_,int zigcount,int pt_katachi){
         if(pt_katachi == PT_ZOKUSIN_UP ||
             pt_katachi == PT_ZOKUSIN_DN
         ){
-            string name1="zokushin_up"+zigcount+PeriodToString(period_);
-            string name2="zokushin_dn"+zigcount+PeriodToString(period_);
+            string name1="zokushin_up"+IntegerToString(zigcount)+PeriodToString(period_);
+            string name2="zokushin_dn"+IntegerToString(zigcount)+PeriodToString(period_);
             int cc=GetTimeColor(period_);
             if(pt_katachi == PT_ZOKUSIN_UP){
               TrendCreate(0,name1,0,at[1],ay[1],at[5],ay[5],cc,STYLE_SOLID,4);
@@ -336,8 +617,8 @@ bool view_pt(ENUM_TIMEFRAMES period_,int zigcount,int pt_katachi){
             pt_katachi == PT_ZOKUSIN_UP_KAKUDAI ||
             pt_katachi == PT_ZOKUSIN_UP_HEIKOU 
         ){              
-              string name1=IntegerToString(pt_katachi)+":heikou"+zigcount+PeriodToString(period_);
-              string name2=IntegerToString(pt_katachi)+":heikou_"+zigcount+PeriodToString(period_);
+              string name1=IntegerToString(pt_katachi)+":heikou"+IntegerToString(zigcount)+PeriodToString(period_);
+              string name2=IntegerToString(pt_katachi)+":heikou_"+IntegerToString(+zigcount)+PeriodToString(period_);
               int cc=GetTimeColor(period_);
               TrendCreate(0,name1,0,at[5],ay[5],at[3],ay[3],cc,STYLE_SOLID,4);
               TrendCreate(0,name2,0,at[2],ay[2],at[6],ay[6],cc,STYLE_SOLID,4);
@@ -996,3 +1277,52 @@ void CreateArrowRightPrice //CreateArrowRightPrice(0,"",0,Time,Price,Color,3)
 //ObjectSetInteger(chart_id,name,OBJPROP_BACK,true);
 //----
   }
+
+
+//-------view
+#ifdef dell_already_defined
+void CreateArrowRightPrice //CreateArrowRightPrice(0,"",0,Time,Price,Color,3)
+(
+  long   chart_id,         // chart ID
+  string name1,             // object name
+  int    nwin,             // window index
+  datetime Time,           // position of price label by time
+  double Price,            // position of price label by vertical
+  color  Color,            // text color
+  uint    Size             // font size
+){
+    //string new_name = 
+    //   ObjectCreate(chart_id,name,OBJ_ARROW_RIGHT_PRICE,nwin,Time,Price);
+      ObjectCreate(chart_id,name1,OBJ_ARROW_RIGHT_PRICE,nwin,Time,Price);
+      ObjectSetInteger(chart_id,name1,OBJPROP_COLOR,Color);
+      ObjectSetInteger(chart_id,name1,OBJPROP_WIDTH,Size);
+    //ObjectSetInteger(chart_id,name,OBJPROP_BACK,true);
+    //----
+}
+#endif //dell_already_defined
+double oshimodori_ritu(double s,double e,double v,double dir){
+//---------LIB 押し戻りの比率
+	#ifdef commenttt
+		ある指定した辺（s,e(右)）、評価価格渡すと		
+			s-eが上向きのとき(e上でsが下の時)	
+					-XX%					150%
+				  e	0%			s			100%
+					50%						50%
+				s	100%				e   0%
+					150%					-XX%
+	#endif //commenttt
+    if(dir == 0 || s==e){ 
+      printf("error oshimodori_ritu");
+      return 999999;//error
+     }
+    double dd_se=MathAbs(s-e);
+    double dd_ev=MathAbs(v-e);
+    double ret=999999;
+    double tmp=(dd_ev/dd_se)*(-1);
+    if(e > v){
+      ret = tmp*dir;
+    }else{
+      ret = tmp*dir*(-1);
+    }
+  return ret;
+}

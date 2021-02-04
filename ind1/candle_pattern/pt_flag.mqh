@@ -374,7 +374,7 @@ int get_heikou_2line_katamuki_kannkei(double x1,double y1,double x2,double y2,do
 	c1=a1/b1;
 	c2=a2/b2;
 
-	double d1,d2;//
+//	double d1,d2;//
 	double b=MathMax(MathAbs(c1),MathAbs(c2));
 	double s=MathMin(MathAbs(c1),MathAbs(c2));
 	double bs=100;

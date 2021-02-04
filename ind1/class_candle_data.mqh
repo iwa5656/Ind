@@ -10,6 +10,7 @@
 //#define USE_debug_zigzag_check_make_c_after_samecheck //check zigzagdata格納が正しいか確認（ｃに格納とｂが同じかを確認）
 //------LCn利用
 #define USE_LCn	//目線確定Cnからの逆の目線発生後、Cn方向へ向いたときを検知する
+#define USE_debugLCn_Cn //debug用
 //------押し戻し率
 //#define USE_oshimodoshi_ritu
 //------
@@ -221,28 +222,44 @@ public:
 			datetime LCn_st,LCn_et;//0初期化（未設定かどうかを判断する。）
 			int LCn_s_zigzagidx,LCn_e_zigzagidx;
 			bool bLCn_notfinded_LCn;//初期検索したが見つからないときTrue。（毎回検索しないようにする）Cnの時初期化
-
 			//前回確定目線がCn方向に変わった時のLCnのデータ
 			double preLCn_sv,preLCn_ev;
 			datetime preLCn_st,preLCn_et;
-			int preLCn_s_zigzagidx,preLCn_e_zigzagidx;
+			int preLCn_status,preLCn_s_zigzagidx,preLCn_e_zigzagidx;
+
+			void resetLCn(void){
+					LCn_status=0;
+					Cn_sv=0;Cn_ev=0;Cn_st=0;Cn_et=0;Cn_zigzagidx_ev=0;Cn_dir=0;
+					LCn_count=0;LCn_mesen_chg_count=0;
+					LCn_sv=0.0;LCn_ev=0.0;
+					LCn_st=0;LCn_et=0;
+					LCn_s_zigzagidx=0;LCn_e_zigzagidx=0;
+
+					//前回確定目線がCn方向に変わった時のLCnのデータ
+					preLCn_sv=0.0;preLCn_ev=0.0;
+					preLCn_st=0;preLCn_et=0;
+					preLCn_s_zigzagidx=0;preLCn_e_zigzagidx=0;
+			}
 
 			void init_LCn(void){
-				LCn_status=0;
-				Cn_sv=0;Cn_ev=0;Cn_st=0;Cn_et=0;Cn_zigzagidx_ev=0;Cn_dir=0;
-				LCn_count=0;LCn_mesen_chg_count=0;
-				LCn_sv=0.0;LCn_ev=0.0;
-				LCn_st=0;LCn_et=0;
-				LCn_s_zigzagidx=0;LCn_e_zigzagidx=0;
+//				resetLCn();
+					LCn_status=0;
+					Cn_sv=0;Cn_ev=0;Cn_st=0;Cn_et=0;Cn_zigzagidx_ev=0;Cn_dir=0;
+					LCn_count=0;LCn_mesen_chg_count=0;
+					LCn_sv=0.0;LCn_ev=0.0;
+					LCn_st=0;LCn_et=0;
+					LCn_s_zigzagidx=0;LCn_e_zigzagidx=0;
 
-				//前回確定目線がCn方向に変わった時のLCnのデータ
-				preLCn_sv=0.0;preLCn_ev=0.0;
-				preLCn_st=0;preLCn_et=0;
-				preLCn_s_zigzagidx=0;preLCn_e_zigzagidx=0;
-				
+					//前回確定目線がCn方向に変わった時のLCnのデータ
+					preLCn_sv=0.0;preLCn_ev=0.0;
+					preLCn_st=0;preLCn_et=0;
+					preLCn_s_zigzagidx=0;preLCn_e_zigzagidx=0;
 			}
+			void resetCn(void){
+   		   ;
+   			}
 			void set_LCn_set_Cn_data(int paraCn_zigzagidx_ev,ENUM_TIMEFRAMES paraCn_period_,
-			double paraCn_sv,double paraCn_ev,datetime paraCn_st,datetime paraCn_et,int paraCn_dir){
+			                           double paraCn_sv,double paraCn_ev,datetime paraCn_st,datetime paraCn_et,int paraCn_dir){
 				Cn_sv=paraCn_sv;
 				Cn_ev=paraCn_ev;
 				Cn_st=paraCn_st;
@@ -268,46 +285,89 @@ public:
 			//	ないならEnd
 			//	ハラミを抜けた状態ならEnd（CnのS/Eを抜けた状態）
 			if(Cn_et==0 || LCn_status==4){return;}
+			//前回値の更新
+			//前回確定目線がCn方向に変わった時のLCnのデータ
+			preLCn_status=LCn_status;
+			preLCn_sv=LCn_sv;
+			preLCn_ev=LCn_ev;
+			preLCn_st=LCn_st;
+			preLCn_et=LCn_et;
+			preLCn_s_zigzagidx=LCn_s_zigzagidx;
+			preLCn_e_zigzagidx=LCn_e_zigzagidx;
 
 			//1：LCn初期出現まち+処理最後のZigzagidxまで状態を見ていく(LCn count更新)
 			//	CnE時間以降の時間の次のZigzagを探すidx。idxから最後まで処理する
-			bool find_start_idx=false;
-			int start_zigzagidx=0;
-			find_start_idx=zigzagdata_count-1;//見つからないときは最後とする
+			//bool find_start_idx=false;
+			int start_zigzagidx=zigzagdata_count-1;//見つからないときは最後とする;
+			//find_start_idx=zigzagdata_count-1;//見つからないときは最後とする
 			if(bLCn_notfinded_LCn==false){//LCnがない場合、検索して探す。それでもないなら出現するまで待つ
 				//対応idxを探す（Ｃｎ時間の次の辺をさす。最後なら最後にする
 				for(int i=zigzagdata_count-1;i>0;i--){
 					if(zigzagdata[i].time < Cn_et ){//Cnより古いZig発見
-						find_start_idx=true;
+						//find_start_idx=true;
 						if(i+1<=zigzagdata_count-1){//次のidxをStartidxとする。最後なら最後にする
 							start_zigzagidx=i+1;
 						}else{
 							start_zigzagidx=i;
 						}
+                        #ifdef USE_debugLCn_Cn
+                        printf(__FUNCTION__+"LCn探索できた;LCn:Zigc="+
+                                       IntegerToString(zigzagdata_count)+
+                                      " LCnstatus="+IntegerToString(LCn_status)+
+                                      " LCn_e_zigzagidx="+IntegerToString(LCn_e_zigzagidx)+
+                                      " LCn_mesen_chg_count="+IntegerToString(LCn_mesen_chg_count)+
+                                      " Cn_ev"+DoubleToString(Cn_ev)+
+                                      ""
+                        );
+                        #endif//USE_debugLCn_Cn
 						break;
 					}
 				}
 				bLCn_notfinded_LCn=true;//検索したので、2回目は通さないようにする
-				
+                        #ifdef USE_debugLCn_Cn
+                        printf(__FUNCTION__+"LCn初期探索完了;LCn:Zigc="+
+                                       IntegerToString(zigzagdata_count)+
+                                      " LCnstatus="+IntegerToString(LCn_status)+
+                                      " LCn_e_zigzagidx="+IntegerToString(LCn_e_zigzagidx)+
+                                      " LCn_mesen_chg_count="+IntegerToString(LCn_mesen_chg_count)+
+                                      " Cn_ev"+DoubleToString(Cn_ev)+
+                                      ""
+                        );
+                        #endif//USE_debugLCn_Cn				
 			}
 			// LCnの評価を順に行う
 			//for idx-> zigzag_count-1まで繰り返し
 			for(int i=start_zigzagidx;i<zigzagdata_count && i>0 ;i++){
 					//Cn_dir方向と逆のZigzag辺が出現した時、LCn出現
 					//初期の処理
-					if(LCn_et !=0 &&  			// LCn無い かつ
-						zigzagdata[i].kind != Cn_dir){//Cnと逆方向の辺が見つかる
-						//LCnを登録
+					if(LCn_et !=0 ){  			// LCn無い かつ
+						if(zigzagdata[i].kind != Cn_dir){//Cnと逆方向の辺が見つかる
+							LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
+						}else {
+							LCn_status=3;//LCn抜け判断・更新中 (基準Cn方向へ伸びていっている)
+						}
+
 						//ローカル目線切り替わりのカウント更新
+						//LCnを登録
 						LCn_count=1;
 						LCn_mesen_chg_count=0;
 						LCn_sv=zigzagdata[i-1].value;
 						LCn_ev=zigzagdata[i].value;
 						LCn_st=zigzagdata[i-1].time;
 						LCn_et=zigzagdata[i].time;
-						LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
-						LCn_e_zigzagidx=zigzagdata[i].idx-1;
-						LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
+						LCn_s_zigzagidx=zigzagdata[i-1].idx;
+						LCn_e_zigzagidx=zigzagdata[i].idx;
+
+							#ifdef USE_debugLCn_Cn
+							printf(__FUNCTION__+"LCn初期決定;LCn:Zigc="+
+										IntegerToString(zigzagdata_count)+
+										" LCnstatus="+IntegerToString(LCn_status)+
+										" LCn_e_zigzagidx="+IntegerToString(LCn_e_zigzagidx)+
+										" LCn_mesen_chg_count="+IntegerToString(LCn_mesen_chg_count)+
+										" Cn_ev"+DoubleToString(Cn_ev)+
+										""
+							);
+							#endif//USE_debugLCn_Cn
 					}else {
 					//初期以外の処理
 					//LCnの計算
@@ -320,6 +380,16 @@ public:
 										( ((Cn_dir==1) && (LCn_sv < zigzagdata[i].value)) //起点超えたら逆に抜けた
 											|| ((Cn_dir==-1) && (LCn_sv > zigzagdata[i].value))) //起点超えたら逆に抜けた
 								){
+												#ifdef USE_debugLCn_Cn
+												printf(__FUNCTION__+"LCn_status=2→3目線切り替わり（Cn方向へ）;LCn:Zigc="+
+															IntegerToString(zigzagdata_count)+
+															" LCnstatus="+IntegerToString(LCn_status)+
+															" LCn_e_zigzagidx="+IntegerToString(LCn_e_zigzagidx)+
+															" LCn_mesen_chg_count="+IntegerToString(LCn_mesen_chg_count)+
+															" Cn_ev"+DoubleToString(Cn_ev)+
+															""
+												);
+												#endif//USE_debugLCn_Cn
 									LCn_status=3;//LCn逆に抜けた
 									LCn_count++;// 
 									LCn_mesen_chg_count++;// 目線変化
@@ -327,22 +397,32 @@ public:
 									LCn_ev=zigzagdata[i].value;
 									LCn_st=zigzagdata[i-1].time;
 									LCn_et=zigzagdata[i].time;
-									LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
-									LCn_e_zigzagidx=zigzagdata[i].idx-1;
+									LCn_s_zigzagidx=zigzagdata[i-1].idx;
+									LCn_e_zigzagidx=zigzagdata[i].idx;
 								}
 								//続伸判断
 								if(zigzagdata[i].kind != Cn_dir && 
 										( ((Cn_dir==1) && (LCn_ev > zigzagdata[i].value)) //起点超えたら逆に抜けた
 											|| ((Cn_dir==-1) && (LCn_ev < zigzagdata[i].value))) //起点超えたら逆に抜けた
 								){
+											#ifdef USE_debugLCn_Cn
+											printf(__FUNCTION__+"LCn_status=2→2続伸;LCn:Zigc="+
+														IntegerToString(zigzagdata_count)+
+														" LCnstatus="+IntegerToString(LCn_status)+
+														" LCn_e_zigzagidx="+IntegerToString(LCn_e_zigzagidx)+
+														" LCn_mesen_chg_count="+IntegerToString(LCn_mesen_chg_count)+
+														" Cn_ev"+DoubleToString(Cn_ev)+
+														""
+											);
+											#endif//USE_debugLCn_Cn
 									LCn_count++;// 
 									//LCn_mesen_chg_count++;// 目線変化
 									LCn_sv=zigzagdata[i-1].value;
 									LCn_ev=zigzagdata[i].value;
 									LCn_st=zigzagdata[i-1].time;
 									LCn_et=zigzagdata[i].time;
-									LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
-									LCn_e_zigzagidx=zigzagdata[i].idx-1;
+									LCn_s_zigzagidx=zigzagdata[i-1].idx;
+									LCn_e_zigzagidx=zigzagdata[i].idx;
 								}
 
 							}
@@ -355,6 +435,17 @@ public:
 										( (Cn_dir==1 && Cn_sv > zigzagdata[i].value) //起点超えたら逆に抜けた
 											|| (Cn_dir==-1 && Cn_sv < zigzagdata[i].value)) //起点超えたら逆に抜けた
 								){
+											#ifdef USE_debugLCn_Cn
+											printf(__FUNCTION__+"LCn_status=3→2逆方向へ（Cnの逆方向へ）;LCn:Zigc="+
+														IntegerToString(zigzagdata_count)+
+														" LCnstatus="+IntegerToString(LCn_status)+
+														" LCn_e_zigzagidx="+IntegerToString(LCn_e_zigzagidx)+
+														" LCn_mesen_chg_count="+IntegerToString(LCn_mesen_chg_count)+
+														" Cn_ev"+DoubleToString(Cn_ev)+
+														""
+											);
+											#endif//USE_debugLCn_Cn
+
 									LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
 									LCn_count++;// 
 									LCn_mesen_chg_count++;
@@ -362,40 +453,63 @@ public:
 									LCn_ev=zigzagdata[i].value;
 									LCn_st=zigzagdata[i-1].time;
 									LCn_et=zigzagdata[i].time;
-									LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
-									LCn_e_zigzagidx=zigzagdata[i].idx-1;
+									LCn_s_zigzagidx=zigzagdata[i-1].idx;
+									LCn_e_zigzagidx=zigzagdata[i].idx;
 								}
 								//続伸判断
 								if(zigzagdata[i].kind == Cn_dir && 
 										( (Cn_dir==1 && Cn_ev < zigzagdata[i].value) //起点超えたら逆に抜けた
 											|| (Cn_dir==-1 && Cn_ev > zigzagdata[i].value)) //起点超えたら逆に抜けた
 								){
+											#ifdef USE_debugLCn_Cn
+											printf(__FUNCTION__+"LCn_status=3→3Cn方向へ続伸;LCn:Zigc="+
+														IntegerToString(zigzagdata_count)+
+														" LCnstatus="+IntegerToString(LCn_status)+
+														" LCn_e_zigzagidx="+IntegerToString(LCn_e_zigzagidx)+
+														" LCn_mesen_chg_count="+IntegerToString(LCn_mesen_chg_count)+
+														" Cn_ev"+DoubleToString(Cn_ev)+
+														""
+											);
+											#endif//USE_debugLCn_Cn
+
 									LCn_count++;// 
 									//LCn_mesen_chg_count++;// 目線変化
 									LCn_sv=zigzagdata[i-1].value;
 									LCn_ev=zigzagdata[i].value;
 									LCn_st=zigzagdata[i-1].time;
 									LCn_et=zigzagdata[i].time;
-									LCn_s_zigzagidx=zigzagdata[i-1].idx-1;
-									LCn_e_zigzagidx=zigzagdata[i].idx-1;
+									LCn_s_zigzagidx=zigzagdata[i-1].idx;
+									LCn_e_zigzagidx=zigzagdata[i].idx;
 								}
 							}
 						}
-					//4：CnのS/Eを抜けた状態
-					//
-					double v=zigzagdata[zigzagdata_count -1].value;
-					if( (Cn_dir == 1 && (Cn_ev< v || Cn_sv> v)) ||
-						(Cn_dir == -1 && (Cn_ev> v || Cn_sv< v))
-					){ 
-						LCn_status=4;//CnのS/Eを抜けた状態
-					}
+						//4：CnのS/Eを抜けた状態　　　かの判断
+						//
+						//double v=zigzagdata[zigzagdata_count -1].value;
+						double v=zigzagdata[i].value;
+						if( (Cn_dir == 1 && (Cn_ev< v || Cn_sv> v)) ||
+							(Cn_dir == -1 && (Cn_ev> v || Cn_sv< v))
+						){ 
+							LCn_status=4;//CnのS/Eを抜けた状態
+						}
 					
-				}//初期・初期以外	
+					}//初期・初期以外	
 					
 			}// for Zigzag全部の処理
-						
-		}// end function calc_LCn
 
+		}// end function calc_LCn
+		bool isChg_LCn_mesen(int &out_e_zigzagidx){
+			//Cn方向に切り替わったらtrue、
+			bool ret=false;
+			if(preLCn_status!=LCn_status&&LCn_status==3){
+				ret = true;
+				out_e_zigzagidx = LCn_e_zigzagidx;
+#ifdef USE_debugLCn_Cn	
+         printf(__FUNCTION__+"LCnがCn方向に切り替わった");
+#endif//USE_debugLCn_Cn
+			}
+			return ret;
+		}
 
 #endif//USE_LCn
         double get_now_price(){
@@ -426,7 +540,8 @@ public:
 		int CnStatusFlag;// 0 初期値、１逆のCn発生、２続伸
 		int Cndir;//0 初期値、１ue、-1 sita
 		int Cn_zokusin_count;// 続伸の数(0 初期値):　初めての逆への切り替わりで0とする、N型になったとき1とする(続伸の1つ目ができたなのでN型できた印)
-	
+		int pre_CnStatusFlag,pre_Cndir,Pre_Cn_zokusin_count,pre_zigzag_mesen_chg_at_count_mesen_C;//前回値
+
 	//I/F
 	bool add_new_bar    (
         datetime &now_bar_time// 
@@ -694,7 +809,13 @@ public:
 		bool flag_mesen_zokushin = false;//　続伸したとき
 		
 		int now_zigzagcount = zigzagdata_count;
-		CnStatusFlag=0;// 初期化
+		//CnStatusFlag=0;// 初期化
+		//変更前の値を保持値の更新
+		pre_zigzagdata_count_mesen_C =zigzagdata_count;
+		pre_CnStatusFlag=CnStatusFlag;
+		pre_Cndir=Cndir;
+		Pre_Cn_zokusin_count=Cn_zokusin_count;
+		pre_zigzag_mesen_chg_at_count_mesen_C=zigzag_mesen_chg_at_count_mesen_C;
 		
 		if( now_zigzagcount <4){ return;}
 		
@@ -800,8 +921,20 @@ public:
 			
 		}
 
-		//前回値の更新
-		pre_zigzagdata_count_mesen_C =zigzagdata_count;
+	}
+	bool isChg_mesen(int &out_status,int &out_zigzagidx,int &out_dir){
+		//目線がきりかわった、変化があった　true.　　　目線の切り替わりなしは　false
+		// Status  目線切り替わり１、続伸２
+		//zigzagidxを返す
+		bool ret=false;
+		if(CnStatusFlag!=pre_CnStatusFlag || Cn_zokusin_count !=Pre_Cn_zokusin_count)
+		{
+			ret = true;
+			out_status = CnStatusFlag;
+			out_zigzagidx = zigzag_mesen_chg_at_count_mesen_C-1;
+			out_dir = zigzagdata[out_zigzagidx].kind;
+		}
+		return(ret);
 	}
 	bool isNegativeBar(int k){// 陰線だったらtrue　　k 0が最新
 		bool ret = false;
@@ -1044,6 +1177,10 @@ bool candle_data::get_zigzagbufferdata(double &out_v[],datetime &out_t[],int &ou
 	int ttmp_num_max=0;
 	datetime ttmp_t[NUM_OF_A+1];
 	int ttmp_dir[NUM_OF_A+1];
+	ttmp_v[0]=0.0;
+	ttmp_t[0]=0;
+	ttmp_dir[0]=0;
+
 	// tmp_* [0] 古いものが入っている。
 	for(int b=bbbb_num_max ;b>=0 && b>bbbb_num_max-candle_bar_count;b--){ //最新足から検索していく
 		if(ZigzagPeakBuffer[b]!=0.0){
@@ -1750,8 +1887,8 @@ if(dd==time[299]){//debug 20210105
 
 									// zigzag data の再取得
 									if(z!=0){
-										int h=0;
-										for(int z=0;z<NUM_OF_A+1;z++){
+										h=0;
+										for(z=0;z<NUM_OF_A+1;z++){
 											h=zigzagdata_count-1-NUM_OF_A+z;
 											c_dir[z]=zigzagdata[h].kind;
 											c_v[z]=zigzagdata[h].value;
@@ -1760,7 +1897,7 @@ if(dd==time[299]){//debug 20210105
 										}										
 
 										//同一　あるか探す
-										for(int z=0;z<NUM_OF_A+1-1;z++){
+										for(z=0;z<NUM_OF_A+1-1;z++){
 											if(c_dir[z]==c_dir[z+1]){
 												b_same_dir=true;
 												same_dir_idx1=z;

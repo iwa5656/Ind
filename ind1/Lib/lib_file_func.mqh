@@ -100,7 +100,7 @@ void writestring_file(string filename,string str,bool add)  //  表示文字列�
 //debug	  	PrintFormat("%s file is available for reading",filename);
 //debug	  	PrintFormat("File path: %s\\Files\\",TerminalInfoString(TERMINAL_DATA_PATH));
 	  	//--- 追加の変数
-	  	int	  str_size;
+//	  	int	  str_size;
 //	  	string str2;
          string tmp;
         string sss="";  	

@@ -596,8 +596,8 @@ int OnCalculate_Sameline(//同じ高さのラインを表示
 
 //---- declaration of local variables 
    int limit;
-   bool   bFound;
-   double dCurrent;
+   //bool   bFound;
+   //double dCurrent;
    string stime;
 
 //---- calculations of the necessary amount of data to be copied and
@@ -912,9 +912,9 @@ bool eq_price(double a,double b){
     //デフォルトは１Pips
     return(eq_price(a,b,chgPips2price(1.0)));
 }
-bool eq_price(double a,double b,double d_seido){// dseido 価格差の最小サイズ
+bool eq_price(double a,double b,double d_seido_){// dseido 価格差の最小サイズ
     bool ret=false;
-    double d=d_seido;
+    double d=d_seido_;
     if(a==b){ret = true;}
     if((a+d)>b&&(a-d)<b){
         ret = true;

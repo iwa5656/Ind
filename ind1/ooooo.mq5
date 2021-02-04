@@ -191,7 +191,7 @@ void OnDeinit(const int reason)
 int OnInit()
   {
    //debug
-   init_ema_bolinger();//Ing表示
+   //init_ema_bolinger();//Ing表示
    
     nobiritu =  Inp_nobiritu;// tp d12率
     songiriritu =  Inp_songiriritu;//　sl d12率
@@ -438,9 +438,16 @@ if(use_calc_pass_kako == true) {
 	            bool rr = p_allcandle.add_new_bar( peri,t);// ローソク作成
 	            //Zigzag作成処理　足確定した分を渡す（ここでは1つ分）　　　　　　　・・・確定、未確定のイメージ
 	            int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
+
+#ifdef USE_Fractals                
 	            int ret4 = p_allcandle.Oncalculate_Fractals(peri);
+#endif //USE_Fractals
 	            p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
-	            m_hyouka.hyouka();
+#ifdef USE_HYOUKA
+                if(peri== Inp_base_time_frame){
+    	            m_hyouka.hyouka();
+    	        }
+#endif//USE_HYOUKA    	        
 	            
 	            //printf(TimeToString(time[0])+"   "+TimeToString(time[1]));
 			}
@@ -458,8 +465,8 @@ if(use_calc_pass_kako == true) {
 #ifdef USE_Fractals                
                 int ret4 = p_allcandle.Oncalculate_Fractals(peri);
 #endif //USE_Fractals
-#ifdef USE_HYOUKA
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+#ifdef USE_HYOUKA
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
     	        }
@@ -492,8 +499,8 @@ if(use_calc_pass_kako == true) {
 #ifdef USE_Fractals                
                 int ret4 = p_allcandle.Oncalculate_Fractals(peri);
 #endif //USE_Fractals                
-#ifdef USE_HYOUKA
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+#ifdef USE_HYOUKA
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
     	        }
@@ -513,9 +520,13 @@ if(use_calc_pass_kako == true) {
                 int ret4 = p_allcandle.Oncalculate_Fractals(peri);
 #endif //USE_Fractals
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+
+#ifdef USE_HYOUKA
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
     	        }
+#endif// USE_HYOUKA
+
     	    }
 #endif// USE_ZIGZAG_M30
         }
@@ -658,6 +669,7 @@ if(use_calc_pass_kako == true) {
     //Tickデータ処理  最新足の処理（エントリーとか、損切とか動的な処理を入れる）
     ///////
         //状態に合わせて処理する。
+
 #ifdef Lib_iunima_mtf_ru
     //MA
     int retm;
@@ -697,7 +709,9 @@ rates_total　まで計算されていない時の処理が必要
         
 #endif//commenttt
 
+#ifdef USE_Tick_bar
    double price_tick;
+#endif// USE_Tick_bar   
    int get_ticks=0;
    
    flag_new_bar = false;
@@ -1789,7 +1803,7 @@ void debug_candle_data(ENUM_TIMEFRAMES period){
 
 }
 #endif//USE_debug_candle_date_view
-
+#ifdef USE_debug_candle_date_view
 //debug_H1_candle_copyfuffer(1515020400,PERIOD_H1);
 void debug_H1_candle_copyfuffer(datetime now_bar_time,ENUM_TIMEFRAMES period){
             datetime times[];int ret = 0;int error_count =0;
@@ -1852,6 +1866,7 @@ void debug_H1_candle_copyfuffer(datetime now_bar_time,ENUM_TIMEFRAMES period){
             }
 
 }
+#endif//USE_debug_candle_date_view
 
 
 #ifdef USE_Lib_Myfunc_Ind_entry_exit
@@ -1863,20 +1878,22 @@ void debug_H1_candle_copyfuffer(datetime now_bar_time,ENUM_TIMEFRAMES period){
 	//GlobalVariableSet("Ind_EntryPrice",EntryPrice);
 	//GlobalVariableSet("Ind_Tp_Price",Tp_Price);
 	//GlobalVariableSet("Ind_Sl_Price",Sl_Price);
-	
-	
-	
-	
-	
+
 	//SetSendData_forEntry_tpsl_direct_ctrl(int EntryDirect,int hyoukaNo,int hyoukaSyuhouNo,double EntryPrice,double Tp_Price,double Sl_Price,double lots)
 	double lots = 0.1;	
 	SetSendData_forEntry_tpsl_direct_ctrl(EntryDirect,hyoukaNo,hyoukaSyuhouNo,EntryPrice,Tp_Price,Sl_Price,lots);
 	
  }
+#endif//USE_Lib_Myfunc_Ind_entry_exit
+
+#ifdef USE_Lib_Myfunc_Ind_entry_exit
 int Entry_zig_no; 
 void init_entry_check_tick(void){
     Entry_zig_no=0;
 }
+#endif//USE_Lib_Myfunc_Ind_entry_exit
+
+#ifdef dell_debug
 void Entry_check_tick(void){
     candle_data *cm5;    
     candle_data *cm15;
@@ -1910,21 +1927,17 @@ void Entry_check_tick(void){
     ch1d34=MathAbs(ch1y3-ch1y4);
 
     //続伸時＋底の時
-    
-    
-    
-    
-    
+  
 
 }
-
 //時間軸で指定Zigzagのidxの時の目線、目線切り替わりの境界（上下）、算出
 //　目線切り替わりの境界のセットの過去分が取れるといいのか？
 
+#endif//dell_debug
 
 
-#endif//USE_Lib_Myfunc_Ind_entry_exit
 
+#ifdef delll_debug
 //int i_test_ind_to_ea;//debug
 void test_ind_to_ea(int idx){
     //i_test_ind_to_ea++;
@@ -1950,7 +1963,9 @@ void init_ema_bolinger(void){
   );
 #endif//commmmment  
 }
+
 void test_arrays(double &oo[]){
    oo[0]=1.0;
    oo[1]=oo[0]+1;
 }
+#endif//delll_debug

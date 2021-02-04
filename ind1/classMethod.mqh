@@ -136,7 +136,7 @@ public:
 void set_EntryData(int i,int kekkano){
     SetSendData_forEntry(
         EntryNo++,
-        hyouka_data[i].kekka[kekkano][37],
+        (int)hyouka_data[i].kekka[kekkano][37],
         i,kekkano,
         hyouka_data[i].kekka[kekkano][40],
         hyouka_data[i].kekka[kekkano][38],
@@ -787,7 +787,7 @@ void MethodPattern::set_kekkadata_jouiashi(int i,int pttern,datetime t,double pr
 //"ブレーク前のH1直近B-安値Pips"+TAB+     bottomdist
 //"H1足パターン"+TAB+//　Nとか上場中でトレンド、レンジ、？
     candle_data *c;
-    int h;bool bret;double k;
+    //int h;bool bret;double k;
     int num;
     
     double vv1,vv2,top,bottom,percent,topdist,bottomdist;

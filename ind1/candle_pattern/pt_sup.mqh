@@ -131,7 +131,7 @@ ________________________
 	if(condition==true){
 		//add_pt_sup();
 	    int i=pt_sup_data_count;
-	    int base_idx = zigzagdata_count-1;
+	    base_idx = zigzagdata_count-1;
 		if(base_idx < 0){
 			return;//error
 		}	
@@ -142,7 +142,7 @@ ________________________
 		candle_data *c = p_allcandle.get_candle_data_pointer(period);
 		double ma=		c.MAprice(20,MODE_SMA);
 		double price = c.get_now_price();
-		double t = c.get_now_time();
+		double t = (double)c.get_now_time();
 		double katamuki = c.MAkatamuki(20,MODE_SMA);
 		pt_sup_data[i].pt_sup_status = 1;//有効1、無効0
 		pt_sup_data[i].idx = base_idx;//基準zigzag idx
