@@ -340,7 +340,7 @@ public:
 			for(int i=start_zigzagidx;i<zigzagdata_count && i>0 ;i++){
 					//Cn_dir方向と逆のZigzag辺が出現した時、LCn出現
 					//初期の処理
-					if(LCn_et !=0 ){  			// LCn無い かつ
+					if(LCn_et ==0 ){  			// LCn無い かつ
 						if(zigzagdata[i].kind != Cn_dir){//Cnと逆方向の辺が見つかる
 							LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
 						}else {

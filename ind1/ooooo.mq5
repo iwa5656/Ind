@@ -1,4 +1,6 @@
-//----------option
+//---------------------------
+//----------option-------
+//---------------------------
 //#define USE_CALC_PASS_kako
 //#define USE_HYOUKA
 //#define USE_ZIGZAG_M1 
@@ -15,6 +17,11 @@
 //#define USE_OnDeinit_output_zigzag_output_each_period   //ファイルへZigzagデータを出力
 //#define USE_out_candle_debug
 //#define USE_debug_candle_date_view    //ファイル出力
+
+#define USE_debug_during_Period_hanndann   //テスト期間内かの判定
+
+//---------------------------
+//---------------------------
 
 input double Inp_nobiritu =1.0;// tp d12率
 input double Inp_songiriritu= 1.15;//　sl d12率
@@ -158,6 +165,8 @@ MethodPattern_flag *m_hyouka;// ★★ 複数のMethodPatternを持てるよう�
 
 //debug用
 int debug_i1;
+bool b_during_test_piriod;//テスト期間中かを確認　trueテスト期間中、falseテスト期間外
+datetime pre_test_starttime;//テスト期間開始　一つ前のバー
 //+------------------------------------------------------------------+
 //| Custom indicator deinitialization function                         |
 //+------------------------------------------------------------------+
@@ -195,6 +204,8 @@ int OnInit()
    
     nobiritu =  Inp_nobiritu;// tp d12率
     songiriritu =  Inp_songiriritu;//　sl d12率
+    b_during_test_piriod=false;
+    pre_test_starttime=0;
     
 printf("%%%&&&Start_Inp_nobiritu="+DoubleToString(Inp_nobiritu,3)+" Inp_songiriritu="+DoubleToString(Inp_songiriritu,3));
   
@@ -335,7 +346,9 @@ Print(sz1[1]);
 
 
 int pass;
-
+////---------------------
+////------Oncal oncal
+////---------------------
 int OnCalculate(const int rates_total,
                 const int prev_calculated,
                 const datetime &time[],
@@ -358,6 +371,18 @@ int OnCalculate(const int rates_total,
 
   global_rates_total=rates_total;
   golobal_prev_calculated = prev_calculated;
+  #ifdef USE_debug_during_Period_hanndann
+    if(b_during_test_piriod==false){
+        if(pre_test_starttime==0){
+            pre_test_starttime=time[rates_total-1];
+        }else{
+            if(prev_calculated!=0 && time[prev_calculated-1]>pre_test_starttime){
+                b_during_test_piriod=true;
+            }
+        }
+    }
+  #endif//USE_debug_during_Period_hanndann
+
   ArraySetAsSeries(time,true);
   ArraySetAsSeries(close,true);//chg 20201123 
 //#ifdef USE_CALC_PASS_kako

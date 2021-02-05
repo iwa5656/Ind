@@ -184,7 +184,8 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
 ////////////////////////////////////////////////    
 ////////////////////////////////////////////////    
 ////////////////////////////////////////////////
-#ifdef aaaaa
+#define aaaaaa33
+#ifdef aaaaaa33
     //#include "Trade_06_core.mqh"
 //Trade_06_core.mqh
 
@@ -308,7 +309,7 @@ if(isnew_bar == true){
                 
             }
 #ifdef USE_debug_Cn_Lcn
-            printf(__FUNCTION__+":Status  目線切り替わり１、続伸２LCn:zigc="+IntegerToString(c_l.zigzagdata_count)+
+            printf(__FUNCTION__+":Status  上位目線切り替わりあり・続伸あり（通知）→LCn:zigc="+IntegerToString(c_l.zigzagdata_count)+
               "LCnstatus="+IntegerToString(c_l.LCn_status)+
               "LCn_e_zigzagidx="+IntegerToString(c_l.LCn_e_zigzagidx)+
               "LCn_mesen_chg_count="+IntegerToString(c_l.LCn_mesen_chg_count)+
@@ -343,7 +344,7 @@ if(isnew_bar == true){
             c_l.set_LCn_set_Cn_data(paraCn_zigzagidx_ev, paraCn_period_,
 			                  paraCn_sv, paraCn_ev, paraCn_st, paraCn_et, paraCn_dir);
         }
-#ifdef aaaaaaaaa        
+//#ifdef aaaaaaaaa        
         //Cn値更新下化の確認
         if( c_l.Cn_zigzagidx_ev >= c_h.zigzagdata_count){
             printf(__FUNCTION__+"Cn zigzagidx out of range--->restart time["+ TimeToString(t)
@@ -353,13 +354,14 @@ if(isnew_bar == true){
             // Cn,LCnを初期化
             c_l.resetLCn();
             c_h.resetCn();
+            return;
         }
-#endif//aaaaaaaaa        
+//#endif//aaaaaaaaa        
         if(c_l.Cn_ev!=c_h.zigzagdata[c_l.Cn_zigzagidx_ev].value //値が異なるか？
             && c_l.Cn_zigzagidx_ev == c_h.zigzagdata_count-1)   //最後のZigzagとおなじか？
             {
 #ifdef USE_debug_Cn_Lcn
-            printf(__FUNCTION__+":Status  Cn値更新下化の確認 LCn:zigc="+IntegerToString(c_l.zigzagdata_count)+
+            printf(__FUNCTION__+":Status  Cn値更新あり（下位へ再通知） LCn:zigc="+IntegerToString(c_l.zigzagdata_count)+
               "LCnstatus="+IntegerToString(c_l.LCn_status)+
               "LCn_e_zigzagidx="+IntegerToString(c_l.LCn_e_zigzagidx)+
               "LCn_mesen_chg_count="+IntegerToString(c_l.LCn_mesen_chg_count)+
@@ -451,7 +453,7 @@ if(isnew_bar == true){
 
     }
 }    //end if(isnew_bar
-#endif// aaaaaa
+#endif// aaaaaa33
 ////////////////////////////////////////////////    
 ////////////////////////////////////////////////    
 ////////////////////////////////////////////////    
@@ -459,7 +461,6 @@ if(isnew_bar == true){
     
     
     
-
 #ifdef aaaaa    
     peri = PERIOD_H1;
     ret= chk_pt_mesen(peri,ret_match_zigcount,ret_pt_katachi);

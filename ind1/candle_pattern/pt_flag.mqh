@@ -2,6 +2,10 @@
 //#include "..\class_allcandle.mqh"
 //#include "..\classMethod.mqh"
 
+//------option-------
+#define USE_debug_pt_flag_katamuki_seppen_3point_same_online
+
+
 //レンジパターン
 //pt_flag
 //データ
@@ -103,6 +107,7 @@ ________________________
 	
 	if(bsameline135 == true && bsameline246==true && pre_pt_flag_zig_count!=zigzagdata_count){
 	    pt_flag_find_count++;
+#ifdef USE_debug_pt_flag_katamuki_seppen_3point_same_online
 	    a1=a1*3600;
 	    printf("	    pt_flag_find_count++"+IntegerToString(	    pt_flag_find_count));
 
@@ -112,6 +117,7 @@ ________________________
 	    +" b2="+DoubleToString(b1));
 	    
 	    bsameline135 = Is_3point_same_online( x1, y1, x3, y3, x5, y5,  gosa_pips);//debug 
+#endif//USE_debug_pt_flag_katamuki_seppen_3point_same_online
 	    pre_pt_flag_zig_count = zigzagdata_count;
 	}
 	
