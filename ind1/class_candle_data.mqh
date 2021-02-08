@@ -12,7 +12,7 @@
 #define USE_LCn	//目線確定Cnからの逆の目線発生後、Cn方向へ向いたときを検知する
 #define USE_debugLCn_Cn //debug用
 //------押し戻し率
-//#define USE_oshimodoshi_ritu
+#define USE_oshimodoshi_ritu
 //------
 
 #include <_inc\\My_function_lib2.mqh>
@@ -340,12 +340,15 @@ public:
 			for(int i=start_zigzagidx;i<zigzagdata_count && i>0 ;i++){
 					//Cn_dir方向と逆のZigzag辺が出現した時、LCn出現
 					//初期の処理
-					if(LCn_et ==0 ){  			// LCn無い かつ
-						if(zigzagdata[i].kind != Cn_dir){//Cnと逆方向の辺が見つかる
-							LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
-						}else {
-							LCn_status=3;//LCn抜け判断・更新中 (基準Cn方向へ伸びていっている)
-						}
+					if(LCn_et ==0   			// LCn無い かつ
+                     && zigzagdata[i].kind != Cn_dir){//Cnと逆方向の辺が見つかる
+                  LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
+					//if(LCn_et ==0 ){  			// LCn無い かつ
+					//	if(zigzagdata[i].kind != Cn_dir){//Cnと逆方向の辺が見つかる
+					//		LCn_status=2;//LCn抜け判断・更新中 （逆方向へ続伸中）
+					//	}else {
+					//		LCn_status=3;//LCn抜け判断・更新中 (基準Cn方向へ伸びていっている)
+					//	}
 
 						//ローカル目線切り替わりのカウント更新
 						//LCnを登録
@@ -357,6 +360,17 @@ public:
 						LCn_et=zigzagdata[i].time;
 						LCn_s_zigzagidx=zigzagdata[i-1].idx;
 						LCn_e_zigzagidx=zigzagdata[i].idx;
+
+						//初期決定したので、前回値も更新しておく
+						//前回値の更新
+						//前回確定目線がCn方向に変わった時のLCnのデータ
+						preLCn_status=LCn_status;
+						preLCn_sv=LCn_sv;
+						preLCn_ev=LCn_ev;
+						preLCn_st=LCn_st;
+						preLCn_et=LCn_et;
+						preLCn_s_zigzagidx=LCn_s_zigzagidx;
+						preLCn_e_zigzagidx=LCn_e_zigzagidx;
 
 							#ifdef USE_debugLCn_Cn
 							printf(__FUNCTION__+"LCn初期決定;LCn:Zigc="+
@@ -491,6 +505,16 @@ public:
 							(Cn_dir == -1 && (Cn_ev> v || Cn_sv< v))
 						){ 
 							LCn_status=4;//CnのS/Eを抜けた状態
+											#ifdef USE_debugLCn_Cn
+											printf(__FUNCTION__+"LCn_status=4CnのS/Eを抜けた状態;LCn:Zigc="+
+														IntegerToString(zigzagdata_count)+
+														" LCnstatus="+IntegerToString(LCn_status)+
+														" LCn_e_zigzagidx="+IntegerToString(LCn_e_zigzagidx)+
+														" LCn_mesen_chg_count="+IntegerToString(LCn_mesen_chg_count)+
+														" Cn_ev"+DoubleToString(Cn_ev)+
+														""
+											);
+											#endif//USE_debugLCn_Cn
 						}
 					
 					}//初期・初期以外	
@@ -1046,7 +1070,7 @@ bool chk_mesen_C_zigcount_updn(int zigcount,int &out_dir){
 	}
 	return(ret);
 }	
-bool	get_oshimodoshi_ritu(int zigidxno,double v,double out_ritu);
+bool	get_oshimodoshi_ritu(int zigidxno,double v,double &out_ritu);
 
 
 //	double MAprice(int period,ENUM_MA_METHOD mode);//MODE_SMA,単純平均。,MODE_EMA,指数移動平均。,MODE_SMMA,平滑平均。,MODE_LWMA,線形加重移動平均。
@@ -2634,7 +2658,7 @@ int candle_data::Oncalculate_Fractals(void){
 }
 
 #ifdef USE_oshimodoshi_ritu
-bool candle_data::get_oshimodoshi_ritu(int zigidx,double v,double out_ritu){
+bool candle_data::get_oshimodoshi_ritu(int zigidx,double v,double &out_ritu){
 	//指定Zigzagidxを先頭とする線分と　価格ｖの位置関係を比率で返す: 全戻しが100％　もっと戻すと100％を超える
 	//zigidx は配列のidx、out_rituは１が100%
 	#ifdef commenttt			

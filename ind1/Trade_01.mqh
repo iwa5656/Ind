@@ -191,7 +191,7 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
 
 //void chk_trade_forTick(double v,double t,allcandle *pallcandle,bool isTrade){
 #ifdef commmment
-［STEP１］上位目線の切り替わり後、上位の時間軸でLCnがいったん逆に行ってから、戻ったときにエントリー
+［STEP１］上位目線の切り替わり後、下位の時間軸でLCnがいったん逆に行ってから、戻ったときにエントリー
     H4、H1、M15
 
 ［STEP２-1］
@@ -234,12 +234,15 @@ if(isnew_bar == true){
 
 
 
+    //最上位足の目線切り替わり？
+    ENUM_TIMEFRAMES peri_hh=PERIOD_H4;
     //上位足の目線切り替わり？
     ENUM_TIMEFRAMES peri_h=PERIOD_H1;
     //ENUM_TIMEFRAMES 
     peri=PERIOD_M15;
 
 
+    candle_data *c_hh=pac.get_candle_data_pointer(peri_hh);
     candle_data *c_h=pac.get_candle_data_pointer(peri_h);
     candle_data *c_l=pac.get_candle_data_pointer(peri);
     int out_status=0,out_zigzagidx=0, out_dir=0;
@@ -248,8 +251,11 @@ if(isnew_bar == true){
     ENUM_TIMEFRAMES paraCn_period_;
 	double paraCn_sv;double paraCn_ev;datetime paraCn_st;datetime paraCn_et;int paraCn_dir;
 
-    if(c_h!=NULL && c_l!=NULL){
-    
+    if(c_h!=NULL && c_l!=NULL&&c_hh!=NULL){
+        //チェックtpsl
+        tpls_chk(v);
+
+
         //----mesenn変わったか？
         //下位足でLCnの条件が成立したか？（上位の逆に行っていたのが、上位方向となった時
         //デバッグとして、成立したらマーキングすることで、あとで戦略考えるときに使えるはず。
@@ -381,25 +387,26 @@ if(isnew_bar == true){
             paraCn_sv=c_h.ZigY(2);
             paraCn_st=c_h.Zigtime(2);
             paraCn_zigzagidx_ev= c_l.Cn_zigzagidx_ev;           
+            if(c_h.zigzagdata_count>2){
 
-
-            string name1;             // object name
-            int    nwin=0;             // window index
-            datetime tt;           // position of price label by time
-            double pp=0.0;            // position of price label by vertical
-            color  Color=clrGreenYellow;            // text color
-            //HYOUJI Cn
-            pp =  paraCn_ev;
-            tt =  paraCn_et;
-            name1 = "Cn_e"+IntegerToString(c_h.zigzagdata_count-1) +"tt="+TimeToString(tt)+" pp="+DoubleToString(pp);
-            CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,1);
-            //pp =  paraCn_sv;
-            //tt =  paraCn_st;
-            //name1 = "Cn_s"+IntegerToString(c_h.zigzagdata_count-1-1) +"tt="+TimeToString(tt)+" pp="+DoubleToString(pp);
-            //CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,3);
-            //下位足へCn通知する
-            c_l.set_LCn_set_Cn_data(paraCn_zigzagidx_ev, paraCn_period_,
-			                  paraCn_sv, paraCn_ev, paraCn_st, paraCn_et, paraCn_dir);
+               string name1;             // object name
+               int    nwin=0;             // window index
+               datetime tt;           // position of price label by time
+               double pp=0.0;            // position of price label by vertical
+               color  Color=clrGreenYellow;            // text color
+               //HYOUJI Cn
+               pp =  paraCn_ev;
+               tt =  paraCn_et;
+               name1 = "Cn_e"+IntegerToString(c_h.zigzagdata_count-1) +"tt="+TimeToString(tt)+" pp="+DoubleToString(pp);
+               CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,1);
+               //pp =  paraCn_sv;
+               //tt =  paraCn_st;
+               //name1 = "Cn_s"+IntegerToString(c_h.zigzagdata_count-1-1) +"tt="+TimeToString(tt)+" pp="+DoubleToString(pp);
+               //CreateArrowRightPrice(0,name1,nwin,tt,pp,Color,3);
+               //下位足へCn通知する
+               c_l.set_LCn_set_Cn_data(paraCn_zigzagidx_ev, paraCn_period_,
+   			                  paraCn_sv, paraCn_ev, paraCn_st, paraCn_et, paraCn_dir);
+            }
         }
 
             double entryprice;
@@ -439,6 +446,25 @@ if(isnew_bar == true){
                 if(total >1){
                     printf("エントリー後"+IntegerToString(total)+"以上　あるのはおかしい");
                 }
+
+#ifdef USE_tpsl_view_ctr
+                struct_tpsl d;													
+                d.entry	=	v;										
+                d.dir	=	c_l.Cn_dir;										
+                d.tp	=	c_l.Cn_ev;										
+                d.sl	=	c_l.Cn_sv;										
+                d.tp_pips	=	MathAbs(	chgPrice2Pips(d.tp-v));
+                d.sl_pips	=	MathAbs(	chgPrice2Pips(d.sl-v));
+                  double ttt=0.0;if(d.tp_pips!=0){ttt=d.sl_pips/d.tp_pips;}else{ttt=9999;}												
+                d.tp_sl_hi	=	ttt;										
+
+                c_h.get_oshimodoshi_ritu(c_l.Cn_zigzagidx_ev,v,d.Cn_oshimodori);													
+                c_hh.get_oshimodoshi_ritu(c_hh.zigzagdata_count-1,v,d.joui_oshiodori);
+                tpsl_set_data(d);
+#endif// USE_tpsl_view_ctr
+                
+
+
             }else
             if(b_exit_all == true && flag_is_entry == true){
                 SetSendData_forExitAll();

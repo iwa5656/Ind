@@ -20,6 +20,9 @@
 
 #define USE_debug_during_Period_hanndann   //テスト期間内かの判定
 
+//tpsl
+#define USE_tpsl_view_ctr //tpslの結果＋エントリー情報を出力したい
+
 //---------------------------
 //---------------------------
 
@@ -48,6 +51,11 @@ int idebug;
 #ifdef Lib_iunima_mtf_ru
 #include "iunima_mtf_ru.mqh"
 #endif// Lib_iunima_mtf_ru
+
+#ifdef USE_tpsl_view_ctr
+#include "tpsl_ctrl.mqh"
+#endif// USE_tpsl_view_ctr
+
 
 #define USE_Lib_Myfunc_Ind_entry_exit
 #ifdef USE_Lib_Myfunc_Ind_entry_exit
@@ -179,6 +187,10 @@ void OnDeinit(const int reason)
     m_hyouka.view_kekka_youso_flag(n);
    }
 #endif//USE_HYOUKA   
+
+#ifdef USE_tpsl_view_ctr
+    tpsl_outall();
+#endif// USE_tpsl_view_ctr
 
    printf("Ondeinit...");
 #ifdef USE_OnDeinit_output_zigzag_output_each_period   
@@ -378,6 +390,7 @@ int OnCalculate(const int rates_total,
         }else{
             if(prev_calculated!=0 && time[prev_calculated-1]>pre_test_starttime){
                 b_during_test_piriod=true;
+                printf("b_during_test_piriod=true  計算がテスト期間内に入った★");
             }
         }
     }

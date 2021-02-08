@@ -3,7 +3,7 @@
 //#include "..\classMethod.mqh"
 
 //------option-------
-#define USE_debug_pt_flag_katamuki_seppen_3point_same_online
+//#define USE_debug_pt_flag_katamuki_seppen_3point_same_online
 
 
 //レンジパターン
