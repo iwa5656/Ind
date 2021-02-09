@@ -63,8 +63,11 @@
             }
             double syouritu=(double)win_count/(double)(win_count+loss_count);
             double kitaichi = winpips/win_count*syouritu-losspips/loss_count*(1-syouritu)*(-1);
+            double pf;
+            if(losspips!=0){pf=winpips/losspips;}else{pf=9999999;}
             printf("total:="+DoubleToString(winpips+losspips,2));
             printf("  期待値：="+DoubleToString(  kitaichi  ));
+            printf("  PF値　：="+DoubleToString(  pf  ));
             printf("  タープの期待値：負けトレード１通貨あたりの期待値="+DoubleToString(kitaichi/(losspips*(-1))));
             printf("  勝率：="+DoubleToString(  syouritu  ));
             printf("  商い数：="+IntegerToString(  win_count+loss_count  ));

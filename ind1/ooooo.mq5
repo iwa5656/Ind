@@ -10,6 +10,7 @@
 //#define USE_ZIGZAG_M30
 #define USE_ZIGZAG_H1
 #define USE_ZIGZAG_H4
+#define USE_ZIGZAG_D1
 
 //#define USE_Tick_bar  //Tick barをりようする
 #define USE_OnDEinit_Fractals
@@ -685,9 +686,11 @@ if(use_calc_pass_kako == true) {
                 int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
                 int ret4 = p_allcandle.Oncalculate_Fractals(peri);
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+#ifdef USE_HYOUKA                
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
     	        }
+#endif//USE_HYOUKA                
     	    }
 #endif // USE_ZIGZAG_D1
 

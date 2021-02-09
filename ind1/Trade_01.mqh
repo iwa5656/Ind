@@ -460,7 +460,10 @@ if(isnew_bar == true){
 
                 c_h.get_oshimodoshi_ritu(c_l.Cn_zigzagidx_ev,v,d.Cn_oshimodori);													
                 c_hh.get_oshimodoshi_ritu(c_hh.zigzagdata_count-1,v,d.joui_oshiodori);
-                tpsl_set_data(d);
+                //テスト期間内のものを登録
+                if(b_during_test_piriod==true){
+                   tpsl_set_data(d);
+                }
 #endif// USE_tpsl_view_ctr
                 
 
