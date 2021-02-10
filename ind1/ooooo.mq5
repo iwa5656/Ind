@@ -24,6 +24,10 @@
 //tpsl
 #define USE_tpsl_view_ctr //tpslの結果＋エントリー情報を出力したい
 
+
+//debug call Lcn 2回エントリー
+#define USE_debug_Lcn_2kaicall
+
 //---------------------------
 //---------------------------
 
@@ -538,7 +542,16 @@ if(use_calc_pass_kako == true) {
 #ifdef USE_Fractals                
                 int ret4 = p_allcandle.Oncalculate_Fractals(peri);
 #endif //USE_Fractals                
+                                    #ifdef	USE_debug_Lcn_2kaicall
+                                        printf(__FUNCTION__+"★M15　pre calc_kakutei");
+                                    #endif//USE_debug_Lcn_2kaicall
+
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+
+                                    #ifdef	USE_debug_Lcn_2kaicall
+                                        printf(__FUNCTION__+"★M15　after calc_kakutei");
+                                    #endif//USE_debug_Lcn_2kaicall
+
 #ifdef USE_HYOUKA
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
@@ -703,7 +716,14 @@ if(use_calc_pass_kako == true) {
         }
         //pt
             //test★
+
+                        #ifdef	USE_debug_Lcn_2kaicall
+                            printf(__FUNCTION__+"★pre　chk_trade_forTick");
+                        #endif//USE_debug_Lcn_2kaicall
         chk_trade_forTick(close[i],time[i],p_allcandle,true);
+                        #ifdef	USE_debug_Lcn_2kaicall
+                            printf(__FUNCTION__+"★after　chk_trade_forTick");
+                        #endif//USE_debug_Lcn_2kaicall
         
     }    // for
     ///////
