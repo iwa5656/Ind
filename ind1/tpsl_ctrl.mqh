@@ -4,6 +4,9 @@
 #ifdef USE_tpsl_view_ctr
 #define  NUM_YOBI_TPSL_MEM 1000
 
+//------opt-------
+#define USE_view_tpsl_cancel  //tp sl cancel view
+//#define USE_printf_SetSendData_forEntry_tpsl_direct //エントリーのPrintf
 
 #ifdef commentttt
 エントリー時の情報保持と、エントリーの結果を保持																		
@@ -122,13 +125,21 @@
                                     bview=true;
                                 }
                                 if(bview==true){
-                                if(tpsldata[i].winloss==1){
-                                    printf("勝:tshi="+ DoubleToString(tpsldata[i].tp_sl_hi)+"  winpips="+DoubleToString(tpsldata[i].tp_pips));
-                                }
-                                if(tpsldata[i].winloss==-1){
-                                    printf("負:tshi="+ DoubleToString(tpsldata[i].tp_sl_hi)+"  winpips="+DoubleToString(tpsldata[i].sl_pips));
-                                }
-                                
+                                    #ifdef USE_view_tpsl_cancel
+												string outputname="";
+            									if(tpsldata[i].winloss==1){
+													outputname="勝:tshi="+ DoubleToString(tpsldata[i].tp_sl_hi)+"  winpips="+DoubleToString(tpsldata[i].tp_pips);
+            										printf(outputname);
+													
+            									}
+            									if(tpsldata[i].winloss==-1){
+													outputname = "負:tshi="+ DoubleToString(tpsldata[i].tp_sl_hi)+"  winpips="+DoubleToString(tpsldata[i].sl_pips);
+            										printf(outputname);
+            									}
+            									string addname = IntegerToString(i);
+            									view_kachi_make_cancel(tpsldata[i].winloss,tt,v,addname,tpsldata[i].kekka_pips);
+												get_ChartScreenShot(outputname);
+                                    #endif//USE_view_tpsl_cancel                                
                                 }
                             }//end if(tpsldata[i].entry_type==0){	
                        
@@ -150,11 +161,19 @@
                                 tpprice,//double Tp_Price,
                                 slprice,//double Sl_Price,
                                 0.1); //lots){
+#ifdef USE_printf_SetSendData_forEntry_tpsl_direct									
                                 printf("SetSendData_forEntry_tpsl_direct_ctrl"+":dir="+IntegerToString(e_dir)+":entryp="+DoubleToString(entryprice,5)+":tp="+DoubleToString(tpprice,5)+":sl="+DoubleToString(slprice)+":tp_sl_hi="+DoubleToString(tpsldata[i].tp_sl_hi,3) );
+#endif //USE_printf_SetSendData_forEntry_tpsl_direct
 
                             }
                             if(tpsldata[i].canceltime < tt && tpsldata[i].canceltime !=0){
                                 tpsldata[i].status=0;//時間がかかっているので、エントリーをキャンセル
+                                
+                                 #ifdef USE_view_tpsl_cancel
+                                printf("キャンセル");
+         								string addname = IntegerToString(i);
+         								view_kachi_make_cancel(0,tt,v,addname,0);
+         								#endif//USE_view_tpsl_cancel
                             }
                                                                     //entry_type=1
                                                 //1登録後監視中(ｔｐｓｌチェック中)、３エントリー待ち中　　２，結果決定				ALL
@@ -182,7 +201,9 @@
 					tpsldata[i].		entry_type	=	0;		//add				
 
 			}														
-			void	tpsl_set_data_entryline_canceltime(struct_tpsl &d)			{
+			bool	tpsl_set_data_entryline_canceltime(struct_tpsl &d)			{
+			//登録　　　成功true    失敗（同じものを登録済み）
+			      bool ret = false;
 			      bool bsame=is_tpsl_same_entry(d.entryzigidx);
 			      if(bsame!=true){
    					int i=tpsl_count;
@@ -202,7 +223,9 @@
    					tpsldata[i].		entry_type	=	1;		//add				
    					tpsldata[i].		canceltime	=	d.canceltime;		//add
    					tpsldata[i].		entryzigidx	=	d.entryzigidx;		//add
+   					ret = true;
                }
+               return ret;
             }
 			bool is_tpsl_same_entry(int id){//すでに同じZigzagidｘのものが登録されているか　　true登録されている
 			   bool ret = false;

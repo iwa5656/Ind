@@ -17,7 +17,7 @@ struct struct_pt_data{
 //input double songiriritu = 1.15;//　sl d12率
 
 //option
-#define USE_VIEW_printf_katachiNo //形の番号と時間を出力
+//#define USE_VIEW_printf_katachiNo //形の番号と時間を出力
 #define USE_debug_Cn_Lcn   //
 
 //Zigパターンは最新Zigは含めないこととする
@@ -232,14 +232,22 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
           ((ay[1] >ay[3])&&(dd32*1.1 <dd21)) ;
 
 
+      double para_entryline=Inp_para_double1;//0-N
+      double para_tp_ritu=Inp_para_double2;//
+      double para_sl_ritu=Inp_para_double3;
+      double para_ct_ritu=Inp_para_double4;
       if(cond==true){
           struct_tpsl d;
-          double entryline=ay[4]+dd43*0.1;
+//          double entryline=ay[4]+dd43*0.1;
+          double entryline=ay[4]+dd43*para_entryline;    //★★
 //          double entryline=ay[4]+dd43*1;
           d.entry	=	entryline;
           d.dir	=	1;			//固定							
-          d.tp	=	dd21+ay[4];										
-          d.sl	=	ay[2]-dd32*0.2;										
+//          d.tp	=	dd21+ay[4];										
+//          d.sl	=	ay[2]-dd32*0.2;
+          d.tp	=	dd21*para_tp_ritu+ay[4];					//★★					
+          d.sl	=	ay[2]-dd32*para_sl_ritu;
+          
 //          d.sl	=	ay[2]-dd32*0.5;		//debug								
           d.tp_pips	=	MathAbs(	chgPrice2Pips(d.tp-entryline));
           d.sl_pips	=	MathAbs(	chgPrice2Pips(d.sl-entryline));									
@@ -250,11 +258,27 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
           c_hh.get_oshimodoshi_ritu(c_hh.zigzagdata_count-1,entryline,d.joui_oshiodori);													
 
 //          d.canceltime	=	at[1]+bb42*2;   // 4-2の幅以内
-          d.canceltime	=	at[1]+bb41*2;   // 4-1 *2の幅以内
+//          d.canceltime	=	at[1]+bb41*2;   // 4-1 *2の幅以内
+          d.canceltime	=	at[1]+bb41*para_ct_ritu;   // 4-1 *2の幅以内  //★★
 //d.canceltime	=0;
           d.entryzigidx = c_l.zigzagdata_count-1;
           //登録
-          tpsl_set_data_entryline_canceltime(d);
+          bool isreg=false;
+          isreg= tpsl_set_data_entryline_canceltime(d);
+
+          //view
+          if(isreg==true){
+            string name1="tp:zig="+IntegerToString(c_l.zigzagdata_count)+"tp/sl="+DoubleToString(d.tp_pips/d.sl_pips);
+            string name2="entry:zig="+IntegerToString(c_l.zigzagdata_count)+"oshi="+DoubleToString(d.Cn_oshimodori);
+            string name3="sl:zig="+IntegerToString(c_l.zigzagdata_count);
+            int cc=GetTimeColor(peri);
+              datetime bt=24*15*60;
+              TrendCreate(0,name1,0,at[1],d.tp    ,d.canceltime,d.tp,cc,STYLE_SOLID,4);
+              TrendCreate(0,name2,0,at[1],d.entry ,d.canceltime,d.entry,cc,STYLE_SOLID,4);          
+              TrendCreate(0,name3,0,at[1],d.sl    ,d.canceltime,d.sl,cc,STYLE_SOLID,4);   
+              cc=cc;      
+          } 
+
       }
     }
   }
@@ -630,7 +654,7 @@ void init_pt(void){
 #include "Trade_06_func_def.mqh"
 void init_Trace(void){
   init_Trade_06_func_def();
-
+  init_ChartScreenShot();
 }
 bool reg_pt(ENUM_TIMEFRAMES period_,int zigcount,int pt_katachi){
     bool ret=false;
@@ -1438,3 +1462,32 @@ double oshimodori_ritu(double s,double e,double v,double dir){
     }
   return ret;
 }
+
+
+int ChartScreenShot_pos;
+void init_ChartScreenShot(void){ChartScreenShot_pos=0;}
+void get_ChartScreenShot(string addname){
+#ifdef chartevent_denaito_dekinairasii_testingMode_dato_dekinai
+#ifdef commmenttt
+bool  ChartScreenShot(
+  long            chart_id,                  // チャート識別子
+  string          filename,                  // 銘柄名
+  int              width,                      // 幅
+  int              height,                    // 高さ
+  ENUM_ALIGN_MODE  align_mode=ALIGN_RIGHT      // 整列の種類
+  );
+
+#define        WIDTH  800     // ChartScreenShot() を呼ぶ画像幅
+#define        HEIGHT 600     // ChartScreenShot() を呼ぶ画像の縦幅
+#endif //commentttt
+#define        WIDTH  800     // ChartScreenShot() を呼ぶ画像幅
+#define        HEIGHT 600     // ChartScreenShot() を呼ぶ画像の縦幅
+
+string name="ChartScreenShot"+string(ChartScreenShot_pos)+":"+addname+".gif";
+//--- terminal_directory\MQL5\Files\ にチャートのスクリーンショットファイルを保存する
+          if(ChartScreenShot(0,name,WIDTH,HEIGHT,ALIGN_LEFT))
+              Print("We've saved the screenshot ",name);
+          //---
+#endif //chartevent_denaito_dekinairasii_testingMode_dato_dekinai
+}
+

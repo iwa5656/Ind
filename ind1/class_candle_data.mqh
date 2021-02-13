@@ -14,6 +14,8 @@
 //------押し戻し率
 #define USE_oshimodoshi_ritu
 //------
+//#define USE_view_output_Cn_kirikawari	//Cn　続伸、逆　をジャーナルにテキスト出力
+
 
 #include <_inc\\My_function_lib2.mqh>
 //#include "class_allcandle.mqh"
@@ -930,13 +932,17 @@ public:
 			if(count_mesen_C > 2){// xx=6
 				
 				if(flag_mesen_chg == true){
+					#ifdef USE_view_output_Cn_kirikawari
 					printf("「"+PeriodToString(period)+";"+"逆へ"+IntegerToString(zigzagdata[now_zigzagcount-1].mesen.dir)+"」");
+					#endif// USE_view_output_Cn_kirikawari
 				    zigzag_mesen_chg_at_count_mesen_C= now_zigzagcount;
 					CnStatusFlag=1;//逆のCn発生
 					Cn_zokusin_count=0;
 				}
 				if(flag_mesen_zokushin == true){
+					#ifdef USE_view_output_Cn_kirikawari
 					printf("「"+PeriodToString(period)+";"+"続伸"+"」");
+					#endif// USE_view_output_Cn_kirikawari
 					zigzag_mesen_chg_at_count_mesen_C= now_zigzagcount;
 					CnStatusFlag=2;//続伸Cnが発生
 					Cn_zokusin_count++;
@@ -2703,8 +2709,9 @@ bool candle_data::get_oshimodoshi_ritu(int zigidx,double v,double &out_ritu){
 	}else {}
 	return true;
 }
-
 #endif//USE_oshimodoshi_ritu
+
+
 
 #endif//class_candle_data
   

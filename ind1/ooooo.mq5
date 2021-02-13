@@ -26,7 +26,7 @@
 
 
 //debug call Lcn 2回エントリー
-#define USE_debug_Lcn_2kaicall
+//#define USE_debug_Lcn_2kaicall
 
 //---------------------------
 //---------------------------
@@ -39,6 +39,15 @@ input bool Inp_VjiUse=false;// \Vjiつかうｔ、使わないF
 
 double nobiritu;
 double songiriritu;
+
+input double Inp_para_double1 =0.1;//double para1
+input double Inp_para_double2 =1.0;//double para2
+input double Inp_para_double3 =0.2;//double para3
+input double Inp_para_double4 =2.0;//double para4
+input double Inp_para_int1 =0;//int para1
+input double Inp_para_int2 =0;//int para2
+input double Inp_para_int3 =0;//int para2
+
 
 input bool use_calc_pass_kako=true;  // 過去全部計算F:一部T
 input int use_calc_pass_kako_num=5000;  // 過去何bar分計算するか（一部計算の時有効）
@@ -61,6 +70,7 @@ int idebug;
 #include "tpsl_ctrl.mqh"
 #endif// USE_tpsl_view_ctr
 
+#include "func_view_text.mqh"
 
 #define USE_Lib_Myfunc_Ind_entry_exit
 #ifdef USE_Lib_Myfunc_Ind_entry_exit
