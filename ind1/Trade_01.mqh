@@ -1491,3 +1491,115 @@ string name="ChartScreenShot"+string(ChartScreenShot_pos)+":"+addname+".gif";
 #endif //chartevent_denaito_dekinairasii_testingMode_dato_dekinai
 }
 
+void view_fibo_expansion(int zigno,candle_data &c){
+//zigno 最後（最新）が１とする。
+   datetime t1,t2,t3;
+   double v1,v2,v3;
+   int offset = zigno-1;
+   if(c.zigzagdata_count<4){return;}
+   v3=c.ZigY(1+offset);
+   v2=c.ZigY(2+offset);
+   v1=c.ZigY(3+offset);
+   t3=c.Zigtime(1+offset);
+   t2=c.Zigtime(2+offset);
+   t1=c.Zigtime(3+offset);
+   string name="expa:"+PeriodToString(c.period)+":zigidx="+  IntegerToString(c.zigzagdata_count-1);
+   
+//   ObjectCreate(chart_ID,name,OBJ_EXPANSION,sub_window,time1,price1,time2,price2,time3,price3) 
+   if(!ObjectCreate(0,name,OBJ_EXPANSION,0,t1,v1,t2,v2,t3,v3)){
+      ObjectMove(0,name,0,t1,v1);
+      ObjectMove(0,name,1,t2,v2);
+      ObjectMove(0,name,2,t3,v3);
+   }else{
+      //--- オブジェクトの色を設定 
+      color clr=c.GetTimeColor(c.period);
+      //clr=clrRed;
+      ObjectSetInteger(0,name,OBJPROP_COLOR,clr); 
+      ObjectSetInteger(0,name,OBJPROP_LEVELCOLOR,clr); 
+      
+      ENUM_LINE_STYLE style=STYLE_DASHDOTDOT; // 線のスタイル 
+      int             width=2;               // 線の幅 
+      bool           back=false;             // 背景オブジェクト 
+      bool           selection=true;         // 強調表示して移動 
+      bool           ray_left=false;         // オブジェクトの左への継続 
+      bool           ray_right=false;         // オブジェクトの右への継続 
+      bool           hidden=true;           // オブジェクトリストに隠す 
+      long           z_order=0;               // マウスクリックの優先順位       
+      //--- 線のスタイルを設定する 
+        ObjectSetInteger(0,name,OBJPROP_STYLE,style); 
+      //--- 線の幅を設定する 
+        ObjectSetInteger(0,name,OBJPROP_WIDTH,width); 
+      //--- 前景（false）または背景（true）に表示 
+        ObjectSetInteger(0,name,OBJPROP_BACK,back); 
+      //--- 強調表示してチャンネルを移動するモードを有効（true）か無効（false）にする。 
+      //--- ObjectCreate 関数を使用してグラフィックオブジェクトを作成する際、オブジェクトは 
+      //--- デフォルトではハイライトされたり動かされたり出来ない。このメソッド内では、選択パラメータは 
+      //--- デフォルトでは true でハイライトと移動を可能にする。 
+        ObjectSetInteger(0,name,OBJPROP_SELECTABLE,selection); 
+         ObjectSetInteger(0,name,OBJPROP_SELECTED,selection); 
+      //--- オブジェクトの表示を左に延長するモードを有効（true）か無効（false）にする 
+        ObjectSetInteger(0,name,OBJPROP_RAY_LEFT,ray_left); 
+      //--- オブジェクトの表示を右に延長するモードを有効（true）か無効（false）にする 
+        ObjectSetInteger(0,name,OBJPROP_RAY_RIGHT,ray_right); 
+      //--- オブジェクトリストのグラフィックオブジェクトを非表示（true）か表示（false）にする 
+        ObjectSetInteger(0,name,OBJPROP_HIDDEN,hidden); 
+      //--- チャートのマウスクリックのイベントを受信するための優先順位を設定する 
+        ObjectSetInteger(0,name,OBJPROP_ZORDER,z_order);       
+   }
+}
+
+void view_fibo(int zigno,candle_data &c){
+//zigno 最後（最新）が１とする。
+   datetime t1,t2,t3;
+   double v1,v2,v3;
+   int offset = zigno-1;
+   if(c.zigzagdata_count<4){return;}
+   v3=c.ZigY(1+offset);
+   v2=c.ZigY(2+offset);
+   v1=c.ZigY(3+offset);
+   t3=c.Zigtime(1+offset);
+   t2=c.Zigtime(2+offset);
+   t1=c.Zigtime(3+offset);
+   string name="fibo:"+PeriodToString(c.period)+":zigidx="+  IntegerToString(c.zigzagdata_count-1);
+   
+//   ObjectCreate(chart_ID,name,OBJ_EXPANSION,sub_window,time1,price1,time2,price2,time3,price3) 
+   if(!ObjectCreate(0,name,OBJ_FIBO,0,t1,v1,t2,v2)){
+      ObjectMove(0,name,0,t1,v1);
+      ObjectMove(0,name,1,t2,v2);
+   }else{
+      //--- オブジェクトの色を設定 
+      color clr=c.GetTimeColor(c.period);
+      //clr=clrRed;
+      ObjectSetInteger(0,name,OBJPROP_COLOR,clr); 
+      ObjectSetInteger(0,name,OBJPROP_LEVELCOLOR,clr); 
+      
+      ENUM_LINE_STYLE style=STYLE_DASHDOTDOT; // 線のスタイル 
+      int             width=2;               // 線の幅 
+      bool           back=false;             // 背景オブジェクト 
+      bool           selection=true;         // 強調表示して移動 
+      bool           ray_left=false;         // オブジェクトの左への継続 
+      bool           ray_right=false;         // オブジェクトの右への継続 
+      bool           hidden=true;           // オブジェクトリストに隠す 
+      long           z_order=0;               // マウスクリックの優先順位       
+      //--- 線のスタイルを設定する 
+        ObjectSetInteger(0,name,OBJPROP_STYLE,style); 
+      //--- 線の幅を設定する 
+        ObjectSetInteger(0,name,OBJPROP_WIDTH,width); 
+      //--- 前景（false）または背景（true）に表示 
+        ObjectSetInteger(0,name,OBJPROP_BACK,back); 
+      //--- 強調表示してチャンネルを移動するモードを有効（true）か無効（false）にする。 
+      //--- ObjectCreate 関数を使用してグラフィックオブジェクトを作成する際、オブジェクトは 
+      //--- デフォルトではハイライトされたり動かされたり出来ない。このメソッド内では、選択パラメータは 
+      //--- デフォルトでは true でハイライトと移動を可能にする。 
+        ObjectSetInteger(0,name,OBJPROP_SELECTABLE,selection); 
+         ObjectSetInteger(0,name,OBJPROP_SELECTED,selection); 
+      //--- オブジェクトの表示を左に延長するモードを有効（true）か無効（false）にする 
+        ObjectSetInteger(0,name,OBJPROP_RAY_LEFT,ray_left); 
+      //--- オブジェクトの表示を右に延長するモードを有効（true）か無効（false）にする 
+        ObjectSetInteger(0,name,OBJPROP_RAY_RIGHT,ray_right); 
+      //--- オブジェクトリストのグラフィックオブジェクトを非表示（true）か表示（false）にする 
+        ObjectSetInteger(0,name,OBJPROP_HIDDEN,hidden); 
+      //--- チャートのマウスクリックのイベントを受信するための優先順位を設定する 
+        ObjectSetInteger(0,name,OBJPROP_ZORDER,z_order);       
+   }
+}

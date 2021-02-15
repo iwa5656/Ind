@@ -28,6 +28,25 @@
 //debug call Lcn 2回エントリー
 //#define USE_debug_Lcn_2kaicall
 
+//----view fibo
+//#define USE_fibo_expansion_M5
+//#define USE_fibo_expansion_M15
+//#define USE_fibo_expansion_M30
+//#define USE_fibo_expansion_H1
+//#define USE_fibo_expansion_H4
+//#define USE_fibo_expansion_D1
+
+//#define USE_fibo_M5
+//#define USE_fibo_M15
+//#define USE_fibo_M30
+#define USE_fibo_H1
+#define USE_fibo_H4
+#define USE_fibo_D1
+
+
+
+
+
 //---------------------------
 //---------------------------
 
@@ -616,6 +635,13 @@ if(use_calc_pass_kako == true) {
                 int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
 //                int ret4 = p_allcandle.Oncalculate_Fractals(peri);
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+#ifdef USE_fibo_expansion_H1                
+                view_fibo_expansion(1,p_allcandle.get_candle_data_pointer(peri));
+#endif// USE_fibo_expansion_H1
+#ifdef USE_fibo_H1                
+                view_fibo(1,p_allcandle.get_candle_data_pointer(peri));
+#endif// USE_fibo_H1
+
 #ifdef USE_HYOUKA
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
@@ -682,6 +708,13 @@ if(use_calc_pass_kako == true) {
                 int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
                 //int ret4 = p_allcandle.Oncalculate_Fractals(peri);
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+#ifdef USE_fibo_expansion_H4                
+                view_fibo_expansion(1,p_allcandle.get_candle_data_pointer(peri));
+#endif// USE_fibo_expansion_H4                
+#ifdef USE_fibo_H4                
+                view_fibo(1,p_allcandle.get_candle_data_pointer(peri));
+#endif// USE_fibo_H4                
+
 #ifdef USE_HYOUKA                
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
@@ -709,6 +742,12 @@ if(use_calc_pass_kako == true) {
                 int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
                 int ret4 = p_allcandle.Oncalculate_Fractals(peri);
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+#ifdef USE_fibo_expansion_D1
+                view_fibo_expansion(1,p_allcandle.get_candle_data_pointer(peri));
+#endif// USE_fibo_expansion_D1
+#ifdef USE_fibo_D1
+                view_fibo(1,p_allcandle.get_candle_data_pointer(peri));
+#endif// USE_fibo_D1
 #ifdef USE_HYOUKA                
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
