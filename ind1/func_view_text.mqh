@@ -239,7 +239,7 @@ void OnStart()
 
  void view_kachi_make_cancel(int kind,datetime t,double p,string n,double pips){
     //kind 1勝　-1負け  0キャンセル
-    string name1;
+    //string name1;
     string objname1;
     string text;
     int font_size = 10;

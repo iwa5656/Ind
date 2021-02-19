@@ -25,9 +25,10 @@ void func2(double &dd[]){
     CopyBuffer(0,0,0,1,dd);
 }    
 
-
+int arrow_id;
 void OnInit()
   {
+  init_arrow_view();
   int i;
   	for(i=0;i<10;i++){
 		writestring_file("test.txt",IntegerToString(i),true);
@@ -49,10 +50,93 @@ int OnCalculate(const int rates_total,
                 )
   {
   
+  
+  test_arrow_view(time[0],close[0]);
+  
    return(rates_total);
   }
   
   
+  void init_arrow_view(void){
+   arrow_id=32;
+  }
+  void test_arrow_view(datetime t,double v){
+  
+   if(isNewBar(Symbol(),Period())==true){
+         if(arrow_id>255){arrow_id=32;}
+         
+         datetime time=TimeCurrent(); 
+         string up_arrow="up_arrow="+IntegerToString(arrow_id)+":"+TimeToString(time); 
+         double lastClose[1]; 
+         int close=CopyClose(Symbol(),Period(),0,1,lastClose);     // 終値を取得 
+      //--- 価格が取得された 
+        if(close>0) 
+           { 
+#ifdef delll           
+           ObjectCreate(0,up_arrow,OBJ_ARROW,0,0,0,0,0);         // 矢印を作成 
+          ObjectSetInteger(0,up_arrow,OBJPROP_ARROWCODE,arrow_id);   // 矢印のコードを作成 
+          ObjectSetInteger(0,up_arrow,OBJPROP_COLOR,clrWhite );
+          ObjectSetInteger(0,up_arrow,OBJPROP_TIME,time);       // 時間を設定 
+          ObjectSetDouble(0,up_arrow,OBJPROP_PRICE,lastClose[0]);// 価格を設定 
+//          ObjectSetInteger(0,up_arrow,OBJPROP_WIDTH,3);
+          ObjectSetInteger(0,up_arrow,OBJPROP_WIDTH,arrow_id%15);
+          ChartRedraw(0);                                       // 矢印を描画 
+          arrow_id++;
+ #endif //dell
+ 
+ 
+ double pos_offset=chgPips2price(5.0);//5pips その方向にずらす。
+ 
+ 
+           ObjectCreate(0,up_arrow,OBJ_ARROW,0,0,0,0,0);         // 矢印を作成 
+ 
+          ObjectSetInteger(0,up_arrow,OBJPROP_ARROWCODE,242);   // 矢印のコードを作成 
+          ObjectSetInteger(0,up_arrow,OBJPROP_COLOR,clrWhite );
+          ObjectSetInteger(0,up_arrow,OBJPROP_TIME,time);       // 時間を設定 
+          ObjectSetDouble(0,up_arrow,OBJPROP_PRICE,lastClose[0]+pos_offset*0);// 価格を設定 
+          ObjectSetInteger(0,up_arrow,OBJPROP_WIDTH,6);
+          ChartRedraw(0);                                       // 矢印を描画 
+ 
+            up_arrow=up_arrow+":2";
+           ObjectCreate(0,up_arrow,OBJ_ARROW,0,0,0,0,0);         // 矢印を作成 
+          ObjectSetInteger(0,up_arrow,OBJPROP_ARROWCODE,246);   // 矢印のコードを作成 
+          ObjectSetInteger(0,up_arrow,OBJPROP_COLOR,clrWhite );
+          ObjectSetInteger(0,up_arrow,OBJPROP_TIME,time);       // 時間を設定 
+          ObjectSetDouble(0,up_arrow,OBJPROP_PRICE,lastClose[0]+pos_offset*1);// 価格を設定 
+          ObjectSetInteger(0,up_arrow,OBJPROP_WIDTH,6);
+          ChartRedraw(0);                                       // 矢印を描画 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+          }
+   } 
+  }
+  
+  
+double chgPips2price(double d){return(d*Point()*10.0);}
+double chgPrice2Pips(double d){return(d/(Point()*10.0));}
+  
+  bool isNewBar(string symbol, ENUM_TIMEFRAMES tf)
+{
+   static datetime bartime = 0;
+   static long ticktime = 0;
+   MqlTick tick;
+   SymbolInfoTick(symbol, tick);
+   if(iTime(symbol, tf, 0) != bartime)
+   {
+      bartime = iTime(symbol, tf, 0);
+      ticktime = tick.time_msc;
+      return true;
+   }
+   else if(ticktime == tick.time_msc) return true;
+   return false;
+}
   
   //+------------------------------------------------------------------+ 
 //| テキスト記述を取得                                                    | 

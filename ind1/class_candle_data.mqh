@@ -8,6 +8,10 @@
 //#define USE_Debug_Check_zigzag_remake_after_samepoint	//同一方向を丸めた後、処理漏れがないかをチェック
 //#define USE_debug_zigzag_add_num_break_point	//Zigzag追加あるときのBreakPoint用
 //#define USE_debug_zigzag_check_make_c_after_samecheck //check zigzagdata格納が正しいか確認（ｃに格納とｂが同じかを確認）
+#define USE_view_Zigzag_chgpoint	//zigzagの線がどこで確定するかわかるようにする。
+//#define USE_zigzagLine_chg_style_kirikawari_hasenn //Zigzagラインを補足して、目線切り替わりを破線で表現する。
+#define USE_view_mesenkirikawari_arrow //目線切り替わりを矢印で表示　黒塗り斜めは目線切り替わり。中抜け矢印は続伸
+
 //------LCn利用
 #define USE_LCn	//目線確定Cnからの逆の目線発生後、Cn方向へ向いたときを検知する
 #define USE_debugLCn_Cn //debug用
@@ -97,6 +101,7 @@ enum EnSearchMode
 		int no;// Zigzag count.　ラインの右側（新しい時間の点のもの）
 		double up;//上のライン　価格
 		double dn;//下のライン　価格
+		int kind;//目線切り替わり１、続伸２、それ以外不定
 	};	
 	
 	
@@ -603,9 +608,13 @@ public:
     	int &idx1,
     	int &idx2
     );
+	void view_zigzag_chgpoint(int zigcount,datetime t,double v,datetime plottime,color cColor,int istyle,int iwidth);	
     void zigzagSetOtherInfo(int insert_idx,datetime t, double v);    
     int GetTimeColor(ENUM_TIMEFRAMES period);
     void set_zigzag_Zi_line(	int &idx1,	int &idx2);
+	void set_mesen_line_style(int right_idx,int mesen_dir);
+	void view_arrow(string name,datetime t,double v,int dir,int kind,int wide);
+
 	double Highest(const double&array[],int count,int start);
 	double Lowest(const double&array[],int count,int start);
 	string make_zig_objectname(		ENUM_TIMEFRAMES &period,		int idx1,		int idx2		);
@@ -875,6 +884,7 @@ public:
 				zigzagdata[now_zigzagcount-1].mesen.up = y1;
 				zigzagdata[now_zigzagcount-1].mesen.dn = y0;
 				zigzagdata[now_zigzagcount-1].mesen.no = now_zigzagcount;
+				zigzagdata[now_zigzagcount-1].mesen.kind = 1;//mesen切り替わり
 				
 				if(zigzagdata[now_zigzagcount-1].mesen.dir == 0 ){
 					zigzagdata[now_zigzagcount-1].mesen.dir = -1;
@@ -886,6 +896,7 @@ public:
 				zigzagdata[now_zigzagcount-1].mesen.up = y0;
 				zigzagdata[now_zigzagcount-1].mesen.dn = y1;
 				zigzagdata[now_zigzagcount-1].mesen.no = now_zigzagcount;
+				zigzagdata[now_zigzagcount-1].mesen.kind = 2;//mesen続伸
 				if(c0.no != now_zigzagcount){
 					flag_mesen_zokushin =true;
 				}
@@ -903,6 +914,7 @@ public:
 				zigzagdata[now_zigzagcount-1].mesen.up = y0;
 				zigzagdata[now_zigzagcount-1].mesen.dn = y1;
 				zigzagdata[now_zigzagcount-1].mesen.no = now_zigzagcount;
+				zigzagdata[now_zigzagcount-1].mesen.kind = 1;//mesen切り替わり
 				if(zigzagdata[now_zigzagcount-1].mesen.dir == 0 ){
 					zigzagdata[now_zigzagcount-1].mesen.dir = 1;
 					count_mesen_C++;
@@ -914,6 +926,7 @@ public:
 				zigzagdata[now_zigzagcount-1].mesen.up = y1;
 				zigzagdata[now_zigzagcount-1].mesen.dn = y0;
 				zigzagdata[now_zigzagcount-1].mesen.no = now_zigzagcount;
+				zigzagdata[now_zigzagcount-1].mesen.kind = 2;//mesen続伸
 				if(c0.no != now_zigzagcount){
 					flag_mesen_zokushin =true;
 				}
@@ -947,6 +960,7 @@ public:
 					CnStatusFlag=2;//続伸Cnが発生
 					Cn_zokusin_count++;
 				}
+				set_mesen_line_style(now_zigzagcount-1,zigzagdata[now_zigzagcount-1].mesen.dir);
 			}
 			
 		}
@@ -2438,9 +2452,126 @@ void candle_data::set_zigzag_Zi_line(
 	        viewstring//      string   text)      // text
 	);
 
+	#ifdef USE_view_Zigzag_chgpoint
+	//view_zigzag_chgpoint(int zigcount,datetime t,double v,datetime plottime)
+	view_zigzag_chgpoint(idx2,t2,p2,time[candle_bar_count-1],cColor,istyle,iwidth);
+
+	#endif//view_Zigzag_chgpoint
+	set_mesen_line_style(idx2,zigzagdata[idx2].mesen.dir);
+}
+void candle_data::set_mesen_line_style(int right_idx,int mesen_dir){
+    //Zigzagの線の見た目を目線によって変える（目線切り替わりのもののみ実施）
+    //上目線は途切れ線（長めの点線）、下目線は一点鎖線（細かい点線）
+    int idx1,idx2;
+    //if(right_idx<zigzagdata_count)
+	idx1=right_idx-1;
+	idx2=right_idx;
+    string name;
+
+	if(mesen_dir == 1||mesen_dir == -1){
+        name = make_zig_objectname(period,idx1,idx2);
+	}
+	//線の見た目を変える
+	#ifdef USE_zigzagLine_chg_style_kirikawari_hasenn
+    if(mesen_dir == 1){
+        ObjectSetInteger(0,name,OBJPROP_WIDTH,1);
+        ObjectSetInteger(0,name,OBJPROP_STYLE,STYLE_DASH);
+    }else if(mesen_dir == -1){
+        ObjectSetInteger(0,name,OBJPROP_WIDTH,1);
+        ObjectSetInteger(0,name,OBJPROP_STYLE,STYLE_DASHDOT);
+    }else{}
+	#endif//USE_zigzagLine_chg_style_kirikawari_hasenn
+
+	#ifdef USE_view_mesenkirikawari_arrow
+	double v=0.0;datetime t= 0;int viewkind=0;int wide=(int)PeriodToIndex(period);
+	if(zigzagdata[idx2].mesen.kind==1){//目線切り替わりしたばかりのZig
+		double peri_direct_pos_offset=0.0;
+      peri_direct_pos_offset=get_peri_direct_pos_offset(0.5, period ,mesen_dir);
+		//切り替わり方向を表示
+		v=zigzagdata[idx2].value+peri_direct_pos_offset;
+		t=zigzagdata[idx2].time;
+		viewkind = 1;
+		view_arrow("mesen chg"+name,t,v,mesen_dir,viewkind,wide);
+		//目線切り替わりの起点を表示
+		viewkind = 2;
+		v=zigzagdata[idx1].value+peri_direct_pos_offset;
+		t=zigzagdata[idx1].time;
+		view_arrow("mesen bas"+name,t,v,mesen_dir,viewkind,wide);
+	}
+	if(zigzagdata[idx2].mesen.kind==2){//続伸
+		double peri_direct_pos_offset=0.0;
+      peri_direct_pos_offset=get_peri_direct_pos_offset(1.0, period ,mesen_dir);
+		//続伸切り替わり方向を表示
+		v=zigzagdata[idx2].value+peri_direct_pos_offset;
+		t=zigzagdata[idx2].time;
+		viewkind = 3;
+		view_arrow("mesen zok"+name,t,v,mesen_dir,viewkind,wide);
+		//続伸の起点を表示
+		viewkind = 4;
+		v=zigzagdata[idx1].value+peri_direct_pos_offset;
+		t=zigzagdata[idx1].time;
+		view_arrow("mesen zbas"+name,t,v,mesen_dir,viewkind,wide);
+
+	}
+	#endif//USE_view_mesenkirikawari_arrow
 
 }
-
+void candle_data::view_arrow(string name,datetime t,double v,int dir,int kind,int wide){
+//kind 	１　目線が切り替わったZig、　　２ 目線切り替わりの起点
+//			３続伸の方向、　４続伸の起点
+//        5 起点を抜けたところにひく　細い上下矢印
+	int arrow_id=0;
+	if(kind==1){//目線切り替わり
+		if(dir ==1){
+			arrow_id=236;//斜め右上　塗りつぶし
+		}
+		else if(dir ==-1){
+			arrow_id=238;//斜め右下　塗りつぶし
+		}else{return;}
+	}else if(kind==2){
+		if(dir ==1){
+			arrow_id=233;
+		}else if(dir ==-1){
+			arrow_id=234;
+		}else{return;}
+	}else if(kind==3){//続伸の方向
+		if(dir ==1){
+			arrow_id=246;
+		}
+		else if(dir ==-1){
+			arrow_id=248;
+		}else{return;}
+	
+	}else if(kind==4){//続伸の起点
+		if(dir ==1){
+			arrow_id=241;
+		}
+		else if(dir ==-1){
+			arrow_id=242;
+		}else{return;}
+	}else if(kind==5){//起点を抜いたところに適応
+		if(dir ==1){
+			arrow_id=225;
+		}
+		else if(dir ==-1){
+			arrow_id=226;
+		}else{return;}
+	
+	}else{
+		return;
+	}
+	color cc=(color)GetTimeColor(period);
+           ObjectCreate(0,name,OBJ_ARROW,0,0,0,0,0);         // 矢印を作成 
+          ObjectSetInteger(0,name,OBJPROP_ARROWCODE,arrow_id);   // 矢印のコードを作成 
+          ObjectSetInteger(0,name,OBJPROP_COLOR,cc );
+          ObjectSetInteger(0,name,OBJPROP_TIME,t);       // 時間を設定 
+          ObjectSetDouble(0,name,OBJPROP_PRICE,v);// 価格を設定 
+          ObjectSetInteger(0,name,OBJPROP_WIDTH,wide);	
+}
+void	candle_data::view_zigzag_chgpoint(int zigcount,datetime t,double v,datetime plottime,color cColor,int istyle,int iwidth){
+		string name ="chgzigpoint zigc="+IntegerToString(zigcount)+TimeToString(plottime)+DoubleToString(v);
+		SetTline(0,name,0,t,v,t+60*15,v,cColor,istyle,iwidth+5,name);
+}
 //idxとPeriodで必要データの取得を行う
 bool candle_data::get_zigzagdata(
 	ENUM_TIMEFRAMES &p,

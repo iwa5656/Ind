@@ -203,8 +203,8 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
     candle_data *c_l=pac.get_candle_data_pointer(peri);
     int out_status=0,out_zigzagidx=0, out_dir=0;
     bool ret_isChg_mesen=false;
-    int paraCn_zigzagidx_ev;
-    ENUM_TIMEFRAMES paraCn_period_;
+    //int paraCn_zigzagidx_ev;
+    //ENUM_TIMEFRAMES paraCn_period_;
 
     if(c_h!=NULL && c_l!=NULL&&c_hh!=NULL){
      //チェックtpsl
@@ -222,8 +222,8 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
       double dd43=MathAbs(ay[4]-ay[3]);
       double dd32=MathAbs(ay[3]-ay[2]);
       double dd21=MathAbs(ay[2]-ay[1]);
-      int bb42=MathAbs((at[4]-at[2]));;
-      int bb41=MathAbs((at[4]-at[1]));;
+      int bb42=(int)MathAbs((at[4]-at[2]));;
+      int bb41=(int)MathAbs((at[4]-at[1]));;
 
       bool cond=false;
       cond =((dd54 >dd43)&&(dd54 >dd32)&&(dd54 >dd21)) &&
@@ -259,7 +259,7 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
 
 //          d.canceltime	=	at[1]+bb42*2;   // 4-2の幅以内
 //          d.canceltime	=	at[1]+bb41*2;   // 4-1 *2の幅以内
-          d.canceltime	=	at[1]+bb41*para_ct_ritu;   // 4-1 *2の幅以内  //★★
+          d.canceltime	=	(datetime)(at[1]+bb41*para_ct_ritu);   // 4-1 *2の幅以内  //★★
 //d.canceltime	=0;
           d.entryzigidx = c_l.zigzagdata_count-1;
           //登録
@@ -1512,7 +1512,7 @@ void view_fibo_expansion(int zigno,candle_data &c){
       ObjectMove(0,name,2,t3,v3);
    }else{
       //--- オブジェクトの色を設定 
-      color clr=c.GetTimeColor(c.period);
+      color clr=(color)c.GetTimeColor(c.period);
       //clr=clrRed;
       ObjectSetInteger(0,name,OBJPROP_COLOR,clr); 
       ObjectSetInteger(0,name,OBJPROP_LEVELCOLOR,clr); 
@@ -1568,7 +1568,7 @@ void view_fibo(int zigno,candle_data &c){
       ObjectMove(0,name,1,t2,v2);
    }else{
       //--- オブジェクトの色を設定 
-      color clr=c.GetTimeColor(c.period);
+      color clr=(color)c.GetTimeColor(c.period);
       //clr=clrRed;
       ObjectSetInteger(0,name,OBJPROP_COLOR,clr); 
       ObjectSetInteger(0,name,OBJPROP_LEVELCOLOR,clr); 

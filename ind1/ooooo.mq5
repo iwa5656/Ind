@@ -39,9 +39,9 @@
 //#define USE_fibo_M5
 //#define USE_fibo_M15
 //#define USE_fibo_M30
-#define USE_fibo_H1
-#define USE_fibo_H4
-#define USE_fibo_D1
+//#define USE_fibo_H1
+//#define USE_fibo_H4
+//#define USE_fibo_D1
 
 
 
