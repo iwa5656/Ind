@@ -119,6 +119,7 @@ public:
 	    //m_allcandle = parent;
 	    period = p;candle_bar_count=0;zigzagdata_count=0;new_bar_flag=false;
 	    sma_make_handle(20, handle_sma_20);sma_make_handle(8,handle_sma_8);
+		cci_make_handle(14, handle_cci);
 #ifdef USE_LCn
 		init_LCn();
 #endif //USE_LCn
@@ -132,6 +133,8 @@ public:
         //SMA
         int handle_sma_8;
         int handle_sma_20;
+		//CCI
+		int handle_cci;
         //zigzag
         #define ZIGZAG_BUFFER_MAX_NUM 300
         #define CANDLE_BUFFER_MAX_NUM ZIGZAG_BUFFER_MAX_NUM
@@ -660,6 +663,10 @@ public:
     void sma_make_handle(int mm,int &handle);//handle_sma作成
     bool sma_get_katamuki_now(int handle,double &katamuki,datetime &t);
     bool sma_get_value_now(int handle,double &ma,datetime &t);
+	//cci
+    void cci_make_handle(int mm,int &handle);//handle_sma作成
+    bool cci_get_value_now(int handle,double &ma,datetime &t);
+
 	bool get_zigzag_average_dist(int offset,double &out_dist);
 	bool get_zigzag_average_time(int offset,double &out);
     void calc_kakutei(){
@@ -2756,6 +2763,21 @@ bool candle_data::sma_get_value_now(int handle,double &v,datetime &t){
     v=ma[0];
     return true;
 }    
+//cci
+void candle_data::cci_make_handle(int ma_period,int &handle){//handle_sma作成
+    handle = iCCI(_Symbol,period,ma_period,PRICE_CLOSE); 
+    printf("maked_cci:"+PeriodToString(period)+"h="+IntegerToString(handle));
+}
+bool candle_data::cci_get_value_now(int handle,double &v,datetime &t){
+    double ma[];
+    int getnum = 1;
+    int iret = CopyBuffer( handle,0,t,getnum,ma);
+    if(iret < getnum){return false;}
+    
+    v=ma[0];
+    return true;
+} 
+
 bool candle_data::get_zigzag_average_dist(int offset,double &out_dist){
 //Zigzagのはじめを除く６辺の高さの平均価格
 	bool ret=false;
