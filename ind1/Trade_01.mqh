@@ -184,7 +184,121 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
 ////////////////////////////////////////////////    
 ////////////////////////////////////////////////    
 ////////////////////////////////////////////////  
-#define USE_trade_07
+
+#define USE_trade_08
+#ifdef USE_trade_08
+  bool isnew_bar=flagchgbarM15;
+  if(isnew_bar == true && b_during_test_piriod==true){
+
+
+    //最上位足の目線切り替わり？
+    ENUM_TIMEFRAMES peri_hh=PERIOD_H4;
+    //上位足の目線切り替わり？
+    ENUM_TIMEFRAMES peri_h=PERIOD_H1;
+    //ENUM_TIMEFRAMES 
+    peri=PERIOD_M15;
+
+
+    candle_data *c_hh=pac.get_candle_data_pointer(peri_hh);
+    candle_data *c_h=pac.get_candle_data_pointer(peri_h);
+    candle_data *c_l=pac.get_candle_data_pointer(peri);
+    int out_status=0,out_zigzagidx=0, out_dir=0;
+    bool ret_isChg_mesen=false;
+    //int paraCn_zigzagidx_ev;
+    //ENUM_TIMEFRAMES paraCn_period_;
+
+    if(c_h!=NULL && c_l!=NULL&&c_hh!=NULL){
+     //チェックtpsl
+        tpls_chk(v,t);
+        //フィルタ
+        int hh_ma_handle = c_hh.handle_sma_20;
+        double hh_ma_20_sma; 
+        c_hh.sma_get_value_now(hh_ma_handle,hh_ma_20_sma,t);
+        double hh_ma_20_sma_katamuki;
+        c_hh.sma_get_katamuki_now(hh_ma_handle,hh_ma_20_sma_katamuki,t);
+        bool filter1 = hh_ma_20_sma_katamuki>0 && hh_ma_20_sma < v;
+        if(filter1==true){
+          bool r=false;
+          int offset = 0;
+          r = get_ZigY_array_org(ay,peri,offset);
+          if(r==false){printf("not get ay");return;}
+          r = get_ZigX_array_org(at,peri,offset);
+          if(r==false){printf("not get at");return;}
+
+
+      
+          //エントリー時	type 2
+            double dd54=MathAbs(ay[5]-ay[4]);
+            double dd43=MathAbs(ay[4]-ay[3]);
+            double dd32=MathAbs(ay[3]-ay[2]);
+            double dd21=MathAbs(ay[2]-ay[1]);
+            int bb42=(int)MathAbs((at[4]-at[2]));;
+            int bb41=(int)MathAbs((at[4]-at[1]));;
+
+            bool cond=false;
+            cond =((dd54 >dd43)&&(dd54 >dd32)&&(dd54 >dd21)) &&
+                ((ay[5] >ay[4])&&(ay[5] >ay[3])&&(ay[5] >ay[2])&&(ay[5] >ay[1])) &&
+                ((ay[2] <ay[5])&&(ay[2] <ay[4])&&(ay[2] <ay[3])&&(ay[2] <ay[1])) &&
+                ((ay[1] >ay[3])&&(dd32*1.1 <dd21)) ;
+
+
+            double para_entryline=Inp_para_double1;//0-N
+            double para_tp_ritu=Inp_para_double2;//
+            double para_sl_ritu=Inp_para_double3;
+            double para_ct_ritu=Inp_para_double4;
+            if(cond==true){
+                struct_tpsl d;
+      //          double entryline=ay[4]+dd43*0.1;
+                double entryline=ay[4]+dd43*para_entryline;    //★★
+      //          double entryline=ay[4]+dd43*1;
+                d.entry	=	entryline;
+                d.dir	=	1;			//固定							
+      //          d.tp	=	dd21+ay[4];										
+      //          d.sl	=	ay[2]-dd32*0.2;
+                d.tp	=	dd21*para_tp_ritu+ay[4];					//★★					
+                d.sl	=	ay[2]-dd32*para_sl_ritu;
+                
+      //          d.sl	=	ay[2]-dd32*0.5;		//debug								
+                d.tp_pips	=	MathAbs(	chgPrice2Pips(d.tp-entryline));
+                d.sl_pips	=	MathAbs(	chgPrice2Pips(d.sl-entryline));									
+                    double ttt=0.0;if(d.tp_pips!=0){ttt=d.sl_pips/d.tp_pips;}else{ttt=9999;}												
+                d.tp_sl_hi	=	ttt;										
+                                                                    
+                c_l.get_oshimodoshi_ritu(c_l.zigzagdata_count-1,entryline,d.Cn_oshimodori);													
+                c_hh.get_oshimodoshi_ritu(c_hh.zigzagdata_count-1,entryline,d.joui_oshiodori);													
+
+      //          d.canceltime	=	at[1]+bb42*2;   // 4-2の幅以内
+      //          d.canceltime	=	at[1]+bb41*2;   // 4-1 *2の幅以内
+                d.canceltime	=	(datetime)(at[1]+bb41*para_ct_ritu);   // 4-1 *2の幅以内  //★★
+      //d.canceltime	=0;
+                d.entryzigidx = c_l.zigzagdata_count-1;
+                //登録
+                bool isreg=false;
+                isreg= tpsl_set_data_entryline_canceltime(d);
+
+                //view
+                if(isreg==true){
+                  string name1="tp:zig="+IntegerToString(c_l.zigzagdata_count)+"tp/sl="+DoubleToString(d.tp_pips/d.sl_pips);
+                  string name2="entry:zig="+IntegerToString(c_l.zigzagdata_count)+"oshi="+DoubleToString(d.Cn_oshimodori);
+                  string name3="sl:zig="+IntegerToString(c_l.zigzagdata_count);
+                  int cc=GetTimeColor(peri);
+                    datetime bt=24*15*60;
+                    TrendCreate(0,name1,0,at[1],d.tp    ,d.canceltime,d.tp,cc,STYLE_SOLID,4);
+                    TrendCreate(0,name2,0,at[1],d.entry ,d.canceltime,d.entry,cc,STYLE_SOLID,4);          
+                    TrendCreate(0,name3,0,at[1],d.sl    ,d.canceltime,d.sl,cc,STYLE_SOLID,4);   
+                    cc=cc;      
+                } 
+
+            }
+        }//filter1==true  
+      }
+  }
+#endif //USE_trade_08    
+////////////////////////////////////////////////    
+////////////////////////////////////////////////    
+////////////////////////////////////////////////    
+////////////////////////////////////////////////  
+//#define USE_trade_07
 #ifdef USE_trade_07
   bool isnew_bar=flagchgbarM15;
   if(isnew_bar == true && b_during_test_piriod==true){

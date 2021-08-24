@@ -24,6 +24,9 @@
 //tpsl
 #define USE_tpsl_view_ctr //tpslの結果＋エントリー情報を出力したい
 
+//cci debug use
+//#define debug_CCI_USE
+
 
 //debug call Lcn 2回エントリー
 //#define USE_debug_Lcn_2kaicall
@@ -580,7 +583,12 @@ if(use_calc_pass_kako == true) {
                                     #ifdef	USE_debug_Lcn_2kaicall
                                         printf(__FUNCTION__+"★M15　after calc_kakutei");
                                     #endif//USE_debug_Lcn_2kaicall
-
+#ifdef debug_CCI_USE
+                //debug
+                double val_cci=0.0;
+                p_allcandle.get_candle_data_pointer(peri).cci_get_value_now(val_cci,t);
+                val_cci=val_cci;
+#endif //debug_CCI_USE
 #ifdef USE_HYOUKA
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();

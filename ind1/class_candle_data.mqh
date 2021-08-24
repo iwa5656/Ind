@@ -119,6 +119,7 @@ public:
 	    //m_allcandle = parent;
 	    period = p;candle_bar_count=0;zigzagdata_count=0;new_bar_flag=false;
 	    sma_make_handle(20, handle_sma_20);sma_make_handle(8,handle_sma_8);
+		atr_make_handle(14, handle_atr);
 		cci_make_handle(14, handle_cci);
 #ifdef USE_LCn
 		init_LCn();
@@ -133,6 +134,8 @@ public:
         //SMA
         int handle_sma_8;
         int handle_sma_20;
+		//atr
+		int handle_atr;
 		//CCI
 		int handle_cci;
         //zigzag
@@ -663,10 +666,14 @@ public:
     void sma_make_handle(int mm,int &handle);//handle_sma作成
     bool sma_get_katamuki_now(int handle,double &katamuki,datetime &t);
     bool sma_get_value_now(int handle,double &ma,datetime &t);
+	//atr
+    void atr_make_handle(int mm,int &handle);//handle_作成
+    bool atr_get_value_now(double &ma,datetime &t);
 	//cci
-    void cci_make_handle(int mm,int &handle);//handle_sma作成
-    bool cci_get_value_now(int handle,double &ma,datetime &t);
-
+    void cci_make_handle(int mm,int &handle);//handle_作成
+    bool cci_get_value_now(double &ma,datetime &t);
+	bool cci_get_state_now(double &v,datetime &t,double upline,double dnline);
+	//
 	bool get_zigzag_average_dist(int offset,double &out_dist);
 	bool get_zigzag_average_time(int offset,double &out);
     void calc_kakutei(){
@@ -2490,7 +2497,7 @@ void candle_data::set_mesen_line_style(int right_idx,int mesen_dir){
 	#endif//USE_zigzagLine_chg_style_kirikawari_hasenn
 
 	#ifdef USE_view_mesenkirikawari_arrow
-	double v=0.0;datetime t= 0;int viewkind=0;int wide=(int)PeriodToIndex(period);
+	double v=0.0;datetime t= 0;int viewkind=0;int wide=(int)(PeriodToIndex(period)/4);
 	if(zigzagdata[idx2].mesen.kind==1){//目線切り替わりしたばかりのZig
 		double peri_direct_pos_offset=0.0;
       peri_direct_pos_offset=get_peri_direct_pos_offset(0.5, period ,mesen_dir);
@@ -2762,21 +2769,101 @@ bool candle_data::sma_get_value_now(int handle,double &v,datetime &t){
     
     v=ma[0];
     return true;
-}    
-//cci
-void candle_data::cci_make_handle(int ma_period,int &handle){//handle_sma作成
-    handle = iCCI(_Symbol,period,ma_period,PRICE_CLOSE); 
-    printf("maked_cci:"+PeriodToString(period)+"h="+IntegerToString(handle));
 }
-bool candle_data::cci_get_value_now(int handle,double &v,datetime &t){
+//atr
+void candle_data::atr_make_handle(int ma_period,int &handle){//handle_sma作成
+    handle = iATR(_Symbol,period,ma_period); 
+    printf("maked_atr:"+PeriodToString(period)+"h="+IntegerToString(handle));
+}
+bool candle_data::atr_get_value_now(double &v,datetime &t){
     double ma[];
     int getnum = 1;
-    int iret = CopyBuffer( handle,0,t,getnum,ma);
+    int iret = CopyBuffer( handle_atr,0,t,getnum,ma);
     if(iret < getnum){return false;}
     
     v=ma[0];
     return true;
-} 
+}
+
+//cci
+void candle_data::cci_make_handle(int ma_period,int &handle){//handle_sma作成
+    handle = iCCI(_Symbol,period,ma_period,PRICE_TYPICAL); 
+    printf("maked_cci:"+PeriodToString(period)+"h="+IntegerToString(handle));
+}
+bool candle_data::cci_get_value_now(double &v,datetime &t){
+    double ma[];
+    int getnum = 1;
+    int iret = CopyBuffer( handle_cci,0,t,getnum,ma);
+    if(iret < getnum){return false;}
+    
+    v=ma[0];
+
+	#ifdef debugcci
+		//debug 
+		int rrr=0;
+		bool retcci=false;
+		double vcci=0.0;
+		retcci = cci_get_state_now(vcci,t,100.0,-100.0);
+		rrr=(int)vcci;
+	#endif//debugcci
+
+    return true;
+}
+//up line dn line をまたいだか
+//戻り値
+#ifdef setumei
+		upより上
+		4	上
+		3	up	lineを上に跨いだ	中から↑へ
+		2	up	Line上
+		真ん中
+		1	up	lineを下へ跨いだ  ★＃↑から↓へ
+		0	中
+		-1	dn	lineを上に跨いだ　★＃↓から↑へ
+		-2	dn	Line上
+		dnより下
+		-3	dn	lineを下へ跨いだ
+		-4	下
+#endif //setumei
+bool candle_data::cci_get_state_now(double &v,datetime &t,double upline,double dnline){
+	// upline dnline 100,-100
+    double ar[];
+    int getnum = 3;
+    int iret = CopyBuffer( handle_cci,0,t,getnum,ar);
+    if(iret < getnum){return false;}
+	// ar[2] 一番新しい値
+	//　ar[0]　一番古い値　
+	if(ar[2]>upline){
+		if(ar[1]<upline){
+			v= 3;//3	up	lineを上に跨いだ	中から↑へ
+		}else{
+			v= 4;//4	上
+		}
+	}else if ( ar[2] < dnline){
+		if(ar[1]>dnline){
+			v=-3;//-3	dn	lineを下へ跨いだ
+		}else{
+			v=-4;//-4	下
+		}
+	}else if ( ar[2] <upline && ar[2] >dnline){
+		if(ar[1] >= upline){
+			v=1;//1	up	lineを下へ跨いだ   uekara nakahe
+		}else if(ar[1] <=dnline){
+			v=-1;//-1	dn	lineを上に跨いだ　　↓から↑へ
+		}else{
+			v=0;// 0	中
+		}
+	}else if ( ar[2]== upline){
+		v=2;//up	Line上
+	}else if ( ar[2] == dnline ){
+		v=-2;//dn	Line上
+	}else {
+		//arienai
+		printf(__FUNCTION__+"arienai");
+	}
+    return true;
+}
+
 
 bool candle_data::get_zigzag_average_dist(int offset,double &out_dist){
 //Zigzagのはじめを除く６辺の高さの平均価格
