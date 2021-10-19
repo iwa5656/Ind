@@ -776,7 +776,7 @@ double MethodPattern::get_ma_katamuki(int i,datetime &t,ENUM_TIMEFRAMES p){
     int h;bool bret=false;double k=0.0;
     if(i==0){h=c.handle_sma_8;}else{h=c.handle_sma_20;}
     if(c!=NULL){
-    	bret=c.sma_get_katamuki_now(h,k,t);
+    	bret=c.ma_get_katamuki_now(h,k,t);
     }
     if(bret == true){return k;}else{return(-1);}
 }
