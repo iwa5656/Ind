@@ -42,6 +42,9 @@ struct struct_pt_data{
 
 
 void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
+//debug
+//test_sturct_mesen_tyouten_mesenKirikawariKyouka();
+//debug end
     double ay[MAX_GET_ZIGZAGDATA_NUM+1];// 価格Zigzag　１からデータ入っている。０は使わない
     int aud[MAX_GET_ZIGZAGDATA_NUM+1];
     datetime at[MAX_GET_ZIGZAGDATA_NUM+1];
@@ -254,9 +257,9 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
         //フィルタ
         int hh_ma_handle = c_hh.handle_sma_20;
         double hh_ma_20_sma; 
-        c_hh.sma_get_value_now(hh_ma_handle,hh_ma_20_sma,t);
+        c_hh.ma_get_value_now(hh_ma_handle,hh_ma_20_sma,t);
         double hh_ma_20_sma_katamuki;
-        c_hh.sma_get_katamuki_now(hh_ma_handle,hh_ma_20_sma_katamuki,t);
+        c_hh.ma_get_katamuki_now(hh_ma_handle,hh_ma_20_sma_katamuki,t);
         bool filter1 = hh_ma_20_sma_katamuki>0 && hh_ma_20_sma < v;
         if(filter1==true){
           bool r=false;
@@ -369,9 +372,9 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
         //フィルタ
         int hh_ma_handle = c_hh.handle_sma_20;
         double hh_ma_20_sma; 
-        c_hh.sma_get_value_now(hh_ma_handle,hh_ma_20_sma,t);
+        c_hh.ma_get_value_now(hh_ma_handle,hh_ma_20_sma,t);
         double hh_ma_20_sma_katamuki;
-        c_hh.sma_get_katamuki_now(hh_ma_handle,hh_ma_20_sma_katamuki,t);
+        c_hh.ma_get_katamuki_now(hh_ma_handle,hh_ma_20_sma_katamuki,t);
         bool filter1 = hh_ma_20_sma_katamuki>0 && hh_ma_20_sma < v;
         if(filter1==true){
           bool r=false;

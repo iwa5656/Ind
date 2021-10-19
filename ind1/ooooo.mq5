@@ -2087,3 +2087,84 @@ void test_arrays(double &oo[]){
    oo[1]=oo[0]+1;
 }
 #endif//delll_debug
+
+
+
+//tmp 
+//頂点と境界を探すアルゴリズム								
+//data
+struct sturct_mesen_tyouten_mesenKirikawariKyouka{					
+        datetime t;				
+        double v;				
+        int zigidx;				
+    };
+sturct_mesen_tyouten_mesenKirikawariKyouka vtdata[3];
+void test_sturct_mesen_tyouten_mesenKirikawariKyouka(){
+    bool ret = false;
+    int out_dir=0;
+    int chk_zigcount;
+    allcandle *pac = p_allcandle;
+    if(pac==NULL){return;}
+    candle_data *c=pac.get_candle_data_pointer(PERIOD_M15);
+    if(c!=NULL){
+        chk_zigcount=c.zigzagdata_count;
+        if(c.zigzagdata_count >2000){
+            get_mesen_tyouten_mesenKirikawariKyoukai(PERIOD_M15,c.zigzagdata_count-1
+            ,5,vtdata);
+
+            int ma_handle = c.handle_sma_20;
+            double ma_sma_20_cal; 
+            bool rr=false;
+            datetime tt=c.get_now_time();
+            rr = c.ma_get_value_now(ma_handle,ma_sma_20_cal,tt);
+
+
+            double ma_sma_20,ma_ema_20;
+            //bool rr2,rr3;rr2=false;rr3=false;
+            ma_sma_20 = c.MAprice(20,MODE_SMA,0);
+            ma_ema_20 = c.MAprice(20,MODE_EMA,0);
+            printf( TimeToString( c.get_now_time()) +"①  ema="+DoubleToString(ma_ema_20)+"  sma="+DoubleToString(ma_sma_20));
+            printf( TimeToString( c.get_now_time()) +"②  sma="+DoubleToString(ma_sma_20_cal)+"  sma="+DoubleToString(ma_sma_20)+"sa="+DoubleToString(ma_sma_20_cal-ma_sma_20));
+        }
+    }
+}
+
+//	Zigidxを起点に、※頂点・目線切り替わり境界３つを探してくる							
+bool	get_mesen_tyouten_mesenKirikawariKyoukai(
+            ENUM_TIMEFRAMES period_,
+            int zigidx,//探す起点のidxを含んで過去を探す
+            int num,  //取得数
+            sturct_mesen_tyouten_mesenKirikawariKyouka &out_data[])
+{
+
+		//戻り値						
+		//	n個取得成功　true					
+		//	取得失敗	FALSE				
+    bool ret = false;
+    int out_dir=0;
+    int chk_zigcount;
+    allcandle *pac = p_allcandle;
+
+    candle_data *c=pac.get_candle_data_pointer(period_);
+    if(c!=NULL)
+    {
+        chk_zigcount=c.zigzagdata_count;
+        if(zigidx<chk_zigcount
+            && c.count_mesen_C >num)
+        {
+            //Cnを３つとってきてそれを起点に境界と頂点を探す
+       		struct_mesen_C mesen_cc[5];
+            //目線切り替わり付近からの頂点を取得する
+	        struct_mesen_tyouten cn_tyoutenn[5];
+
+            int i;
+            for(i=0;i<num;i++){
+                if(c.get_mesen_Cn_new(i,mesen_cc[i])==false){return false;}
+                if(c.get_mesen_tyoutenn(4, cn_tyoutenn)==false){return false;}
+            }
+        }    
+        bool r=false;
+            
+    }
+    return ret;
+}

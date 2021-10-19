@@ -103,6 +103,12 @@ enum EnSearchMode
 		double dn;//下のライン　価格
 		int kind;//目線切り替わり１、続伸２、それ以外不定
 	};	
+	struct struct_mesen_tyouten{
+		datetime t;//
+		double v;
+		int no;// Zigzag count.　ラインの右側（新しい時間の点のもの）
+		int dir;//1上、-1下方向, 0無効
+	};	
 	
 	
 	
@@ -118,7 +124,7 @@ public:
 //	candle_data(ENUM_TIMEFRAMES p,void *parent){
 	    //m_allcandle = parent;
 	    period = p;candle_bar_count=0;zigzagdata_count=0;new_bar_flag=false;
-	    sma_make_handle(20, handle_sma_20);sma_make_handle(8,handle_sma_8);
+	    sma_make_handle(20, handle_sma_20);sma_make_handle(8,handle_sma_8);ema_make_handle(200,handle_ema_200);
 		atr_make_handle(14, handle_atr);
 		cci_make_handle(14, handle_cci);
 #ifdef USE_LCn
@@ -134,6 +140,7 @@ public:
         //SMA
         int handle_sma_8;
         int handle_sma_20;
+		int handle_ema_200;
 		//atr
 		int handle_atr;
 		//CCI
@@ -154,6 +161,7 @@ public:
         	double ma_20_sma;
         	double ma_20_sma_katamuki;
         	double ma_kairi;
+			#ifdef USE_ZIZZAGDATA_bollinger_info
         	double b_sig3updn_pips;
         	double b_sig3updn_dist;
         	double b_sig;
@@ -163,7 +171,12 @@ public:
         	double b_3sig_dn;
         	double b_2sig_dn;
         	double b_1sig_dn;
-        	
+			#endif// USE_ZIZZAGDATA_bollinger_info
+        	//ema200
+			double ma_200_ema;
+        	double ma_200_ema_katamuki;
+			double ma_kairi_ma_200_ema;
+
         	//目線
         	struct_mesen_C mesen;
         };
@@ -662,10 +675,11 @@ public:
     ;
     bool get_new_bar_flag(void){return(new_bar_flag);};
     bool set_new_bar_flag(bool f){new_bar_flag = f;return true;};
-    //sma
+    //sma,ema
     void sma_make_handle(int mm,int &handle);//handle_sma作成
-    bool sma_get_katamuki_now(int handle,double &katamuki,datetime &t);
-    bool sma_get_value_now(int handle,double &ma,datetime &t);
+    void ema_make_handle(int mm,int &handle);//handle_sma作成
+    bool ma_get_katamuki_now(int handle,double &katamuki,datetime &t);
+    bool ma_get_value_now(int handle,double &ma,datetime &t);
 	//atr
     void atr_make_handle(int mm,int &handle);//handle_作成
     bool atr_get_value_now(double &ma,datetime &t);
@@ -796,6 +810,7 @@ public:
 		
 		for(int i = zigzagdata_count-1;i>0;i--){
 			if(zigzagdata[i].mesen.dir !=0){
+			//if(zigzagdata[i].mesen.dir !=0 && zigzagdata[i].mesen.kind !=2){//中途半端と続伸を飛ばし、切り替えだけを対象とする→mesen　kirikawariがあるのでそちらにする
 				if(finded_count == n){
 					ret = true;
 					id = i;
@@ -803,6 +818,7 @@ public:
 					cn.up = zigzagdata[i].mesen.up;
 					cn.dn = zigzagdata[i].mesen.dn;
 					cn.no = zigzagdata[i].mesen.no;
+					cn.kind = zigzagdata[i].mesen.kind;
 					
 					break;
 				}else{
@@ -852,6 +868,100 @@ public:
 		}
 		return ret;
 	}
+	//目線切り替わりの線分を取得する(続伸と中途半場は除く)
+	bool get_mesen_Cn_new(int n,struct_mesen_C &cn){
+		bool ret = false;
+		int finded_count = 0;
+		int id = 0;
+		if(zigzagdata_count ==0 ){return false;}
+		
+		for(int i = zigzagdata_count-1;i>0;i--){
+			if(zigzagdata[i].mesen.dir !=0&&zigzagdata[i].mesen.kind==1){
+				if(finded_count == n){
+					ret = true;
+					id = i;
+					cn.dir = zigzagdata[i].mesen.dir;
+					cn.up = zigzagdata[i].mesen.up;
+					cn.dn = zigzagdata[i].mesen.dn;
+					cn.no = zigzagdata[i].mesen.no;
+					cn.kind = zigzagdata[i].mesen.kind;
+					
+					break;
+				}else{
+					finded_count++;
+				}
+			}
+		}
+		return ret;
+	}
+	//n個分の　目線の切り替わり＋続伸の線分を取得する(中途半場は除く（切り替わり線分と続伸線分を取得）)
+	bool get_mesen_Cn_kirikawari_zokusin(int n,struct_mesen_C &cn){
+		bool ret = false;
+		int finded_count = 0;
+		int id = 0;
+		if(zigzagdata_count ==0 ){return false;}
+		
+		for(int i = zigzagdata_count-1;i>0;i--){
+			if(zigzagdata[i].mesen.dir !=0&&(zigzagdata[i].mesen.kind==1||zigzagdata[i].mesen.kind==2)){
+				if(finded_count < n){
+					
+					id = i;
+					cn.dir = zigzagdata[i].mesen.dir;
+					cn.up = zigzagdata[i].mesen.up;
+					cn.dn = zigzagdata[i].mesen.dn;
+					cn.no = zigzagdata[i].mesen.no;
+					cn.kind = zigzagdata[i].mesen.kind;
+					finded_count++;
+				}else{
+					ret = true;
+					break;
+				}
+			}
+		}
+		return ret;
+	}
+	//目線切り替わり付近からの頂点を取得する 過去n個分取得
+	bool get_mesen_tyoutenn(int n,struct_mesen_tyouten &cn[]){
+		bool ret = false;
+		int finded_count = 0;
+		int id = 0;
+		if(zigzagdata_count ==0 ){return false;}
+		
+		//一番初めの方向を取得する
+		int finded_first_dir=false;
+		int current_dir=0;
+		
+
+		for(int i = zigzagdata_count-1;i>0;i--){
+			//方向がどっちかを調査する→みつかったらcurrent_dirへ保持
+			if(finded_first_dir==false){
+				if(zigzagdata[i].mesen.dir==1 || zigzagdata[i].mesen.dir==-1){
+					finded_first_dir=true;
+					current_dir=zigzagdata[i].mesen.dir;
+				}
+			}else{//現在の方向と異なる続伸or確定が現れたとき、頂点とする
+				if(zigzagdata[i].mesen.dir !=0&&zigzagdata[i].mesen.dir !=current_dir&&
+					(zigzagdata[i].mesen.kind==1||zigzagdata[i].mesen.kind==2)
+						){
+					if(finded_count < n){
+						id = i;
+						cn[finded_count].dir = zigzagdata[i].mesen.dir;
+						cn[finded_count].v = zigzagdata[i].value;
+						cn[finded_count].t = zigzagdata[i].time;
+						cn[finded_count].no = zigzagdata[i].mesen.no;
+						current_dir=zigzagdata[i].mesen.dir;
+						finded_count++;
+						
+					}else{//n個見つかった後
+						ret = true;
+						break;
+					}
+				}
+
+			}
+		}
+		return ret;
+	}	
 	//Zigzag目線の更新処理、Zig目線フラグの更新
 	void calc_mesen_C(void){
 		bool flag_mesen_chg = false;//目線が変わった時True
@@ -909,8 +1019,11 @@ public:
 			}else if ( c0.up < y0 ){// 続伸
 				zigzagdata[now_zigzagcount-1].mesen.up = y0;
 				zigzagdata[now_zigzagcount-1].mesen.dn = y1;
-				zigzagdata[now_zigzagcount-1].mesen.no = now_zigzagcount;
-				zigzagdata[now_zigzagcount-1].mesen.kind = 2;//mesen続伸
+				//add 2021/09/28 Zig切り替わり後に値が変わったときにKindが切り替わりの１から続伸２に変わる不具合修正　同じZigはKind更新しない
+				if(zigzagdata[now_zigzagcount-1].mesen.no != now_zigzagcount){
+				   zigzagdata[now_zigzagcount-1].mesen.no = now_zigzagcount;
+   				zigzagdata[now_zigzagcount-1].mesen.kind = 2;//mesen続伸
+				}
 				if(c0.no != now_zigzagcount){
 					flag_mesen_zokushin =true;
 				}
@@ -939,8 +1052,11 @@ public:
 			}else if ( c0.dn > y0 ){// 続伸した？
 				zigzagdata[now_zigzagcount-1].mesen.up = y1;
 				zigzagdata[now_zigzagcount-1].mesen.dn = y0;
-				zigzagdata[now_zigzagcount-1].mesen.no = now_zigzagcount;
-				zigzagdata[now_zigzagcount-1].mesen.kind = 2;//mesen続伸
+				//add 2021/09/28 Zig切り替わり後に値が変わったときにKindが切り替わりの１から続伸２に変わる不具合修正　同じZigはKind更新しない
+				if(zigzagdata[now_zigzagcount-1].mesen.no != now_zigzagcount){
+   				zigzagdata[now_zigzagcount-1].mesen.no = now_zigzagcount;
+   				zigzagdata[now_zigzagcount-1].mesen.kind = 2;//mesen続伸
+   			}
 				if(c0.no != now_zigzagcount){
 					flag_mesen_zokushin =true;
 				}
@@ -2292,6 +2408,12 @@ void candle_data::zigzagSetOtherInfo(int insert_idx,datetime t,double v){// add 
 		double sig=0.0;
 		double ma = MAprice(ma_period,MODE_SMA,find_idx);
 		double ma_katamuki = MAkatamuki(ma_period,MODE_SMA,find_idx);
+
+		int ma_period_200_ema = 200;
+		double ma_200_ema=0.0;// = MAprice(ma_period_200_ema,MODE_EMA,find_idx);
+			ma_get_value_now(handle_ema_200,ma_200_ema,t);
+		double ma_katamuki_200_ema = MAkatamuki(ma_period_200_ema,MODE_EMA,find_idx);
+
 		sigma(ma_period,find_idx,out_ma,sig);
 		double bori_3sig_up=out_ma+sig*3;
 		double bori_2sig_up=out_ma+sig*2;
@@ -2303,7 +2425,9 @@ void candle_data::zigzagSetOtherInfo(int insert_idx,datetime t,double v){// add 
 		double sig3updn_dist = sig*6;
 		double sig3updn_pips = chgPrice2Pips(sig3updn_dist);
 		double ma_kairi=(v-ma)/100.00;
+		double ma_kairi_200_ema=MathAbs(v-ma_200_ema);//chgPrice2Pips(MathAbs(v-ma_200_ema));
 		
+		#ifdef USE_ZIZZAGDATA_bollinger_info
 		zigzagdata[insert_idx].b_1sig_dn=bori_1sig_dn;
 		zigzagdata[insert_idx].b_2sig_dn=bori_2sig_dn;
 		zigzagdata[insert_idx].b_3sig_dn=bori_3sig_dn;
@@ -2313,10 +2437,17 @@ void candle_data::zigzagSetOtherInfo(int insert_idx,datetime t,double v){// add 
 		zigzagdata[insert_idx].b_sig=sig;
 		zigzagdata[insert_idx].b_sig3updn_dist=sig3updn_dist;
 		zigzagdata[insert_idx].b_sig3updn_pips=sig3updn_pips;
+		#endif// USE_ZIZZAGDATA_bollinger_info
+
 		zigzagdata[insert_idx].ma_20_sma=ma;
 		zigzagdata[insert_idx].ma_20_sma_katamuki=ma_katamuki;
 		zigzagdata[insert_idx].ma_kairi=ma_kairi;
-		
+
+		zigzagdata[insert_idx].ma_200_ema=ma_200_ema;
+		zigzagdata[insert_idx].ma_200_ema_katamuki=ma_katamuki_200_ema;
+		zigzagdata[insert_idx].ma_kairi_ma_200_ema=ma_kairi_200_ema;
+
+
 	}
 }
 void candle_data::clean_up_arrays_zigzag(void){
@@ -2749,7 +2880,11 @@ void candle_data::sma_make_handle(int ma_period,int &handle){//handle_sma作成
     handle = iMA(_Symbol,period,ma_period,0,MODE_SMA,PRICE_CLOSE); 
     printf("maked_sma:"+PeriodToString(period)+"h="+IntegerToString(handle));
 }
-bool candle_data::sma_get_katamuki_now(int handle,double &katamuki,datetime &t){
+void candle_data::ema_make_handle(int ma_period,int &handle){//handle_ema作成
+    handle = iMA(_Symbol,period,ma_period,0,MODE_EMA,PRICE_CLOSE); 
+    printf("maked_ema:"+PeriodToString(period)+"h="+IntegerToString(handle));
+}
+bool candle_data::ma_get_katamuki_now(int handle,double &katamuki,datetime &t){
     double ma[];
     int getnum = 10;
     int iret = CopyBuffer( handle,0,t,getnum,ma);
@@ -2761,7 +2896,7 @@ bool candle_data::sma_get_katamuki_now(int handle,double &katamuki,datetime &t){
     //}
     return true;
 }
-bool candle_data::sma_get_value_now(int handle,double &v,datetime &t){
+bool candle_data::ma_get_value_now(int handle,double &v,datetime &t){
     double ma[];
     int getnum = 1;
     int iret = CopyBuffer( handle,0,t,getnum,ma);

@@ -1,202 +1,144 @@
-#include "lib\lib_file_func.mqh"
-#property indicator_chart_window
+#ifndef _LIB_XY_FUNC_
+#define _LIB_XY_FUNC_
 
-#property indicator_buffers 10
-#property indicator_plots   10
+struct real_point {
+  datetime t;
+  double v;
+};
+struct imi_point{
+  double x;
+  double y;
+};
 
-#include "lib\lib_xy_func.mqh"
-
-
-#ifdef delll
-   int a[];
-   int b[];
-   int gethairetu(int i){
-       if(i==0){
-           //return(a);
-           }else{ 
-   //        return(b);
-           }
-           return 0;
-   }
-   int inpp[5];
-   
-   void func(int &i){
-       i=100;
-   }
-   void func2(double &dd[]){
-       CopyBuffer(0,0,0,1,dd);
-   }    
-#endif //delll
-
-int arrow_id;
-void OnInit()
-  {
-  init_arrow_view();
-  int i;
-  	for(i=0;i<10;i++){
-		writestring_file("test.txt",IntegerToString(i),true);
-	}
-  
-printf("Oninit");
-  }
-
-int OnCalculate(const int rates_total,
-                const int prev_calculated,
-                const datetime &time[],
-                const double &open[],
-                const double &high[],
-                const double &low[],
-                const double &close[],
-                const long &tick_volume[],
-                const long &volume[],
-                const int &spread[]
-                )
-  {
-  
-  test11();
-  
-  test_arrow_view(time[0],close[0]);
-  test_main();
-   return(rates_total);
-  }
-  
-  
-  void init_arrow_view(void){
-   arrow_id=32;
-  }
-  void test_arrow_view(datetime t,double v){
-  
-   if(isNewBar(Symbol(),Period())==true){
-         if(arrow_id>255){arrow_id=32;}
-         
-         datetime time=TimeCurrent(); 
-         string up_arrow="up_arrow="+IntegerToString(arrow_id)+":"+TimeToString(time); 
-         double lastClose[1]; 
-         int close=CopyClose(Symbol(),Period(),0,1,lastClose);     // 終値を取得 
-      //--- 価格が取得された 
-        if(close>0) 
-           { 
-#ifdef delll           
-           ObjectCreate(0,up_arrow,OBJ_ARROW,0,0,0,0,0);         // 矢印を作成 
-          ObjectSetInteger(0,up_arrow,OBJPROP_ARROWCODE,arrow_id);   // 矢印のコードを作成 
-          ObjectSetInteger(0,up_arrow,OBJPROP_COLOR,clrWhite );
-          ObjectSetInteger(0,up_arrow,OBJPROP_TIME,time);       // 時間を設定 
-          ObjectSetDouble(0,up_arrow,OBJPROP_PRICE,lastClose[0]);// 価格を設定 
-//          ObjectSetInteger(0,up_arrow,OBJPROP_WIDTH,3);
-          ObjectSetInteger(0,up_arrow,OBJPROP_WIDTH,arrow_id%15);
-          ChartRedraw(0);                                       // 矢印を描画 
-          arrow_id++;
- #endif //dell
- 
- 
- double pos_offset=chgPips2price(5.0);//5pips その方向にずらす。
- 
- 
-           ObjectCreate(0,up_arrow,OBJ_ARROW,0,0,0,0,0);         // 矢印を作成 
- 
-          ObjectSetInteger(0,up_arrow,OBJPROP_ARROWCODE,242);   // 矢印のコードを作成 
-          ObjectSetInteger(0,up_arrow,OBJPROP_COLOR,clrWhite );
-          ObjectSetInteger(0,up_arrow,OBJPROP_TIME,time);       // 時間を設定 
-          ObjectSetDouble(0,up_arrow,OBJPROP_PRICE,lastClose[0]+pos_offset*0);// 価格を設定 
-          ObjectSetInteger(0,up_arrow,OBJPROP_WIDTH,6);
-          ChartRedraw(0);                                       // 矢印を描画 
- 
-            up_arrow=up_arrow+":2";
-           ObjectCreate(0,up_arrow,OBJ_ARROW,0,0,0,0,0);         // 矢印を作成 
-          ObjectSetInteger(0,up_arrow,OBJPROP_ARROWCODE,246);   // 矢印のコードを作成 
-          ObjectSetInteger(0,up_arrow,OBJPROP_COLOR,clrWhite );
-          ObjectSetInteger(0,up_arrow,OBJPROP_TIME,time);       // 時間を設定 
-          ObjectSetDouble(0,up_arrow,OBJPROP_PRICE,lastClose[0]+pos_offset*1);// 価格を設定 
-          ObjectSetInteger(0,up_arrow,OBJPROP_WIDTH,6);
-          ChartRedraw(0);                                       // 矢印を描画 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-          }
-   } 
-  }
-  
-  
-double chgPips2price(double d){return(d*Point()*10.0);}
-double chgPrice2Pips(double d){return(d/(Point()*10.0));}
-  
-  bool isNewBar(string symbol, ENUM_TIMEFRAMES tf)
-{
-   static datetime bartime = 0;
-   static long ticktime = 0;
-   MqlTick tick;
-   SymbolInfoTick(symbol, tick);
-   if(iTime(symbol, tf, 0) != bartime)
-   {
-      bartime = iTime(symbol, tf, 0);
-      ticktime = tick.time_msc;
-      return true;
-   }
-   else if(ticktime == tick.time_msc) return true;
-   return false;
+//線分と点の距離
+double cal_point_line_dist(real_point &a,real_point &b,real_point &c){
+  double ret=0;//距離線分abとｃとの距離
+  datetime Tk = a.t;
+  imi_point d,e,f;
+  chg_r2i(a,d,Tk);
+  chg_r2i(b,e,Tk);
+  chg_r2i(c,f,Tk);
+  ret = cal_point_line_dist_imi(d,e,f);
+  return(ret);
 }
-  
-  //+------------------------------------------------------------------+ 
-//| テキスト記述を取得                                                    | 
-//+------------------------------------------------------------------+ 
-string getUninitReasonText(int reasonCode) 
-  { 
-   string text=""; 
-//--- 
-   switch(reasonCode) 
-     { 
-     case REASON_ACCOUNT: 
-         text="Account was changed";break; 
-     case REASON_CHARTCHANGE: 
-         text="Symbol or timeframe was changed";break; 
-     case REASON_CHARTCLOSE: 
-         text="Chart was closed";break; 
-     case REASON_PARAMETERS: 
-         text="Input-parameter was changed";break; 
-     case REASON_RECOMPILE: 
-         text="Program "+__FILE__+" was recompiled";break; 
-     case REASON_REMOVE: 
-         text="Program "+__FILE__+" was removed from chart";break; 
-     case REASON_TEMPLATE: 
-         text="New template was applied to chart";break; 
-     default:text="Another reason"; 
-     } 
-//--- 
-   return text; 
-  } 
-//+------------------------------------------------------------------+ 
-//| エキスパート初期化解除に使用される関数                                    | 
-//+------------------------------------------------------------------+ 
-void OnDeinit(const int reason) 
-  { 
-//--- 初期化解除の理由のコード取得の方法その 1 
-   Print(__FUNCTION__,"_Uninitalization reason code = ",reason); 
-//--- 初期化解除の理由のコード取得の方法その 2  
-   Print(__FUNCTION__,"_UninitReason = ",getUninitReasonText(_UninitReason)); 
-  }  
+double cal_point_line_dist_imi(imi_point &d,imi_point &e,imi_point &f){
+  double ret=0;//距離線分deとfとの距離
+  if(d.x == e.x){    return ret;  }
+  double x1,y1,x2,y2,x0,y0;  x1=d.x;y1=d.y;  x2=e.x;y2=e.y;  x0=f.x;y0=f.y;
+  double arufa=(y2-y1)/(x2-x1);
+  double y_x0=arufa*x0-arufa*x1+y1;
+  ret = MathAbs(arufa*x0+(-1)*y0+((-1)*arufa*x1+y1))/MathSqrt(arufa*arufa+1);
+  return ret;
+}
 
-void test_main(){
+
+//線分abと点cの位置関係を知る(上か下か線上か？)
+int chk_point_line_upperordownside(real_point &a,real_point &b,real_point &c){
+  int ret=0;//上：1　下-1、　線分上0
+  datetime Tk = a.t;
+  imi_point d,e,f;
+  chg_r2i(a,d,Tk);
+  chg_r2i(b,e,Tk);
+  chg_r2i(c,f,Tk);
+  ret = chk_point_line_upperordownside_imi(d,e,f);
+  return ret;
+}
+int chk_point_line_upperordownside_imi(imi_point &d,imi_point &e,imi_point &f){
+  int ret=0;//上：1　下-1、　線分上0
+  if(d.x == e.x){    return ret;  }
+  double x1,y1,x2,y2,x0,y0;  x1=d.x;y1=d.y;  x2=e.x;y2=e.y;  x0=f.x;y0=f.y;
+  double arufa=(y2-y1)/(x2-x1);
+  double y_x0=arufa*x0-arufa*x1+y1;
+  if(y_x0 < y0){ret = 1;}else if(y_x0 > y0){ret = -1;}else{ret = 0;}
+  return ret;
+}
+//線分と線分から上方向に距離D離れた線分の間にあるかの判別
+int chk_point_lineAndLine_inner_upperD(real_point &a,real_point &b,real_point &c
+,double dist){
+  int ret=0;//０：外,　　1：中
+  datetime Tk = a.t;
+  imi_point d,e,f;
+  chg_r2i(a,d,Tk);
+  chg_r2i(b,e,Tk);
+  chg_r2i(c,f,Tk);
+  ret = chk_point_lineAndLine_inner_upperD_imi(d,e,f,dist);
+  return ret;
+}
+int chk_point_lineAndLine_inner_upperD_imi(imi_point &d,imi_point &e,imi_point &f
+,double dist){
+  int ret=0;//０：外,　　1：中
+  if(d.x == e.x){  /*x軸上なので別のやり方*/}
+  else{
+    //距離dist離れた数式を算出
+    double x1,y1,x2,y2,x0,y0;  x1=d.x;y1=d.y;  x2=e.x;y2=e.y;  x0=f.x;y0=f.y;
+    double arufa=(y2-y1)/(x2-x1);
+
+    double y_x0=arufa*x0-arufa*x1+y1;
+    double y_d_x0=arufa*x0 -arufa*x1+y1     +dist*MathSqrt(arufa*arufa+1);
+    //ｙ_d_x0  ＝ax+b ±Dist*sqrt（a^2+1）
+
+    if(y_x0<=y0 && y_d_x0>=y0){
+      ret = 1;//範囲内
+    }
+
+  }
+
+  return ret;
 
 }
 
-//+------------------------------------------------------------------+ 
-//| 関数                                    | 
-//+------------------------------------------------------------------+ 
-//+------------------------------------------------------------------+ 
-//| 登録                                    | 
-//+------------------------------------------------------------------+ 
-//+------------------------------------------------------------------+ 
-//| 登録Add                                    | 
-//+------------------------------------------------------------------+ 
-//bool add_pt(){}
 
-bool chg_t2x(datetime Tk,datetime inp_t, ENUM_TIMEFRAMES peri,int &out_bar_idx){
+
+
+//線分と線分から上下方向に距離D離れた線分の間にあるかの判別
+int chk_point_lineAndLine_inner_upperD_downD(real_point &a,real_point &b,real_point &c
+,double dist){
+  int ret=0;//０：外,　　1：中
+  datetime Tk = a.t;
+  imi_point d,e,f;
+  chg_r2i(a,d,Tk);
+  chg_r2i(b,e,Tk);
+  chg_r2i(c,f,Tk);
+  ret = chk_point_lineAndLine_inner_upperD_downD_imi(d,e,f,dist);
+  return ret;
+}
+int chk_point_lineAndLine_inner_upperD_downD_imi(imi_point &d,imi_point &e,imi_point &f
+,double dist){
+  int ret=0;//０：外,　　1：中
+  if(d.x == e.x){  /*x軸上なので別のやり方*/ }
+  else{
+    //距離dist離れた数式を算出
+    double x1,y1,x2,y2,x0,y0;  x1=d.x;y1=d.y;  x2=e.x;y2=e.y;  x0=f.x;y0=f.y;
+    double arufa=(y2-y1)/(x2-x1);
+
+//    double y_x0=arufa*x0-arufa*x1+y1;
+    double y_d_up_x0=arufa*x0 -arufa*x1+y1     +dist*MathSqrt(arufa*arufa+1);
+    double y_d_dn_x0=arufa*x0 -arufa*x1+y1     -dist*MathSqrt(arufa*arufa+1);
+    //ｙ_d_x0  ＝ax+b ±Dist*sqrt（a^2+1）
+
+    if(y_d_dn_x0<=y0 && y_d_up_x0>=y0){
+      ret = 1;//範囲内
+    }
+  }
+  return ret;
+}
+
+
+
+
+
+
+//リアル座標から意味座標へ変換
+bool chg_r2i(real_point &a,imi_point &o,datetime Tk){
+  bool ret=false;
+  o.y = a.v;
+  ret = chg_t2x(Tk,a.t,PERIOD_M5,o.x);
+  return ret;
+}
+
+
+//基準時間から指定時間inp_tにバーが何本あるか（Tkおなじなら０とする。その前の時間を-1とする）
+bool chg_t2x(datetime Tk,datetime inp_t, ENUM_TIMEFRAMES peri,double &out_bar_idx){
   bool ret=false;
   int t_per_bar=PeriodSeconds(peri);//1barの秒数
 
@@ -268,6 +210,7 @@ bool chg_t2x(datetime Tk,datetime inp_t, ENUM_TIMEFRAMES peri,int &out_bar_idx){
 			Inp	Tk,	基準となる時間				
 				bidx	インデックス（ｘ軸）			バーidx	bidx 0がTkと同じ時間　未来は＋、過去がマイナス
 				時間軸	peri	または　時間軸の一つのバーの秒数			
+#endif // comeentss        
 bool chg_x2t(datetime Tk,int bidx, ENUM_TIMEFRAMES peri,datetime &out_t){
   bool ret=false;
   int t_per_bar=PeriodSeconds(peri);//1barの秒数
@@ -333,8 +276,9 @@ bool chg_x2t(datetime Tk,int bidx, ENUM_TIMEFRAMES peri,datetime &out_t){
   }
   return ret;
 }
-#endif // comeentss        
 
+
+#ifdef del_test
 void test11(){
 bool ret;
 datetime Tk=D'2021.10.04 00:30:27';
@@ -469,51 +413,9 @@ datetime out_t=0;
   printf("---------------------\n");
 
 
-double x,y;
-double dist;
-
-imi_point d,e,f;
-d.x=0;d.y=0;e.x=1;e.y=1;f.x=-1;f.y=1;
-dist = MathSqrt(2);
-printf("outret="+chk_point_lineAndLine_inner_upperD_imi(d,e,f,dist)  +  "期待値＝1");
-
-
-d.x=0;d.y=0;e.x=1;e.y=1;f.x=0;f.y=0;
-dist = MathSqrt(2);
-printf("outret="+chk_point_lineAndLine_inner_upperD_imi(d,e,f,dist)  +  "期待値＝1");
-
-d.x=0;d.y=0;e.x=1;e.y=1;f.x=0.1;f.y=0;
-dist = MathSqrt(2);
-printf("outret="+chk_point_lineAndLine_inner_upperD_imi(d,e,f,dist)  +  "期待値＝0");
-
-d.x=0;d.y=0;e.x=1;e.y=1;f.x=0;f.y=-0.1;
-dist = MathSqrt(2);
-printf("outret="+chk_point_lineAndLine_inner_upperD_imi(d,e,f,dist)  +  "期待値＝0");
-
-
-d.x=0;d.y=0;e.x=1;e.y=1;f.x=-0.5;f.y=0.5;
-dist = MathSqrt(2);
-printf("outret="+chk_point_lineAndLine_inner_upperD_imi(d,e,f,dist)  +  "期待値＝1");
-
-
-
-//dist
-d.x=0;d.y=0;e.x=1;e.y=1;f.x=1;f.y=-1;
-printf("outret="+cal_point_line_dist_imi(d,e,f) +  "期待値＝ru-to2");
-;
-
-
-//
-real_point a,b,c;
-  Tk=    D'2021.10.11 00:00:27';
-  a.t= D'2021.10.01 00:00:00';
-  a.v=1.1000;
-
-  a.t= D'2021.10.01 01:00:00';
-  a.v=1.1020;
-
-
-
-
 
 }
+#endif// del_test
+
+
+#endif//_LIB_XY_FUNC_
