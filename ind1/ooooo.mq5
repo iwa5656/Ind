@@ -1,3 +1,5 @@
+#define  debug_20211101
+
 //---------------------------
 //----------option-------
 //---------------------------
@@ -188,6 +190,12 @@ input int tick_view_type = 0;//どの精度何桁？０がそのまま、１PiPs
 input double d_seido = 0.011; // eq精度.01JU.0001 price 1Pips
 // bar count
 long make_bar_count; // 最大　buffer_MAX
+
+//option input sono2
+input bool bUSE_view_mesenkirikawari_arrow = false;//目線切り替わりを矢印で表示　黒塗り斜めは目線切り替わり。中抜け矢印は続伸
+input bool bUSE_view_Zigzag_chgpoint = false;//zigzagの線がどこで確定するかわかるようにする。
+input bool bUSE_view_output_Cn_kirikawari= true;	//Cn　続伸、逆　をジャーナルにテキスト出力
+
 
 
 // test
@@ -781,6 +789,9 @@ if(use_calc_pass_kako == true) {
                         #ifdef	USE_debug_Lcn_2kaicall
                             printf(__FUNCTION__+"★after　chk_trade_forTick");
                         #endif//USE_debug_Lcn_2kaicall
+#ifdef debug_20211101
+//printf("chk_trade_forTick"+TimeToString(time[i]));
+#endif                         
         
     }    // for
     ///////
@@ -2128,7 +2139,140 @@ void test_sturct_mesen_tyouten_mesenKirikawariKyouka(){
         }
     }
 }
+void test_struct_mesen_info_chg_mesen_data1(){
+    test_struct_mesen_info_chg_mesen_data1_base(Inp_base_time_frame,1);//base TimeFrame
+    test_struct_mesen_info_chg_mesen_data1_base(PERIOD_H4,2);//H4 TimeFrame
+    
+}
+void test_struct_mesen_info_chg_mesen_data1_base(ENUM_TIMEFRAMES tf,int opt){
+  bool isnew_bar=flagchgbarM15;
+  static int  seiritu_zigcount=-1;
+  static int  pre_cond_zigcount=0;
+  
+   #ifdef debug_20211101
+  // printf("call #1test_struct_mesen_info_chg_mesen_data1");
+   #endif      
 
+  if(isnew_bar == true || true){//&& b_during_test_piriod==true){
+      //debug
+        //printf("debug call test_struct_mesen_info_chg_mesen_data1");
+
+   #ifdef debug_20211101
+  // printf("call #2test_struct_mesen_info_chg_mesen_data1");
+   #endif      
+
+
+    bool ret = false;
+    int out_dir=0;
+    int chk_zigcount;
+    allcandle *pac = p_allcandle;
+    if(pac==NULL){return;}
+    //candle_data *c=pac.get_candle_data_pointer(PERIOD_M15);
+    candle_data *c=pac.get_candle_data_pointer(tf);
+    
+    struct_mesen_info_chg_mesen_data1 o;
+    if(c!=NULL){
+        chk_zigcount=c.zigzagdata_count;
+        if(c.zigzagdata_count >10){
+   #ifdef debug_20211101
+   //printf("call #3test_struct_mesen_info_chg_mesen_data1");
+   #endif      
+
+#ifdef debug20211105
+if(c.zigzagdata_count == 310){
+c.zigzagdata_count =310;
+}else if(c.zigzagdata_count == 311){
+c.zigzagdata_count =311;
+}else if(c.zigzagdata_count == 312){
+c.zigzagdata_count =312;
+}else if(c.zigzagdata_count == 313){
+c.zigzagdata_count =313;
+
+}
+#endif//debug20211105
+
+
+            if(c.isChg_mesen2()==true  && seiritu_zigcount != c.zigzagdata_count){//目線が切り替わったばかりの時のみTrue
+                    #ifdef debug_20211101
+                    printf("call #33 "+  TimeToString(c.time[CANDLE_BUFFER_MAX_NUM-1]) +   "  test_struct_mesen_info_chg_mesen_data1");
+                    #endif      
+
+               seiritu_zigcount = c.zigzagdata_count;
+                ret = c.get_info_chg_mesen_data1( o);
+                if(ret == true){
+                    #ifdef debug_20211101
+                    printf("call #4 "+  TimeToString(c.time[CANDLE_BUFFER_MAX_NUM-1]) +   "  test_struct_mesen_info_chg_mesen_data1");
+                    #endif      
+
+
+                    //hyouji
+                    out_dir=1;
+                        string name;
+                        color clr;
+                        ENUM_LINE_STYLE style;//=STYLE_DOT     STYLE_DASHDOTDOT
+                        bool nuritubushi=true;
+                        int width = 3;
+                        if(o.dir == 1){
+                            name="MC"+"UP_"+PeriodToString(c.period)+"_"+IntegerToString(o.kiten_zig_idx);
+                            clr = clrHoneydew;
+                            style=STYLE_DOT;
+                        }else{
+                            name="MC"+"DN_"+PeriodToString(c.period)+"_"+IntegerToString(o.kiten_zig_idx);
+                            clr = clrPink;//clrOldLace;
+                            style=STYLE_DASHDOTDOT;
+                        }
+                        if(opt==1){//塗りつぶしあり
+                            nuritubushi=true;
+                        }else if(opt==2){//塗りつぶしなし
+                            nuritubushi=false;
+                        }
+
+                        RectangleCreate(0,name,0,
+                        o.kiten_t,o.tyouten_v,
+                        o.koetaten_t,o.koetaten_v,
+                        clr,
+                        style,
+                        width,
+                        nuritubushi,//四角形を色で塗りつぶす
+                        true,//背景で表示する
+                        true,//
+                        false//オブジェクトリストに隠す
+                        );
+                        string tt="Dn-1";
+                        if(o.dir==1){tt="Up+1 ";}
+                        printf("debbbbbbbbbbbbbbbbbbbbbbbbbbbb "+tt +" tyzg="+IntegerToString(o.tyouten_zig_idx)+"t="+TimeToString(o.koetaten_t));
+                }
+            }
+            
+            if(seiritu_zigcount + 3 == c.zigzagdata_count){
+                    if(pre_cond_zigcount!=c.zigzagdata_count){
+                       out_dir=2;
+                       pre_cond_zigcount=c.zigzagdata_count;
+                    }
+            
+            }else if(seiritu_zigcount + 5 ==  c.zigzagdata_count){
+                    if(pre_cond_zigcount!=c.zigzagdata_count){
+                       out_dir=3;
+                       pre_cond_zigcount=c.zigzagdata_count;
+                    }
+            
+            }else if(seiritu_zigcount + 7 == c.zigzagdata_count){
+                    if(pre_cond_zigcount!=c.zigzagdata_count){
+                       out_dir=4;
+                       pre_cond_zigcount=c.zigzagdata_count;
+                    }
+            
+            }
+            
+            
+        }
+    }
+
+
+  }
+
+        
+}
 //	Zigidxを起点に、※頂点・目線切り替わり境界３つを探してくる							
 bool	get_mesen_tyouten_mesenKirikawariKyoukai(
             ENUM_TIMEFRAMES period_,

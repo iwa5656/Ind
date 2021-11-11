@@ -1,0 +1,13 @@
+
+
+
+oooooo.mqh
+    include Trade_01.mqh
+
+
+        void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade)
+
+oooooo.mqh
+    OnCalculate
+        未確定の足の処理の時に実施
+            chk_trade_forTick

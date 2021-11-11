@@ -83,7 +83,7 @@
             printf("total:="+DoubleToString(winpips+losspips,2));
             printf("  期待値：="+DoubleToString(  kitaichi  ));
             printf("  PF値　：="+DoubleToString(  pf  ));
-            printf("  タープの期待値：負けトレード１通貨あたりの期待値="+DoubleToString(kitaichi/(losspips*(-1))));
+            if(losspips!=0){            printf("  タープの期待値：負けトレード１通貨あたりの期待値="+DoubleToString(kitaichi/(losspips*(-1)))); }else{printf("");}
             printf("  勝率：="+DoubleToString(  syouritu  ));
             printf("  商い数：="+IntegerToString(  win_count+loss_count  ));
             printf("  勝ち数：="+IntegerToString(  win_count  ));

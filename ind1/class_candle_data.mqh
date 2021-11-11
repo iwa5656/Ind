@@ -18,7 +18,7 @@
 //------押し戻し率
 #define USE_oshimodoshi_ritu
 //------
-//#define USE_view_output_Cn_kirikawari	//Cn　続伸、逆　をジャーナルにテキスト出力
+#define USE_view_output_Cn_kirikawari	//Cn　続伸、逆　をジャーナルにテキスト出力
 
 
 #include <_inc\\My_function_lib2.mqh>
@@ -109,6 +109,13 @@ enum EnSearchMode
 		int no;// Zigzag count.　ラインの右側（新しい時間の点のもの）
 		int dir;//1上、-1下方向, 0無効
 	};	
+	struct struct_mesen_info_chg_mesen_data1{//目線切り替わったときの情報：切り替わりの起点座標、頂点座標、超えた座標 (表示用)
+		datetime kiten_t,tyouten_t,koetaten_t;
+		double kiten_v,tyouten_v,koetaten_v;
+		int dir;//切り替わり後の方向：-1下方向、1上方向
+		int kiten_zig_idx;
+		int tyouten_zig_idx;
+	};
 	
 	
 	
@@ -1073,10 +1080,10 @@ public:
 			// 以前通知したものと異なるなら、変化ありとする。
 				// フラグの有効にするのは、Cnの数がXX以上になってからとする（初回が仮なので、間違っている可能性あり）
 			if(count_mesen_C > 2){// xx=6
-				
+				CnStatusFlag=0;//add 2021/11/02　変化があるときのみ1or2としたいため
 				if(flag_mesen_chg == true){
 					#ifdef USE_view_output_Cn_kirikawari
-					printf("「"+PeriodToString(period)+";"+"逆へ"+IntegerToString(zigzagdata[now_zigzagcount-1].mesen.dir)+"」");
+					if(bUSE_view_output_Cn_kirikawari==true){	printf("「"+PeriodToString(period)+";"+"逆へ"+IntegerToString(zigzagdata[now_zigzagcount-1].mesen.dir)+"」"+TimeToString(zigzagdata[now_zigzagcount-1].time)+"zig="+IntegerToString(now_zigzagcount-1));}
 					#endif// USE_view_output_Cn_kirikawari
 				    zigzag_mesen_chg_at_count_mesen_C= now_zigzagcount;
 					CnStatusFlag=1;//逆のCn発生
@@ -1084,7 +1091,7 @@ public:
 				}
 				if(flag_mesen_zokushin == true){
 					#ifdef USE_view_output_Cn_kirikawari
-					printf("「"+PeriodToString(period)+";"+"続伸"+"」");
+					if(bUSE_view_output_Cn_kirikawari==true){	printf("「"+PeriodToString(period)+";"+"続伸"+"」"+TimeToString(zigzagdata[now_zigzagcount-1].time));}
 					#endif// USE_view_output_Cn_kirikawari
 					zigzag_mesen_chg_at_count_mesen_C= now_zigzagcount;
 					CnStatusFlag=2;//続伸Cnが発生
@@ -1096,12 +1103,102 @@ public:
 		}
 
 	}
+	//目線切り替わったときの情報を取得：切り替わりの起点座標、頂点座標、超えた座標 (表示用)
+	bool get_info_chg_mesen_data1(struct_mesen_info_chg_mesen_data1 &o){
+		datetime kiten_t,tyouten_t,koetaten_t;
+		double kiten_v,tyouten_v,koetaten_v;
+		int after_mesen_dir=0;
+		bool ret=false;
+		//一つ前の頂点の取得→右側のZig（頂点座標）と左側のZig（起点座標）、300ほんのキャンドルから検索
+		//方向は？
+		//目線切り替わり付近からの頂点を取得する 過去n個分取得
+		struct_mesen_tyouten cn[1];
+		bool ret2=false;
+		if( get_mesen_tyoutenn(1,cn) == true){
+			tyouten_t=cn[0].t;//
+			tyouten_v=cn[0].v;
+				//cn[0].no;// Zigzag count.　ラインの右側（新しい時間の点のもの）
+			
+			after_mesen_dir = (-1)*cn[0].dir;//1上、-1下方向, 0無効
+
+			int left_zigidx=cn[0].no-1-1;
+			if(left_zigidx >=0 && zigzagdata_count>left_zigidx){
+				//左側のZig取得
+				kiten_v=zigzagdata[left_zigidx].value;
+				kiten_t=zigzagdata[left_zigidx].time;
+				//zigzagdata[left_zigidx].kind;//peak 1 , bottom -1
+
+				//#超えたバーを探す
+				//##起点座標idxを見つける。そこから起点を超えたidxを探す。見つからないときは失敗
+				//###起点座標idxを見つける
+				int kiten_idx=-1;
+				int koetaten_idx=-1;
+				int i;
+				i=CANDLE_BUFFER_MAX_NUM-1;
+				if(candle_bar_count<CANDLE_BUFFER_MAX_NUM){
+					i=candle_bar_count-1;
+				}
+				for(;i>0;i--){
+					 if(time[i-1]<kiten_t    &&     kiten_t<=time[i]){
+						 kiten_idx=i;
+						 break;
+					 }
+				}
+
+				//そこから起点を超えたidxを探す
+				if(kiten_idx!=-1){
+   				for(i=kiten_idx+1;i<CANDLE_BUFFER_MAX_NUM && candle_bar_count>i;i++){
+   					if(after_mesen_dir == 1){
+   						if(high[i-1]<=kiten_v && kiten_v < high[i] ){
+   							koetaten_idx=i;
+   							break;
+   						}
+   					}else{
+   						if(low[i-1]>=kiten_v && kiten_v > low[i] ){
+   							koetaten_idx=i;
+   							break;
+   						}
+   					}
+   				}
+   				if(koetaten_idx!=-1){
+   					koetaten_v = close[koetaten_idx];
+   					koetaten_t = time[koetaten_idx];
+   					ret=true;
+   
+   					//結果の出力
+   					o.kiten_v=kiten_v;o.koetaten_v=koetaten_v;o.tyouten_v=tyouten_v;
+   					o.kiten_t=kiten_t;o.koetaten_t=koetaten_t;o.tyouten_t=tyouten_t;
+   					o.dir = after_mesen_dir;
+   					o.kiten_zig_idx=left_zigidx;
+   					o.tyouten_zig_idx=left_zigidx+1;
+   				}
+   			}
+			}else{
+			   //kitennga遠いので見つけられない
+			   ret = false;
+			}
+		}
+		return ret;
+	}
+
+
+	bool isChg_mesen2(){//目線が切り替わったばかりの時のみTrue
+		bool ret=false;
+//		if(CnStatusFlag!=pre_CnStatusFlag && CnStatusFlag==1)
+		if(CnStatusFlag==1)
+		{
+			ret = true;
+		}
+		return ret;
+	}
+
+
 	bool isChg_mesen(int &out_status,int &out_zigzagidx,int &out_dir){
 		//目線がきりかわった、変化があった　true.　　　目線の切り替わりなしは　false
 		// Status  目線切り替わり１、続伸２
 		//zigzagidxを返す
 		bool ret=false;
-		if(CnStatusFlag!=pre_CnStatusFlag || Cn_zokusin_count !=Pre_Cn_zokusin_count)
+		if((CnStatusFlag!=pre_CnStatusFlag && CnStatusFlag!=0) || Cn_zokusin_count !=Pre_Cn_zokusin_count)
 		{
 			ret = true;
 			out_status = CnStatusFlag;
@@ -2598,9 +2695,10 @@ void candle_data::set_zigzag_Zi_line(
 	);
 
 	#ifdef USE_view_Zigzag_chgpoint
-	//view_zigzag_chgpoint(int zigcount,datetime t,double v,datetime plottime)
-	view_zigzag_chgpoint(idx2,t2,p2,time[candle_bar_count-1],cColor,istyle,iwidth);
-
+	if(bUSE_view_Zigzag_chgpoint==true){
+		//view_zigzag_chgpoint(int zigcount,datetime t,double v,datetime plottime)
+		view_zigzag_chgpoint(idx2,t2,p2,time[candle_bar_count-1],cColor,istyle,iwidth);
+	}
 	#endif//view_Zigzag_chgpoint
 	set_mesen_line_style(idx2,zigzagdata[idx2].mesen.dir);
 }
@@ -2628,35 +2726,37 @@ void candle_data::set_mesen_line_style(int right_idx,int mesen_dir){
 	#endif//USE_zigzagLine_chg_style_kirikawari_hasenn
 
 	#ifdef USE_view_mesenkirikawari_arrow
-	double v=0.0;datetime t= 0;int viewkind=0;int wide=(int)(PeriodToIndex(period)/4);
-	if(zigzagdata[idx2].mesen.kind==1){//目線切り替わりしたばかりのZig
-		double peri_direct_pos_offset=0.0;
-      peri_direct_pos_offset=get_peri_direct_pos_offset(0.5, period ,mesen_dir);
-		//切り替わり方向を表示
-		v=zigzagdata[idx2].value+peri_direct_pos_offset;
-		t=zigzagdata[idx2].time;
-		viewkind = 1;
-		view_arrow("mesen chg"+name,t,v,mesen_dir,viewkind,wide);
-		//目線切り替わりの起点を表示
-		viewkind = 2;
-		v=zigzagdata[idx1].value+peri_direct_pos_offset;
-		t=zigzagdata[idx1].time;
-		view_arrow("mesen bas"+name,t,v,mesen_dir,viewkind,wide);
-	}
-	if(zigzagdata[idx2].mesen.kind==2){//続伸
-		double peri_direct_pos_offset=0.0;
-      peri_direct_pos_offset=get_peri_direct_pos_offset(1.0, period ,mesen_dir);
-		//続伸切り替わり方向を表示
-		v=zigzagdata[idx2].value+peri_direct_pos_offset;
-		t=zigzagdata[idx2].time;
-		viewkind = 3;
-		view_arrow("mesen zok"+name,t,v,mesen_dir,viewkind,wide);
-		//続伸の起点を表示
-		viewkind = 4;
-		v=zigzagdata[idx1].value+peri_direct_pos_offset;
-		t=zigzagdata[idx1].time;
-		view_arrow("mesen zbas"+name,t,v,mesen_dir,viewkind,wide);
+	if(bUSE_view_mesenkirikawari_arrow==true){
+		double v=0.0;datetime t= 0;int viewkind=0;int wide=(int)(PeriodToIndex(period)/4);
+		if(zigzagdata[idx2].mesen.kind==1){//目線切り替わりしたばかりのZig
+			double peri_direct_pos_offset=0.0;
+		peri_direct_pos_offset=get_peri_direct_pos_offset(0.5, period ,mesen_dir);
+			//切り替わり方向を表示
+			v=zigzagdata[idx2].value+peri_direct_pos_offset;
+			t=zigzagdata[idx2].time;
+			viewkind = 1;
+			view_arrow("mesen chg"+name,t,v,mesen_dir,viewkind,wide);
+			//目線切り替わりの起点を表示
+			viewkind = 2;
+			v=zigzagdata[idx1].value+peri_direct_pos_offset;
+			t=zigzagdata[idx1].time;
+			view_arrow("mesen bas"+name,t,v,mesen_dir,viewkind,wide);
+		}
+		if(zigzagdata[idx2].mesen.kind==2){//続伸
+			double peri_direct_pos_offset=0.0;
+		peri_direct_pos_offset=get_peri_direct_pos_offset(1.0, period ,mesen_dir);
+			//続伸切り替わり方向を表示
+			v=zigzagdata[idx2].value+peri_direct_pos_offset;
+			t=zigzagdata[idx2].time;
+			viewkind = 3;
+			view_arrow("mesen zok"+name,t,v,mesen_dir,viewkind,wide);
+			//続伸の起点を表示
+			viewkind = 4;
+			v=zigzagdata[idx1].value+peri_direct_pos_offset;
+			t=zigzagdata[idx1].time;
+			view_arrow("mesen zbas"+name,t,v,mesen_dir,viewkind,wide);
 
+		}
 	}
 	#endif//USE_view_mesenkirikawari_arrow
 

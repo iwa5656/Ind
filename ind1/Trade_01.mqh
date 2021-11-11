@@ -44,6 +44,12 @@ struct struct_pt_data{
 void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
 //debug
 //test_sturct_mesen_tyouten_mesenKirikawariKyouka();
+    //debug
+   #ifdef debug_20211101
+   //printf("call pre test_struct_mesen_info_chg_mesen_data1");
+   #endif      
+    test_struct_mesen_info_chg_mesen_data1();
+    //debug
 //debug end
     double ay[MAX_GET_ZIGZAGDATA_NUM+1];// 価格Zigzag　１からデータ入っている。０は使わない
     int aud[MAX_GET_ZIGZAGDATA_NUM+1];
@@ -190,7 +196,7 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
 ////////////////////////////////////////////////    
 ////////////////////////////////////////////////  
 
-#define USE_trade_00
+//#define USE_trade_00 //rand ランダム
 #ifdef USE_trade_00
   bool isnew_bar=flagchgbarM15;
   if(isnew_bar == true && b_during_test_piriod==true){
