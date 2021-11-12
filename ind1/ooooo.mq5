@@ -196,6 +196,8 @@ input bool bUSE_view_mesenkirikawari_arrow = false;//目線切り替わりを矢
 input bool bUSE_view_Zigzag_chgpoint = false;//zigzagの線がどこで確定するかわかるようにする。
 input bool bUSE_view_output_Cn_kirikawari= true;	//Cn　続伸、逆　をジャーナルにテキスト出力
 
+input bool bUSE_view_Fractals_Day= false;	//日足にあたるFractal（高値、安値を表示）
+
 
 
 // test
@@ -756,7 +758,9 @@ if(use_calc_pass_kako == true) {
                 bool rr = p_allcandle.add_new_bar( peri,t);// ローソク作成
                 //Zigzag作成処理　足確定した分を渡す（ここでは1つ分）　　　　　　　・・・確定、未確定のイメージ
                 int ret3 = p_allcandle.Oncalculate_ZIGZAG(peri);
-                int ret4 = p_allcandle.Oncalculate_Fractals(peri);
+                if(bUSE_view_Fractals_Day==true){
+                    int ret4 = p_allcandle.Oncalculate_Fractals(peri);
+                }
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
 #ifdef USE_fibo_expansion_D1
                 view_fibo_expansion(1,p_allcandle.get_candle_data_pointer(peri));
