@@ -5,6 +5,9 @@
 #ifdef USE_MYFUNC_IND_ENTRY_EXIT
 #include <_inc\\動的エントリー監視LIB\\Lib_Myfunc_Ind_entry_exit.mqh>
 #endif//USE_MYFUNC_IND_ENTRY_EXIT
+
+#include "..\candle_pattern\pt_Lib.mqh"
+
 allcandle *pac;//allcandle pointer
 bool flag_is_entry;//エントリー中か　trueエントリー中　false未エントリー
 bool b_ok_entry;
@@ -1252,7 +1255,8 @@ bool chk_pt_heikou(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
           double gosabairitu=0.2;//平均Zig高さの何パーセントか？（誤差率）1で１００％
           double ave_zigheikin_value;
           r1=c.get_zigzag_average_dist(0,ave_zigheikin_value);
-          r2=c.Is_3point_same_online((double)at[6],ay[6],(double)at[4],ay[4],(double)at[2],ay[2], chgPrice2Pips(ave_zigheikin_value*gosabairitu));
+          //r2=c.Is_3point_same_online((double)at[6],ay[6],(double)at[4],ay[4],(double)at[2],ay[2], chgPrice2Pips(ave_zigheikin_value*gosabairitu));
+          r2=Is_3point_same_online((double)at[6],ay[6],(double)at[4],ay[4],(double)at[2],ay[2], chgPrice2Pips(ave_zigheikin_value*gosabairitu));
           if(r1==true&&r2==true){// 直線上にある
             if(pt_katachi_tmp == 61){
               pt_katachi_tmp = 71;//下向きで下辺3点が直線上にある
@@ -1265,7 +1269,8 @@ bool chk_pt_heikou(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
               pt_katachi = pt_katachi_tmp;
               zigcount=c.zigzagdata_count-offset;            
             bool r3=false;
-            r3=c.Is_heikou_2line((double)at[6],ay[6],(double)at[2],ay[2],(double)at[5],ay[5],(double)at[3],ay[3]);
+            //r3=c.Is_heikou_2line((double)at[6],ay[6],(double)at[2],ay[2],(double)at[5],ay[5],(double)at[3],ay[3]);
+            r3=Is_heikou_2line((double)at[6],ay[6],(double)at[2],ay[2],(double)at[5],ay[5],(double)at[3],ay[3]);
             if(r3==true){//平行？
               if(pt_katachi_tmp == 71){
                 pt_katachi_tmp = 70;//下向き平行（下辺3点と上辺2点）
@@ -1277,7 +1282,8 @@ bool chk_pt_heikou(ENUM_TIMEFRAMES period_,int &zigcount,int &pt_katachi){
               pt_katachi = pt_katachi_tmp;
               zigcount=c.zigzagdata_count-offset;
             }else{//拡大？スクイーズ？
-              int ttt=c.get_heikou_2line_katamuki_kannkei((double)at[6],ay[6],(double)at[2],ay[2],(double)at[5],ay[5],(double)at[3],ay[3]);
+//              int ttt=c.get_heikou_2line_katamuki_kannkei((double)at[6],ay[6],(double)at[2],ay[2],(double)at[5],ay[5],(double)at[3],ay[3]);
+              int ttt=get_heikou_2line_katamuki_kannkei((double)at[6],ay[6],(double)at[2],ay[2],(double)at[5],ay[5],(double)at[3],ay[3]);
               if(ttt == -1){//-1スクイーズ
                 if(pt_katachi_tmp == 71){
                   pt_katachi_tmp = 72;//下向きスクイーズ（下辺3点と上辺2点）

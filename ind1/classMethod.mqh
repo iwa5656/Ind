@@ -413,7 +413,9 @@ bool    MethodPattern::add_hyouka_data(void){
 		hyouka_data[hyouka_data_num].min = 0.0;
         hyouka_data[hyouka_data_num].status = 1;
         hyouka_data[hyouka_data_num].reg_zigzagcount = candle.zigzagdata_count;
+#ifdef USE_pt_range_flag_sup        
         hyouka_data[hyouka_data_num].reg_patterncount = candle.pt_range_data_count;
+#endif // USE_pt_range_flag_sup
 		//zigzag data 1-7 wo v[1]から格納
 		int n=1;
 		for(int i = candle.zigzagdata_count-1; i>(candle.zigzagdata_count-1-8);i--){
