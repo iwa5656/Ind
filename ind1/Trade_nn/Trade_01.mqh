@@ -1,6 +1,6 @@
 //トレードファイル
 #define MAX_GET_ZIGZAGDATA_NUM 10
-#include "class_allcandle.mqh"
+#include "../class_allcandle.mqh"
 #define USE_MYFUNC_IND_ENTRY_EXIT
 #ifdef USE_MYFUNC_IND_ENTRY_EXIT
 #include <_inc\\動的エントリー監視LIB\\Lib_Myfunc_Ind_entry_exit.mqh>
