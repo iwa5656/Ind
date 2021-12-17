@@ -139,7 +139,13 @@ ________________________
 		if( IsExitstZigzagdata(base_idx) ){
 		    return;
 		}	
-		candle_data *c = p_allcandle.get_candle_data_pointer(period);
+// debug 2021.12.14 参照の仕方が悪いので一旦削除
+//del
+		candle_data *c = p_allcandle.get_candle_data_pointer(period);// NG本当はよくないコード　Globalでp_allcandleを参照している。よくない。
+//chg start
+//		candle_data *c;
+//chg end 
+
 		double ma=		c.MAprice(20,MODE_SMA);
 		double price = c.get_now_price();
 		double t = (double)c.get_now_time();

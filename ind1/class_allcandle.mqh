@@ -9,6 +9,7 @@ class allcandle
 {
 public:
 	candle_data *m_data[10];
+	//void *m_data[10];
 	int m_num;
 	bool flagchgbarM1;
 	bool flagchgbarM5;
@@ -20,15 +21,39 @@ public:
 	bool flagchgbarW1;
 	bool flagchgbarMN1;
 	//MethodPattern *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
+	
+   bool bUSE_view_Zigzag_chgpoint;//クラス内でコピーで持つ			//zigzagの線がどこで確定するかわかるようにする。
+   bool bUSE_view_mesenkirikawari_arrow;//クラス内でコピーで持つ	//目線切り替わりを矢印で表示　黒塗り斜めは目線切り替わり。中抜け矢印は続伸	
+   bool bUSE_view_output_Cn_kirikawari;//クラス内でコピーで持つ		//Cn　続伸、逆　をジャーナルにテキスト出力
+   ENUM_TIMEFRAMES	Inp_base_time_frame;//クラス内でコピーで持つ	// 評価時間軸
+	
+	
 	//--- コンストラクタとデストラクタ
-	allcandle(void){
+	//allcandle(void){
+	allcandle(
+		bool bUSE_view_Zigzag_chgpoint_,
+		bool bUSE_view_mesenkirikawari_arrow_,
+		bool bUSE_view_output_Cn_kirikawari_,
+		ENUM_TIMEFRAMES	Inp_base_time_frame_	
+	){
+		bUSE_view_Zigzag_chgpoint = bUSE_view_Zigzag_chgpoint_;
+		bUSE_view_mesenkirikawari_arrow = bUSE_view_mesenkirikawari_arrow_;
+		bUSE_view_output_Cn_kirikawari = bUSE_view_output_Cn_kirikawari_;
+		Inp_base_time_frame=Inp_base_time_frame_;
+
     	ENUM_TIMEFRAMES current_time_frame = Period();
 		m_num=0;
 		int max = ArraySize(period_hairetu);
 		for(int i=0;i<max;i++){
 			//m_data[i] = new candle_data(period_hairetu[i],GetPointer(this));
 			if(current_time_frame <=period_hairetu[i]){
-			    m_data[i] = new candle_data(period_hairetu[i]);
+			    m_data[i] = new candle_data(period_hairetu[i],
+					//this,
+					bUSE_view_Zigzag_chgpoint_,
+					bUSE_view_mesenkirikawari_arrow_,
+					bUSE_view_output_Cn_kirikawari_,
+					Inp_base_time_frame_	
+				);
 			}else{
 			    m_data[i] = NULL;
 			}

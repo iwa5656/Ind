@@ -21,6 +21,10 @@
 //#define USE_out_candle_debug
 //#define USE_debug_candle_date_view    //ファイル出力
 
+//パターン表示利用？
+//#define USE_pt_range_flag_sup  //パターン認識と表示をする。
+
+
 #define USE_debug_during_Period_hanndann   //テスト期間内かの判定
 
 //tpsl
@@ -156,10 +160,14 @@ input double LandMarkW = 5.0;// 上の指標用の幅設定LandMarkW
 
 //#include "Zigzag.mqh"
 #include "class_allcandle.mqh"
+
+#ifdef USE_pt_range_flag_sup
 #include "classMethod.mqh"
 //#include "classMethod_range.mqh"
 #include "classMethod_flag.mqh"
-#include "Trade_01.mqh"
+#endif // USE_pt_range_flag_sup
+
+#include "Trade_nn\Trade_01.mqh"
                                                 //Declaration of buffers
 double buffer_open[],buffer_high[],buffer_low[],buffer_close[]; //Buffers for data
 double buffer_open_tick[buffer_MAX],buffer_high_tick[buffer_MAX],buffer_low_tick[buffer_MAX],buffer_close_tick[buffer_MAX]; //Buffers for data
@@ -280,7 +288,12 @@ init_zigzag_debug();//debug 20200603
 
 	//get_timeframe_value();//debug
   Deinit_XXX_objdelete();
-	p_allcandle = new allcandle;
+	p_allcandle = new allcandle(
+        bUSE_view_Zigzag_chgpoint,
+        bUSE_view_mesenkirikawari_arrow,
+        bUSE_view_output_Cn_kirikawari,
+        Inp_base_time_frame
+    );
 	p_allcandle.Oninit();
 //	m_hyouka = new MethodPattern_range("Wtop",PERIOD_M1,p_allcandle.get_candle_data_pointer(PERIOD_M1),p_allcandle);
 //	m_hyouka = new MethodPattern_range("Wtop",Inp_base_time_frame,p_allcandle.get_candle_data_pointer(Inp_base_time_frame),p_allcandle);
@@ -2118,7 +2131,7 @@ void test_sturct_mesen_tyouten_mesenKirikawariKyouka(){
     bool ret = false;
     int out_dir=0;
     int chk_zigcount;
-    allcandle *pac = p_allcandle;
+    //allcandle *pac = p_allcandle;//pac global dell
     if(pac==NULL){return;}
     candle_data *c=pac.get_candle_data_pointer(PERIOD_M15);
     if(c!=NULL){
@@ -2169,7 +2182,7 @@ void test_struct_mesen_info_chg_mesen_data1_base(ENUM_TIMEFRAMES tf,int opt){
     bool ret = false;
     int out_dir=0;
     int chk_zigcount;
-    allcandle *pac = p_allcandle;
+    //allcandle *pac = p_allcandle;//pac global dell
     if(pac==NULL){return;}
     //candle_data *c=pac.get_candle_data_pointer(PERIOD_M15);
     candle_data *c=pac.get_candle_data_pointer(tf);
@@ -2291,7 +2304,7 @@ bool	get_mesen_tyouten_mesenKirikawariKyoukai(
     bool ret = false;
     int out_dir=0;
     int chk_zigcount;
-    allcandle *pac = p_allcandle;
+    //allcandle *pac = p_allcandle;//pac global dell
 
     candle_data *c=pac.get_candle_data_pointer(period_);
     if(c!=NULL)

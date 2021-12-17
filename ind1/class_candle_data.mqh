@@ -1,6 +1,7 @@
 #ifndef class_candle_data
 #define class_candle_data
-
+#include "class_candle_data.mqh"
+//#include "class_allcandle.mqh"
 //------view/debug用　切り替え
 //#define debug20210112   //debug zigzag printf zigadd chg check  chk_zigzag_debug_handle_zigzagdata
 //#define USE_zigzag_data_sabun_view //debug20210117
@@ -11,6 +12,7 @@
 #define USE_view_Zigzag_chgpoint	//zigzagの線がどこで確定するかわかるようにする。
 //#define USE_zigzagLine_chg_style_kirikawari_hasenn //Zigzagラインを補足して、目線切り替わりを破線で表現する。
 #define USE_view_mesenkirikawari_arrow //目線切り替わりを矢印で表示　黒塗り斜めは目線切り替わり。中抜け矢印は続伸
+
 
 //------LCn利用
 #define USE_LCn	//目線確定Cnからの逆の目線発生後、Cn方向へ向いたときを検知する
@@ -122,11 +124,30 @@ enum EnSearchMode
 class candle_data
 {
 public:
-    //allcandle *m_allcandle;
-    void *m_allcandle;
+   //allcandle *m_allcandle;
+   //allcandle *abcde;
+   // void *m_allcandle;
+
+   bool bUSE_view_Zigzag_chgpoint;//クラス内でコピーで持つ			//zigzagの線がどこで確定するかわかるようにする。
+   bool bUSE_view_mesenkirikawari_arrow;//クラス内でコピーで持つ	//目線切り替わりを矢印で表示　黒塗り斜めは目線切り替わり。中抜け矢印は続伸	
+   bool bUSE_view_output_Cn_kirikawari;//クラス内でコピーで持つ		//Cn　続伸、逆　をジャーナルにテキスト出力
+   ENUM_TIMEFRAMES	Inp_base_time_frame;//クラス内でコピーで持つ	// 評価時間軸
 
 	//--- コンストラクタとデストラクタ
-	candle_data(ENUM_TIMEFRAMES p){
+	candle_data(ENUM_TIMEFRAMES p,
+		//allcandle *ac,
+		bool bUSE_view_Zigzag_chgpoint_,
+		bool bUSE_view_mesenkirikawari_arrow_,
+		bool bUSE_view_output_Cn_kirikawari_,
+		ENUM_TIMEFRAMES	Inp_base_time_frame_		
+	){
+//		m_allcandle=ac;
+		bUSE_view_Zigzag_chgpoint = bUSE_view_Zigzag_chgpoint_;
+		bUSE_view_mesenkirikawari_arrow = bUSE_view_mesenkirikawari_arrow_;
+		bUSE_view_output_Cn_kirikawari = bUSE_view_output_Cn_kirikawari_;
+		Inp_base_time_frame=Inp_base_time_frame_;	
+
+
 //	candle_data(ENUM_TIMEFRAMES p,allcandle *parent){
 //	candle_data(ENUM_TIMEFRAMES p,void *parent){
 	    //m_allcandle = parent;
@@ -698,9 +719,11 @@ public:
 	bool get_zigzag_average_dist(int offset,double &out_dist);
 	bool get_zigzag_average_time(int offset,double &out);
     void calc_kakutei(){
+#ifdef USE_pt_range_flag_sup    
         calc_pt_range();
         calc_pt_flag();
         calc_pt_sup();
+#endif //USE_pt_range_flag_sup        
 #ifdef USE_LCn
 		calc_LCn();
 #endif//USE_LCn
@@ -1293,7 +1316,7 @@ bool chk_mesen_C_zigcount_updn(int zigcount,int &out_dir){
 	bool r=false;bool rr=false;
 	struct_mesen_C c0;
 	struct_mesen_C c1;
-	struct_mesen_C d2;
+	//struct_mesen_C d2;
     r=get_mesen_Cn(0,c0);
     rr=get_mesen_Cn(1,c1);
 	out_dir=0;//default
@@ -1325,9 +1348,11 @@ bool	get_oshimodoshi_ritu(int zigidxno,double v,double &out_ritu);
     
     #include ".\Fractals\Fractals_function.mqh"
     #include ".\Lib\lib_pattern_func.mqh"
+#ifdef USE_pt_range_flag_sup
     #include ".\candle_pattern\pt_range.mqh"
     #include ".\candle_pattern\pt_flag.mqh"
     #include ".\candle_pattern\pt_sup.mqh"
+#endif //USE_pt_range_flag_sup
 
 };// end class candle_data  def
 void candle_data::OnDeinit(const int reason){
@@ -1339,7 +1364,9 @@ void candle_data::Oninit(void){
 	   init_mem_zigzagdata();
        candle_bar_count = 0;
        OnInit_Fractals();
+#ifdef USE_pt_range_flag_sup       
        init_pt_range();
+#endif //USE_pt_range_flag_sup       
        init_mesen_C();
 }
 bool candle_data::add_new_bar(datetime &now_bar_time){
@@ -2373,9 +2400,11 @@ void debug_zigzag(	ENUM_TIMEFRAMES period,	int insert_idx,// chg true,add false
 		"%%insert_idx=%%"+IntegerToString(insert_idx)+
 		"%%v=%%\t"+DoubleToString(v)+
 		"%%t=%%\t"+TimeToString(t)+
-		"%%ts=%%\t"+IntegerToString((int)t)+
-		"%%ratets_total=%%\t"+IntegerToString(global_rates_total)+
-		"%%prev_=%%\t"+IntegerToString(golobal_prev_calculated));
+		"%%ts=%%\t"+IntegerToString((int)t)
+		//+
+//		"%%ratets_total=%%\t"+IntegerToString(global_rates_total)+
+//		"%%prev_=%%\t"+IntegerToString(golobal_prev_calculated)
+   );
 			
 }
 void candle_data::set_Zigzagdata(
