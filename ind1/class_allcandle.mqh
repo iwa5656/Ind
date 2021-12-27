@@ -353,7 +353,7 @@ void allcandle::hyouka(ENUM_TIMEFRAMES p){
 //	}else{ ;}
 }
 
-
+#ifdef USE_pt_range_flag_sup
 bool allcandle::Is_pattern_range(ENUM_TIMEFRAMES period){
 	candle_data *c=get_candle_data_pointer(period);
 	if(c!=NULL){
@@ -366,6 +366,7 @@ int allcandle::get_pt_range(ENUM_TIMEFRAMES period,struct_pt_range &pt){
 		return(c.get_pt_range(pt));
 	}else{return 0;}
 }
+
 //bool allcandle::Is_exist_pt_range(ENUM_TIMEFRAMES period,int f){
 //	candle_data *c=get_candle_data_pointer(period);
 //	if(c!=NULL){
@@ -388,4 +389,6 @@ int allcandle::get_pt_flag(ENUM_TIMEFRAMES period,struct_pt_flag &pt){
 		return(c.get_pt_flag(pt));
 	}else{return 0;}
 }
+#endif //USE_pt_range_flag_sup
+
 #endif//class_allcandle
