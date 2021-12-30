@@ -52,7 +52,7 @@ int chk_point_line_upperordownside_imi(imi_point &d,imi_point &e,imi_point &f){
   if(y_x0 < y0){ret = 1;}else if(y_x0 > y0){ret = -1;}else{ret = 0;}
   return ret;
 }
-//線分と線分から上方向に距離D離れた線分の間にあるかの判別
+//線分abと線分から上方向に距離D離れた線分の間にあるかの判別
 int chk_point_lineAndLine_inner_upperD(real_point &a,real_point &b,real_point &c
 ,double dist){
   int ret=0;//０：外,　　1：中
@@ -67,7 +67,9 @@ int chk_point_lineAndLine_inner_upperD(real_point &a,real_point &b,real_point &c
 int chk_point_lineAndLine_inner_upperD_imi(imi_point &d,imi_point &e,imi_point &f
 ,double dist){
   int ret=0;//０：外,　　1：中
-  if(d.x == e.x){  /*x軸上なので別のやり方*/}
+  if(d.x == e.x){  
+    printf("未対応（垂直は未対応）");/*x軸上なので別のやり方*/
+  }
   else{
     //距離dist離れた数式を算出
     double x1,y1,x2,y2,x0,y0;  x1=d.x;y1=d.y;  x2=e.x;y2=e.y;  x0=f.x;y0=f.y;
@@ -185,6 +187,46 @@ void move_LineAB_To_startpointC_imi(imi_point &a,imi_point &b,imi_point &c,imi_p
   out_D.y = c.y-dd_y;
   out_D.x = c.x-dd_x;
 }
+
+
+
+//特定パターン  BDと並行である予想でCEのEの範囲にあるかを判断する。
+//チャネルの幅はBDとCの距離とする（ddと呼ぶ）
+//Eの場所かの判断はBDの平行線をCを起点にして、CEのラインの上下ddの5%以内に入ったらTrue
+//          D
+//    B
+//            E         
+//A     C
+
+//  p1=A,p2=B,p3=C,p4=D,(p5=E)
+//チャネルBD、CEのEの部分になっているか？
+bool chk_WithInRange_chanell_E_point(real_point &p1,real_point &p2,real_point &p3,real_point &p4,real_point &nowpoint,real_point &p5_e){
+  bool ret = false;
+  imi_point a,b,c,d,e,n;
+
+  //imi座標に変換
+  datetime Tk = p1.t;
+  chg_r2i(p1,a,Tk);
+  chg_r2i(p2,b,Tk);
+  chg_r2i(p3,c,Tk);
+  chg_r2i(p4,d,Tk);  
+  chg_r2i(nowpoint,n,Tk);  
+  //imi座標で計算
+  //Eのポイントを求める
+  move_LineAB_To_startpointC_imi(c,d,b,e);
+  //ddの産出BDとCの距離
+  double dd = cal_point_line_dist_imi(c,d,b);
+  //be の延長のdd*x%以内に　nowpoint　が入ったか？
+    //int chk_point_lineAndLine_inner_upperD_downD_imi(imi_point &d,imi_point &e,imi_point &f
+    //,double dist){
+  int ret_ud=chk_point_lineAndLine_inner_upperD_downD_imi(b,e,n,dd*0.05);
+  if(ret_ud == 1){
+    ret = true;
+    chg_i2r(e,p5_e,Tk);//Eを返す
+  }
+  return(ret);
+}
+
 
 
 //意味座標からリアル座標へ変換 //M5固定
