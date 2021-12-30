@@ -123,12 +123,81 @@ int chk_point_lineAndLine_inner_upperD_downD_imi(imi_point &d,imi_point &e,imi_p
   return ret;
 }
 
+//線分１２と線分３４の交点を求める
+int chk_point_lineAndLine_CrossPoint(
+  real_point &p1,real_point &p2,
+  real_point &p3,real_point &p4,
+  real_point &r_out
+//,double dist
+){
+int ret=0;//-1 :失敗　それ以外成功
+  datetime Tk = p1.t;
+  imi_point d,e,f,g,out_i;
+  chg_r2i(p1,d,Tk);
+  chg_r2i(p2,e,Tk);
+  chg_r2i(p3,f,Tk);
+  chg_r2i(p4,g,Tk);
+  ret = chk_point_lineAndLine_CrossPoint_imi(d,e,f,g,/*dist,*/ out_i);
+ 
+
+//意味座標からリアル座標へ変換
+//bool chg_i2r(imi_point &a,real_point &o,datetime Tk){ 
+  chg_i2r( out_i,r_out,Tk);
+  return ret;
+}
+int chk_point_lineAndLine_CrossPoint_imi(
+  imi_point &d,imi_point &e,
+  imi_point &f,imi_point &g,
+//  double dist,
+  imi_point &out
+){
+  int ret=0;//-1 :失敗　それ以外成功
+  if(d.x == e.x||f.x == g.x){ printf("未対応chk_point_lineAndLine_CrossPoint_imi"); /*x軸上なので別のやり方*/ }
+  else{
+    //距離dist離れた数式を算出
+    double x1,y1,x2,y2,x3,y3,x4,y4,x,y;  x1=d.x;y1=d.y;  x2=e.x;y2=e.y; x3=f.x;y3=f.y;x4=g.x;y4=g.y; x=0.0;y=0.0;
+    double det,t;det=0.0;t=0.0;
+    det = (x1-x2)*(y4-y3)-(x4-x3)*(y1-y2);
+    if(det ==0){ ret = -1; printf("交わらないchk_point_lineAndLine_CrossPoint_imi"); return ret;}//error
+    t=((y4-y3)*(x4-x2)+(x3-x4)*(y4-y2))/det;
+    x=t*x1+(1.0-t)*x2;
+    y=t*y1+(1.0-t)*y2;
+
+    out.x = x;
+    out.y = y;
+
+    ret = 1;//範囲内
+  }
+  return ret;
+}  
+
+//線分ABが点Cを起点の場合のBにあたる点（Dと呼ぶ）を求める。　　ABを平行移動（Cを起点とした場合）
+//用途：線分ABがあった場合、そのチャネルを求めるCD（Cは既存点）でDを求める
+void move_LineAB_To_startpointC(real_point &a,real_point &b,real_point &c,real_point &out_D){
+  double dd_v=a.v-b.v;
+  datetime dd_t=a.t-b.t;
+  out_D.v = c.v-dd_v;
+  out_D.t = c.t-dd_t;
+}
+void move_LineAB_To_startpointC_imi(imi_point &a,imi_point &b,imi_point &c,imi_point &out_D){
+  double dd_y=a.y-b.y;
+  double dd_x=a.x-b.x;
+  out_D.y = c.y-dd_y;
+  out_D.x = c.x-dd_x;
+}
 
 
+//意味座標からリアル座標へ変換 //M5固定
+bool chg_i2r(imi_point &a,real_point &o,datetime Tk){
+  bool ret=false;
+  o.v = a.y;
+  ret = chg_x2t(Tk,(int)a.x,PERIOD_M5,o.t);
+  
+  return ret;
+}
 
 
-
-//リアル座標から意味座標へ変換
+//リアル座標から意味座標へ変換　//M5固定
 bool chg_r2i(real_point &a,imi_point &o,datetime Tk){
   bool ret=false;
   o.y = a.v;
@@ -210,7 +279,10 @@ bool chg_t2x(datetime Tk,datetime inp_t, ENUM_TIMEFRAMES peri,double &out_bar_id
 			Inp	Tk,	基準となる時間				
 				bidx	インデックス（ｘ軸）			バーidx	bidx 0がTkと同じ時間　未来は＋、過去がマイナス
 				時間軸	peri	または　時間軸の一つのバーの秒数			
-#endif // comeentss        
+#endif // comeentss  
+
+int testsss(void){return 0;}
+
 bool chg_x2t(datetime Tk,int bidx, ENUM_TIMEFRAMES peri,datetime &out_t){
   bool ret=false;
   int t_per_bar=PeriodSeconds(peri);//1barの秒数
