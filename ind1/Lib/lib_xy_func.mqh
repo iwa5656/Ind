@@ -213,9 +213,9 @@ bool chk_WithInRange_chanell_E_point(real_point &p1,real_point &p2,real_point &p
   chg_r2i(nowpoint,n,Tk);  
   //imi座標で計算
   //Eのポイントを求める
-  move_LineAB_To_startpointC_imi(c,d,b,e);
+  move_LineAB_To_startpointC_imi(b,d,c,e);
   //ddの産出BDとCの距離
-  double dd = cal_point_line_dist_imi(c,d,b);
+  double dd = cal_point_line_dist_imi(b,d,c);
   //be の延長のdd*x%以内に　nowpoint　が入ったか？
     //int chk_point_lineAndLine_inner_upperD_downD_imi(imi_point &d,imi_point &e,imi_point &f
     //,double dist){
