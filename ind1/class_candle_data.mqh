@@ -240,6 +240,7 @@ public:
         struct_zigzagdata zigzagdata[];//Zigzag格納用データ
         int zigzagdata_count;	//Zigzag格納用データの数
 	    bool zigzag_chg_flag;// new bar 時にリセット
+		int zigzag_chg_flag_status;// Zig変化時の詳細状態を保持（zigzag_chg_flag）chg 0, add 1 , del -1　、変化なしの時は-99。AddnewBarの時に更新する。
         //ラストのpeakとbottomを記憶しておく
         //記憶は値と、時間
         //今回求めた値(ないなら０)　初期化は計算する前
@@ -969,6 +970,10 @@ public:
 					cn_out[outdata_count].t=cn[i].t;
 					cn_out[outdata_count].no=cn[i].no;
 					outdata_count++;
+					if(outdata_count >= n){
+						ret = true;
+						break;
+					}
 				}else if(cn[i].dir ==1){
 					//新しい方を先ず格納し、その間を求めて、求めた値を埋める
 					//自分自身を格納
@@ -1497,6 +1502,7 @@ bool candle_data::add_new_bar(datetime &now_bar_time){
     double new_bar_low;
     
     zigzag_chg_flag=false;// リセットしておく
+	zigzag_chg_flag_status=-99;//初期値　変化なし
             int error_count = 0;
             datetime times[];
             int ret1;
@@ -2572,6 +2578,9 @@ void candle_data::set_Zigzagdata(
 		zigzagSetOtherInfo(insert_idx,t,v);
 	}
 	zigzag_chg_flag=true;
+	if(ope == 0||ope ==1||ope == -1){
+		zigzag_chg_flag_status = ope;
+	}
 }
 void candle_data::into_Zigzagdata(
 		int regIsChg,// chg true,add false
