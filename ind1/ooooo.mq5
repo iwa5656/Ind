@@ -104,9 +104,6 @@ int idebug;
 #ifdef USE_Lib_Myfunc_Ind_entry_exit
 #include <_inc\\動的エントリー監視LIB\\Lib_Myfunc_Ind_entry_exit.mqh> //SetSendData_forEntry_tpsl_direct_ctrl(int EntryDirect,int hyoukaNo,int hyoukaSyuhouNo,double EntryPrice,double Tp_Price,double Sl_Price,double lots)
 #endif//USE_Lib_Myfunc_Ind_entry_exit
-
-#include "lib\Lib_xy_func.mqh"
-
 //+------------------------------------------------------------------+
 //|                                                        Ticks.mq5 |
 //|                        Copyright 2010, MetaQuotes Software Corp. |
@@ -2157,89 +2154,6 @@ void test_sturct_mesen_tyouten_mesenKirikawariKyouka(){
             printf( TimeToString( c.get_now_time()) +"①  ema="+DoubleToString(ma_ema_20)+"  sma="+DoubleToString(ma_sma_20));
             printf( TimeToString( c.get_now_time()) +"②  sma="+DoubleToString(ma_sma_20_cal)+"  sma="+DoubleToString(ma_sma_20)+"sa="+DoubleToString(ma_sma_20_cal-ma_sma_20));
         }
-    }
-}
-void test_kiriage_channel_kakutei(void){
-    bool ret = false;
-    int out_dir=0;
-    int chk_zigcount;
-    static int t_zigzag_count=0;
-    static int pre_t_zigzag_count =-1;
-    static int pre_E_no = -1;
-    static int viewed = 0;
-    //allcandle *pac = p_allcandle;//pac global dell
-    if(pac==NULL){return;}
-    candle_data *c=pac.get_candle_data_pointer(PERIOD_M15);
-    if(c!=NULL){
-        chk_zigcount=c.zigzagdata_count;
-        if(c.zigzagdata_count >400 && pre_t_zigzag_count != c.zigzagdata_count){
- //         	//n個分の　目線の切り替わり＋続伸の線分を取得する(中途半場は除く（切り替わり線分と続伸線分を取得）)
-//         	//新しい点を配列の０へ格納
-//         	bool get_mesen_Cn_kirikawari_zokusin(int n,struct_mesen_tyouten_zokushin &cn_out[]){
-//         		bool ret = false;
-            struct_mesen_tyouten_zokushin cn_out[5];
-            bool ret_kirikawari_sokusin =               c.get_mesen_Cn_kirikawari_zokusin(5, cn_out);
-
-#ifdef comment
-                E
-        C
-                    F
-A           D
-
-    B
-#endif //comment
-            //形になっているか判定
-            real_point A,M,C,B,D,E;
-            A.v = cn_out[4].v;/*y*/            A.t = cn_out[4].t;//x
-            B.v = cn_out[3].v;/*y*/            B.t = cn_out[3].t;//x
-            C.v = cn_out[2].v;/*y*/            C.t = cn_out[2].t;//x
-            D.v = cn_out[1].v;/*y*/            D.t = cn_out[1].t;//x
-            E.v = cn_out[0].v;/*y*/            E.t = cn_out[0].t;//x
-            
-           if(   E.v >D.v && C.v > B.v && C.v > D.v &&                       D.v > B.v && E.v > C.v  &&pre_E_no!= cn_out[0].no ){
-            
-            //if(E.v >D.v && C.v > B.v && C.v > D.v && A.v>B.v&& A.v < C.v&& D.v > B.v && E.v > C.v){
-                // A and D  same price
-                //view
-                pre_E_no = cn_out[0].no;
-                int aaaa=0;
-                if(A.v>B.v){
-                  aaaa=1;
-                }
-                if( A.v < C.v){
-                  aaaa=aaaa+2;
-                }
-                if(aaaa==3){
-                    aaaa = 9;
-                    for(int nn=0;nn<4;nn++){
-                       string name1 = "PPPtn"+IntegerToString(cn_out[nn].no-1)+"_"+IntegerToString(cn_out[nn+1].no-1)+
-                        "("+IntegerToString(cn_out[4].no-1)+"_"+IntegerToString(cn_out[0].no-1)+")";
-                       
-                       TrendCreate(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7);
-                    }
-                    printf("###"+IntegerToString(cn_out[0].no-1));
-                    printf("   "+DoubleToString(A.v,2)+"  "+TimeToString(A.t));
-                    printf("   "+DoubleToString(B.v,2)+"  "+TimeToString(B.t));
-                    printf("   "+DoubleToString(C.v,2)+"  "+TimeToString(C.t));
-                    printf("   "+DoubleToString(D.v,2)+"  "+TimeToString(D.t));
-                    printf("   "+DoubleToString(E.v,2)+"  "+TimeToString(E.t));
-                    
-                   
-                   t_zigzag_count = c.zigzagdata_count;
-                   printf("E point zig count="+IntegerToString(t_zigzag_count-1));
-                   viewed=1;
-                }
-            }
-            //止めて見る用
-            if(t_zigzag_count+2 == c.zigzagdata_count&& viewed==1){
-                t_zigzag_count=t_zigzag_count;
-                viewed=2;
-            }else if(t_zigzag_count+4 == c.zigzagdata_count && viewed ==2){
-                t_zigzag_count=t_zigzag_count;
-                viewed=3;
-            }
-        }
-        pre_t_zigzag_count = t_zigzag_count;
     }
 }
 void test_struct_mesen_info_chg_mesen_data1(){
