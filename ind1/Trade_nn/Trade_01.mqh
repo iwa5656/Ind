@@ -46,11 +46,13 @@ struct struct_pt_data{
 
 void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
 //debug
-test_sturct_mesen_tyouten_mesenKirikawariKyouka();
+  // 目線頂点のテスト
+  test_sturct_mesen_tyouten_mesenKirikawariKyouka();
     //debug
    #ifdef debug_20211101
    //printf("call pre test_struct_mesen_info_chg_mesen_data1");
    #endif      
+    //目線のUp期間とDN期間を表示（時間ごとに表示するとどうなるかの確認用）
     test_struct_mesen_info_chg_mesen_data1();
     //debug
 //debug end
