@@ -46,7 +46,7 @@ struct struct_pt_data{
 
 void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
 //debug
-//test_sturct_mesen_tyouten_mesenKirikawariKyouka();
+test_sturct_mesen_tyouten_mesenKirikawariKyouka();
     //debug
    #ifdef debug_20211101
    //printf("call pre test_struct_mesen_info_chg_mesen_data1");

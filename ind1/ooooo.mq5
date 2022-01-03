@@ -2136,7 +2136,7 @@ void test_sturct_mesen_tyouten_mesenKirikawariKyouka(){
     candle_data *c=pac.get_candle_data_pointer(PERIOD_M15);
     if(c!=NULL){
         chk_zigcount=c.zigzagdata_count;
-        if(c.zigzagdata_count >2000){
+        if(c.zigzagdata_count >400){
             get_mesen_tyouten_mesenKirikawariKyoukai(PERIOD_M15,c.zigzagdata_count-1
             ,5,vtdata);
 
@@ -2317,6 +2317,15 @@ bool	get_mesen_tyouten_mesenKirikawariKyoukai(
        		struct_mesen_C mesen_cc[5];
             //目線切り替わり付近からの頂点を取得する
 	        struct_mesen_tyouten cn_tyoutenn[5];
+
+
+//         	//n個分の　目線の切り替わり＋続伸の線分を取得する(中途半場は除く（切り替わり線分と続伸線分を取得）)
+//         	//新しい点を配列の０へ格納
+//         	bool get_mesen_Cn_kirikawari_zokusin(int n,struct_mesen_tyouten_zokushin &cn_out[]){
+//         		bool ret = false;
+            struct_mesen_tyouten_zokushin cn_out[5];
+            bool ret_kirikawari_sokusin =
+               c.get_mesen_Cn_kirikawari_zokusin(5, cn_out);
 
             int i;
             for(i=0;i<num;i++){

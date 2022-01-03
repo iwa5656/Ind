@@ -111,6 +111,12 @@ enum EnSearchMode
 		int no;// Zigzag count.　ラインの右側（新しい時間の点のもの）
 		int dir;//1上、-1下方向, 0無効
 	};	
+	struct struct_mesen_tyouten_zokushin{
+		datetime t;//
+		double v;
+		int no;// Zigzag count.　ラインの右側（新しい時間の点のもの）
+		int dir;//1上、-1下方向、0無効, 続伸時の間の点（下下へ続伸の間は＋２、上上続伸の間はー2続伸時の押し戻し）
+	};		
 	struct struct_mesen_info_chg_mesen_data1{//目線切り替わったときの情報：切り替わりの起点座標、頂点座標、超えた座標 (表示用)
 		datetime kiten_t,tyouten_t,koetaten_t;
 		double kiten_v,tyouten_v,koetaten_v;
@@ -924,29 +930,142 @@ public:
 		}
 		return ret;
 	}
-	//n個分の　目線の切り替わり＋続伸の線分を取得する(中途半場は除く（切り替わり線分と続伸線分を取得）)
-	bool get_mesen_Cn_kirikawari_zokusin(int n,struct_mesen_C &cn){
+	//n個分の　目線の切り替わり後の点＋続伸の点を取得＋続伸の間の押し戻りの点を取得
+	//新しい点を配列の０へ格納
+	bool get_mesen_Cn_kirikawari_zokusin(int n,struct_mesen_tyouten_zokushin &cn_out[]){
 		bool ret = false;
 		int finded_count = 0;
 		int id = 0;
-		if(zigzagdata_count ==0 ){return false;}
+		int i;
+		struct_mesen_tyouten_zokushin cn[10];//仮の切り替わり・続伸点を保持する
+		if(zigzagdata_count < n ){return false;}
 		
-		for(int i = zigzagdata_count-1;i>0;i--){
+		for(i = zigzagdata_count-1;i>0;i--){
 			if(zigzagdata[i].mesen.dir !=0&&(zigzagdata[i].mesen.kind==1||zigzagdata[i].mesen.kind==2)){
 				if(finded_count < n){
 					
 					id = i;
-					cn.dir = zigzagdata[i].mesen.dir;
-					cn.up = zigzagdata[i].mesen.up;
-					cn.dn = zigzagdata[i].mesen.dn;
-					cn.no = zigzagdata[i].mesen.no;
-					cn.kind = zigzagdata[i].mesen.kind;
+					cn[finded_count].dir = zigzagdata[i].mesen.dir;
+					cn[finded_count].v = zigzagdata[i].value;
+					cn[finded_count].t = zigzagdata[i].time;
+					cn[finded_count].no = zigzagdata[i].mesen.no;
+					
 					finded_count++;
+					if(finded_count>=n){ret = true;break;}
 				}else{
 					ret = true;
 					break;
 				}
 			}
+		}
+		if(ret == true){//ｎ個続伸・切り替わりの点を取得できたので、間を補完する。
+			ret = false;
+			int outdata_count =0;
+			for(i=0;i<n-1;i++){
+				if(cn[i].dir != cn[i+1].dir){
+					//自分自身を格納
+					cn_out[outdata_count].dir=cn[i].dir;
+					cn_out[outdata_count].v=cn[i].v;
+					cn_out[outdata_count].t=cn[i].t;
+					cn_out[outdata_count].no=cn[i].no;
+					outdata_count++;
+				}else if(cn[i].dir ==1){
+					//新しい方を先ず格納し、その間を求めて、求めた値を埋める
+					//自分自身を格納
+					cn_out[outdata_count].dir=cn[i].dir;
+					cn_out[outdata_count].v=cn[i].v;
+					cn_out[outdata_count].t=cn[i].t;
+					cn_out[outdata_count].no=cn[i].no;
+					outdata_count++;
+					if(outdata_count >= n){
+						ret = true;
+						break;
+					}
+					//前後のZigzagから最小点を見つける
+					int zig_idx_new,zig_idx_old;
+					zig_idx_new = cn[i].no-1;zig_idx_old = cn[i+1].no-1;
+					bool bfinded = false;int finded_zig_idx = -1;
+					double tmp_value=9999;
+					for(int k = zig_idx_new-1;k>zig_idx_old;k--){
+						if(bfinded==false){
+							finded_zig_idx = k;
+							bfinded = true;
+							tmp_value = zigzagdata[k].value;
+						}else{
+							if(tmp_value > zigzagdata[k].value){
+								finded_zig_idx = k;
+								tmp_value = zigzagdata[k].value;
+							}
+						}
+					}
+					if(bfinded==true){
+						cn_out[outdata_count].dir=-2;
+						cn_out[outdata_count].v=zigzagdata[finded_zig_idx].value;
+						cn_out[outdata_count].t=zigzagdata[finded_zig_idx].time;
+						cn_out[outdata_count].no=zigzagdata[finded_zig_idx].idx+1;
+						outdata_count++;
+						if(outdata_count >= n){
+							ret = true;
+							break;
+						}
+					}
+				}else if(cn[i].dir == -1){
+					//前後のZigzagから最大点を見つける
+					//新しい方を先ず格納し、その間を求めて、求めた値を埋める
+					//自分自身を格納
+					cn_out[outdata_count].dir=cn[i].dir;
+					cn_out[outdata_count].v=cn[i].v;
+					cn_out[outdata_count].t=cn[i].t;
+					cn_out[outdata_count].no=cn[i].no;
+					outdata_count++;
+					if(outdata_count >= n){
+						ret = true;
+						break;
+					}
+					//前後のZigzagから最大点を見つける
+					int zig_idx_new,zig_idx_old;
+					zig_idx_new = cn[i].no-1;zig_idx_old = cn[i+1].no-1;
+					bool bfinded = false;int finded_zig_idx = -1;
+					double tmp_value=-9999;
+					for(int k = zig_idx_new-1;k>zig_idx_old;k--){
+						if(bfinded==false){
+							finded_zig_idx = k;
+							bfinded = true;
+							tmp_value = zigzagdata[k].value;
+						}else{
+							if(tmp_value < zigzagdata[k].value){
+								finded_zig_idx = n;
+								tmp_value = zigzagdata[k].value;
+							}
+						}
+					}
+					if(bfinded==true){
+						cn_out[outdata_count].dir=2;
+						cn_out[outdata_count].v=zigzagdata[finded_zig_idx].value;
+						cn_out[outdata_count].t=zigzagdata[finded_zig_idx].time;
+						cn_out[outdata_count].no=zigzagdata[finded_zig_idx].idx+1;
+						outdata_count++;
+						if(outdata_count >= n){
+							ret = true;
+							break;
+						}
+					}
+
+				}
+				if(i == n-1-1){// 最後の要素の手前の時は、最後の要素を入れる
+					cn_out[outdata_count].dir=cn[i+1].dir;
+					cn_out[outdata_count].v=cn[i+1].v;
+					cn_out[outdata_count].t=cn[i+1].t;
+					cn_out[outdata_count].no=cn[i+1].no;
+					outdata_count++;					
+				}
+
+				if(outdata_count >= n){
+					ret = true;
+					break;
+				}
+			}
+
 		}
 		return ret;
 	}
