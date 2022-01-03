@@ -20,7 +20,7 @@
 //------押し戻し率
 #define USE_oshimodoshi_ritu
 //------
-#define USE_view_output_Cn_kirikawari	//Cn　続伸、逆　をジャーナルにテキスト出力
+//#define USE_view_output_Cn_kirikawari	//Cn　続伸、逆　をジャーナルにテキスト出力
 
 
 #include <_inc\\My_function_lib2.mqh>
