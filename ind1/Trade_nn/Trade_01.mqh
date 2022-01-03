@@ -53,7 +53,7 @@ void chk_trade_forTick(double v,datetime t,allcandle *pallcandle,bool isTrade){
    //printf("call pre test_struct_mesen_info_chg_mesen_data1");
    #endif      
     //目線のUp期間とDN期間を表示（時間ごとに表示するとどうなるかの確認用）
-    test_struct_mesen_info_chg_mesen_data1();
+    //test_struct_mesen_info_chg_mesen_data1();
     //debug
 //debug end
     double ay[MAX_GET_ZIGZAGDATA_NUM+1];// 価格Zigzag　１からデータ入っている。０は使わない
