@@ -2184,6 +2184,8 @@ void test_sturct_mesen_tyouten_mesenKirikawariKyouka(){
         }
     }
 }
+
+#ifdef delll
 void test_kiriage_channel_kakutei(void){
     bool ret = false;
     int out_dir=0;
@@ -2245,16 +2247,19 @@ A           D
                        
                        TrendCreate(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7);
                     }
+                    t_zigzag_count = c.zigzagdata_count;
+                    
                     printf("###"+IntegerToString(cn_out[0].no-1));
                     printf("   "+DoubleToString(A.v,2)+"  "+TimeToString(A.t));
                     printf("   "+DoubleToString(B.v,2)+"  "+TimeToString(B.t));
                     printf("   "+DoubleToString(C.v,2)+"  "+TimeToString(C.t));
                     printf("   "+DoubleToString(D.v,2)+"  "+TimeToString(D.t));
                     printf("   "+DoubleToString(E.v,2)+"  "+TimeToString(E.t));
+                    printf("E point zig count="+IntegerToString(t_zigzag_count-1));
                     
                    
-                   t_zigzag_count = c.zigzagdata_count;
-                   printf("E point zig count="+IntegerToString(t_zigzag_count-1));
+
+                   
                    viewed=1;
                 }
             }
@@ -2270,6 +2275,7 @@ A           D
         pre_t_zigzag_count = t_zigzag_count;
     }
 }
+#endif //delll test
 void test_struct_mesen_info_chg_mesen_data1(){
     test_struct_mesen_info_chg_mesen_data1_base(Inp_base_time_frame,1);//base TimeFrame
     test_struct_mesen_info_chg_mesen_data1_base(PERIOD_H4,2);//H4 TimeFrame
