@@ -197,9 +197,9 @@ void move_LineAB_To_startpointC_imi(imi_point &a,imi_point &b,imi_point &c,imi_p
 //    B
 //            E         
 //A     C
-
+//  x 
 //  p1=A,p2=B,p3=C,p4=D,(p5=E)
-//チャネルBD、CEのEの部分になっているか？
+//チャネルBD、CEのEの部分になっているか？ CE線分の延長線上の　距離（BDとCの距離）の5％（10％の幅）範囲内ならtrueを返す
 bool chk_WithInRange_chanell_E_point(real_point &p1,real_point &p2,real_point &p3,real_point &p4,real_point &nowpoint,real_point &p5_e){
   bool ret = false;
   imi_point a,b,c,d,e,n;
@@ -214,7 +214,7 @@ bool chk_WithInRange_chanell_E_point(real_point &p1,real_point &p2,real_point &p
   //imi座標で計算
   //Eのポイントを求める
   move_LineAB_To_startpointC_imi(b,d,c,e);
-  //ddの産出BDとCの距離
+  //ddの算出BDとCの距離
   double dd = cal_point_line_dist_imi(b,d,c);
   //be の延長のdd*x%以内に　nowpoint　が入ったか？
     //int chk_point_lineAndLine_inner_upperD_downD_imi(imi_point &d,imi_point &e,imi_point &f

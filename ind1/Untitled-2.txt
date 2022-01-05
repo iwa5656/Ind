@@ -11,3 +11,60 @@ oooooo.mqh
     OnCalculate
         未確定の足の処理の時に実施
             chk_trade_forTick
+
+
+
+get_mesen_tyoutenn
+
+
+
+//	Zigidxを起点に、※頂点・目線切り替わり境界３つを探してくる							
+bool	get_mesen_tyouten_mesenKirikawariKyoukai(
+            ENUM_TIMEFRAMES period_,
+            int zigidx,//探す起点のidxを含んで過去を探す
+            int num,  //取得数
+            sturct_mesen_tyouten_mesenKirikawariKyouka &out_data[])
+{
+
+
+test_sturct_mesen_tyouten_mesenKirikawariKyouka
+
+
+
+
+
+get_mesen_Cn_kirikawari_zokusin
+	//n個分の　目線の切り替わり＋続伸の線分を取得する(中途半場は除く（切り替わり線分と続伸線分を取得）)
+	bool get_mesen_Cn_kirikawari_zokusin(int n,struct_mesen_C &cn){
+
+        
+調査：
+
+methodの
+	Entry
+	Exit
+		view_entry(now,now_time, IntegerToString(hyouka_data_num));
+
+		評価して状態変更
+		hyouka_data[i].kekka[0][0] =-1;//集計　状態を無効に
+		view_end(now,now_time,stmp);
+
+
+
+Trade 00の
+	Entry
+	Exit
+		SetSendData_forEntry_tpsl_direct_ctrl(ent_direct,0,0,v,ent_tp,ent_sl,0.1);
+		\Include\_inc\動的エントリー監視LIB\Lib_Myfunc_Ind_entry_exit.mqh
+
+確定足＆＆テスト可能領域（表示されている（過去データではない）
+  bool isnew_bar=flagchgbarM15;
+  if(isnew_bar == true && b_during_test_piriod==true){
+
+Zig変化フラグ
+	int zigzag_chg_flag_status;// Zig変化時の詳細状態を保持
+		（zigzag_chg_flag）chg 0, add 1 , del -1　、変化なしの時は-99。AddnewBarの時に更新する。	
+
+
+
+
