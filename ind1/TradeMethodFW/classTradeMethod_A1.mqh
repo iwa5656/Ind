@@ -1,5 +1,5 @@
-#ifndef classTradeMethodbaseA1
-#define classTradeMethodbaseA1
+#ifndef classTradeMethod_A1
+#define classTradeMethod_A1
 
 #include "..\class_candle_data.mqh"
 #include "..\class_allcandle.mqh"
@@ -25,8 +25,8 @@ public:
 	//--- オブジェクトを初期化する
    void Oninit(void){}
    void OnDeinit(const int reason){
-      kekka_calc();printf("instantA1");
       debug_A1_tp_sl_All();
+      kekka_calc();printf("instantA1");
    }
     //関数
 //	int		hyouka(void);//　評価・状態遷移含む処理
@@ -215,8 +215,8 @@ void TradeMethod_A1::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
             if(ret_b_up == 1||ret_b_up == 0){//上のチャネルにぶつかる
                //exit syori
                flag_exit_syori=true;
-//            }else if(A.v>nn.v){ //Aのラインを下に割る
-            }else if(B.v>nn.v){ //Bのラインを下に割る
+            }else if(A.v>nn.v){ //Aのラインを下に割る
+//            }else if(B.v>nn.v){ //Bのラインを下に割る
       			//A未満になったらExit			前提条件が崩れているので撤退
                //exit syori
                flag_exit_syori=true;
@@ -533,7 +533,7 @@ void TradeMethod_A1::debug_A1_tp_sl_idx(int idx){
      );
 }
 
-#endif//classTradeMethodbaseA1
+#endif//classTradeMethod_A1
 
 
 

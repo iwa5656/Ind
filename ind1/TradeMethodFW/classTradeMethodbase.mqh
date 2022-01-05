@@ -262,10 +262,11 @@ public:
 		datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
 		double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
 		view_exit(now,now_time,IntegerToString(hyouka_data_num));
+		view_entryToExit(hyouka_idx);
 		
 
 	}
-
+   void view_entryToExit(int idx);
 //\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 
@@ -784,6 +785,17 @@ void TradeMethodbase::Oninit(void){
 }
 void TradeMethodbase::OnDeinit(const int reason){
 	kekka_calc();printf("aa");
+}
+void TradeMethodbase::view_entryToExit(int idx){
+   double p1 = hyouka_data[idx].entry_v;
+   datetime t1 = hyouka_data[idx].entry_t;
+   double p2 = hyouka_data[idx].exit_v;
+   datetime t2 = hyouka_data[idx].exit_t;
+  string name1 = name+"entry_exit  "+IntegerToString(idx)+":";
+  
+  //TrendCreate(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7);
+  candle.CreateTline(0,name1,0,t1,p1    ,t2,p2,clrPurple,STYLE_SOLID,10,name1);	
+  printf("exit "+name1);
 }
 //+------------------------------------------------------------------+
 //|  Creating a text label                                           |
