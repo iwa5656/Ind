@@ -215,7 +215,8 @@ void TradeMethod_A1::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
             if(ret_b_up == 1||ret_b_up == 0){//上のチャネルにぶつかる
                //exit syori
                flag_exit_syori=true;
-            }else if(A.v>nn.v){ //Aのラインを下に割る
+//            }else if(A.v>nn.v){ //Aのラインを下に割る
+            }else if(B.v>nn.v){ //Bのラインを下に割る
       			//A未満になったらExit			前提条件が崩れているので撤退
                //exit syori
                flag_exit_syori=true;
@@ -485,7 +486,7 @@ void TradeMethod_A1::debug_A1_tp_sl(real_point &A,real_point &B,real_point &C,re
 void TradeMethod_A1::debug_A1_tp_sl_All(void){
    printf("勝ち負け"+":"+"pips"+":"+"lastzig"+":"+"b_same_A_D="+":"+"   dd_F_G_rieki="+":"+"   dd_F_D_sl=   "+":"+"   dd_F_A_sl=   "+":"+"   dd_F_B_sl=   ");
    for(int i = 0;i< hyouka_data_koyuu_num;i++){
-      if(hyouka_data[i].status !=999){
+      if(hyouka_data[i].status ==999){
          debug_A1_tp_sl_idx(i);
       }
    }
@@ -516,13 +517,13 @@ void TradeMethod_A1::debug_A1_tp_sl_idx(int idx){
 	double dd_F_B_sl = MathAbs(F.v-B.v);
 	double dd_F_A_sl = MathAbs(F.v-A.v);
 
-   printf("aaaa="+IntegerToString(hyouka_data[idx].reg_ikey));
+   //printf("aaaa="+IntegerToString(hyouka_data[idx].reg_ikey));
    int wl=0;
    if(hyouka_data[idx].exit_v>hyouka_data[idx].entry_v){
       wl = 1;
    }
 
-   printf(IntegerToString( wl ) +":"+ getPips(hyouka_data[idx].exit_v-hyouka_data[idx].entry_v)+":"+
+   printf(IntegerToString( hyouka_data[idx].winloss ) +":"+ getPips(hyouka_data[idx].exit_v-hyouka_data[idx].entry_v)+":"+
      IntegerToString( hyouka_data_koyuu[idx].last_zigidx)+":"+
      IntegerToString(b_same_A_D)+":"+
      getPips(dd_F_G_rieki)+":"+
