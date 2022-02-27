@@ -10,8 +10,8 @@ struct imi_point{
   double y;
 };
 
-//線分と点の距離
-double cal_point_line_dist(real_point &a,real_point &b,real_point &c){
+//線分と点の距離(線分abとｃとの距離)
+double cal_point_line_dist(real_point &a,real_point &b,real_point &c){//線分abとｃとの距離(座標はchg_r2iのバー一本をｘの１としたときの距離)
   double ret=0;//距離線分abとｃとの距離
   datetime Tk = a.t;
   imi_point d,e,f;
@@ -21,7 +21,7 @@ double cal_point_line_dist(real_point &a,real_point &b,real_point &c){
   ret = cal_point_line_dist_imi(d,e,f);
   return(ret);
 }
-double cal_point_line_dist_imi(imi_point &d,imi_point &e,imi_point &f){
+double cal_point_line_dist_imi(imi_point &d,imi_point &e,imi_point &f){//線分deとfとの距離
   double ret=0;//距離線分deとfとの距離
   if(d.x == e.x){    return ret;  }
   double x1,y1,x2,y2,x0,y0;  x1=d.x;y1=d.y;  x2=e.x;y2=e.y;  x0=f.x;y0=f.y;
@@ -92,7 +92,7 @@ int chk_point_lineAndLine_inner_upperD_imi(imi_point &d,imi_point &e,imi_point &
 
 
 
-//線分と線分から上下方向に距離D離れた線分の間にあるかの判別
+//線分と線分から上下方向に距離D離れた線分の間にあるかの判別　inp：線分ab、現在値ｃ、±距離dist
 int chk_point_lineAndLine_inner_upperD_downD(real_point &a,real_point &b,real_point &c
 ,double dist){
   int ret=0;//０：外,　　1：中
@@ -124,6 +124,17 @@ int chk_point_lineAndLine_inner_upperD_downD_imi(imi_point &d,imi_point &e,imi_p
   }
   return ret;
 }
+//線分ＣＤがあるとき、Ｃからｎ％下に移動した点を求める　　hiritu(0-1）
+void get_Move_point_hiritu_down_imi(imi_point &C,imi_point &D,imi_point &P,
+double hiritu
+){
+  //CEの線分DFの線分があるとき、CEの線分を５％内側にしたときの結果にしたいため、
+  //CEの線分を距離ddの５％減らしたところに移動したP点を算出
+  //dd=cal_point_line_dist(C,E,D);
+  P.x=C.x+MathAbs(C.x-D.x)*hiritu;
+  P.y=C.y-(C.y-D.y)*hiritu;
+}
+
 
 //線分１２と線分３４の交点を求める
 int chk_point_lineAndLine_CrossPoint(
