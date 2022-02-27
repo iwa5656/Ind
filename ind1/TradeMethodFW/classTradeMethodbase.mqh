@@ -304,6 +304,7 @@ public:
  void view_entry(double now, datetime now_time,string s);
  void view_end(double now, datetime now_time,string s);
  void view_exit(double now, datetime now_time,string s){view_end(now,now_time,s); }
+ void view_AB_entyouhasenn(real_point &a,real_point &b,string &name);
 
 
  void view_kekka_youso(int n);// n 評価パターン番号
@@ -780,6 +781,36 @@ void TradeMethodbase::view_start(double now, datetime now_time,string s){
 void TradeMethodbase::view_entry(double now, datetime now_time,string s){
     CreateArrowRightPrice(0,s+TimeToString(now_time),0,now_time,now,clrGreenYellow,2);
 }
+
+void TradeMethodbase::view_AB_entyouhasenn(real_point &a,real_point &b,string &name){
+	//線分abの延長bcに線（AB実践、BC点線）
+	//ab -> bc のcを求める
+	real_point c;
+	imi_point A,B,C;
+	datetime Tk = a.t;
+
+	chg_r2i(a,A,Tk);
+	chg_r2i(b,B,Tk);
+	move_LineAB_To_startpointC_imi(A,B,B,C);// C
+
+	chg_i2r(C,c,Tk);
+
+	//ab 実践
+	int wide = 10;
+	candle.CreateTline(0,"J"+name,0,a.t,a.v    ,b.t,b.v,clrPurple,STYLE_SOLID,wide,"J"+name);	
+
+	//bc　破線
+	candle.CreateTline(0,"T"+name,0,b.t,b.v    ,c.t,c.v,clrPink,STYLE_DOT,wide,"T"+name);	
+
+		//	STYLE_SOLID	実線。
+		//	STYLE_DASH	途切れ線。
+		//	STYLE_DOT	点線。
+		//	STYLE_DASHDOT	一点鎖線。
+		//	STYLE_DASHDOTDOT	二点鎖線。
+
+}
+
+
 void TradeMethodbase::Oninit(void){
     EntryNo=0;
 }

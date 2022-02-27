@@ -322,6 +322,8 @@ bool    TradeMethod_A1_2::add_hyouka_data_koyuu(int para_refidx){
         hyouka_data_koyuu[hyouka_data_koyuu_num].last_zigidx = para_refidx;
         hyouka_data_koyuu[hyouka_data_koyuu_num].first_zigidx = cn_out[4].no-1;
 
+
+
         hyouka_data_koyuu_num++;
 
     	//// view mark 
@@ -329,7 +331,32 @@ bool    TradeMethod_A1_2::add_hyouka_data_koyuu(int para_refidx){
     	//datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
     	//view_start(now,now_time, IntegerToString(hyouka_data_koyuu_num));
 
-        
+
+      //view
+      // EF描画
+      int idx = hyouka_data_koyuu_num-1;
+      real_point A,B,C,D,E,F;
+            A.v = hyouka_data_koyuu[idx].tyouten[4].v;/*y*/            A.t = hyouka_data_koyuu[idx].tyouten[4].t;//x
+            B.v = hyouka_data_koyuu[idx].tyouten[3].v;/*y*/            B.t = hyouka_data_koyuu[idx].tyouten[3].t;//x
+            C.v = hyouka_data_koyuu[idx].tyouten[2].v;/*y*/            C.t = hyouka_data_koyuu[idx].tyouten[2].t;//x
+            D.v = hyouka_data_koyuu[idx].tyouten[1].v;/*y*/            D.t = hyouka_data_koyuu[idx].tyouten[1].t;//x
+            E.v = hyouka_data_koyuu[idx].tyouten[0].v;/*y*/            E.t = hyouka_data_koyuu[idx].tyouten[0].t;//x      
+      //CE　を　D起点にしてFを求める
+      	//線分abの延長bcに線（AB実践、BC点線）
+      	//ab -> bc のcを求める
+      	//real_point F;
+      	imi_point Cr,Er,Dr,Fr;
+      	datetime Tk = C.t;
+      
+      	chg_r2i(C,Cr,Tk);
+      	chg_r2i(E,Er,Tk);
+      	chg_r2i(D,Dr,Tk);
+      	move_LineAB_To_startpointC_imi(Cr,Er,Dr,Fr);// C
+      
+         chg_i2r(Fr,F,Tk);
+      //DF線分引く破線付き
+      string name ="sup_L"+IntegerToString(idx)+"_lstzigidx="+IntegerToString(hyouka_data_koyuu[idx].last_zigidx);
+      view_AB_entyouhasenn(D,F,name);        
 	}
     return(ret);
 }
