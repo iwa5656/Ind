@@ -219,7 +219,8 @@ bool chk_WithInRange_chanell_E_point(real_point &p1,real_point &p2,real_point &p
   //be の延長のdd*x%以内に　nowpoint　が入ったか？
     //int chk_point_lineAndLine_inner_upperD_downD_imi(imi_point &d,imi_point &e,imi_point &f
     //,double dist){
-  int ret_ud=chk_point_lineAndLine_inner_upperD_downD_imi(b,e,n,dd*0.05);
+  //int ret_ud=chk_point_lineAndLine_inner_upperD_downD_imi(b,e,n,dd*0.05);
+  int ret_ud=chk_point_lineAndLine_inner_upperD_downD_imi(c,e,n,dd*0.05);// b->c
   if(ret_ud == 1){
     ret = true;
     chg_i2r(e,p5_e,Tk);//Eを返す
