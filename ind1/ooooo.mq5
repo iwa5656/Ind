@@ -225,15 +225,18 @@ allcandle *p_allcandle;
 // hyouka
 //TradeMethodbase ctrl data
 #include "TradeMethodFW\classTradeMethodbase.mqh"
-#include "TradeMethodFW\classTradeMethod_A1.mqh"
-#include "TradeMethodFW\classTradeMethod_A1_2.mqh"
+//#include "TradeMethodFW\classTradeMethod_A1.mqh"
+//#include "TradeMethodFW\classTradeMethod_A1_2.mqh"
+#include "TradeMethodFW\classTradeMethod_A1_4.mqh"
 
-#define NUM_OF_TMBs 2
+#define NUM_OF_TMBs 1
 TradeMethodbase *TMBs[NUM_OF_TMBs];
 int count_TMBs;
 void On_init_TMBs(){count_TMBs=0;
-TMBs[0]=new TradeMethod_A1("method_A1",PERIOD_M15,p_allcandle.get_candle_data_pointer(PERIOD_M15),p_allcandle);count_TMBs++;
-TMBs[1]=new TradeMethod_A1_2("method_A1_2",PERIOD_M15,p_allcandle.get_candle_data_pointer(PERIOD_M15),p_allcandle);count_TMBs++;
+//TMBs[0]=new TradeMethod_A1("method_A1",PERIOD_M15,p_allcandle.get_candle_data_pointer(PERIOD_M15),p_allcandle);count_TMBs++;
+//TMBs[1]=new TradeMethod_A1_2("method_A1_2",PERIOD_M15,p_allcandle.get_candle_data_pointer(PERIOD_M15),p_allcandle);count_TMBs++;
+
+TMBs[0]=new TradeMethod_A1_4("method_A1",PERIOD_M15,p_allcandle.get_candle_data_pointer(PERIOD_M15),p_allcandle);count_TMBs++;
 
 }
 
