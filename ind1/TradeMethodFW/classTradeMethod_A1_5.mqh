@@ -135,6 +135,99 @@ void TradeMethod_A1_5::hyouka_kakutei(void){ // 足確定で呼ばれる想定
 
    for(int i = 0; i<hyouka_data_num ;i++){
       switch(hyouka_data[i].status){
+         case 1:// CEラインがD通ったライン付近に現在値がなったか？
+         	//////////////////////////////
+         	//** 評価パターン０：
+         	//////////////////////////////
+            
+
+			//Eの場所かの判断はBDの平行線をCを起点にして、CEのラインの上下ddの5%以内に入ったらTrue
+			//          D
+			//    B
+			//            E         
+			//A     C
+			//  x 
+			//  p1=A,p2=B,p3=C,p4=D,(p5=E)
+			//チャネルBD、CEのEの部分になっているか？ CE線分の延長線上の　距離（BDとCの距離）の5％（10％の幅）範囲内ならtrueを返す
+			//bool chk_WithInRange_chanell_E_point(real_point &p1,real_point &p2,real_point &p3,real_point &p4,real_point &nowpoint,real_point &p5_e){
+			//  bool ret = false;
+			//  imi_point a,b,c,d,e,n;
+			
+			A.t=hyouka_data_koyuu[i].tyouten[4].t;A.v=hyouka_data_koyuu[i].tyouten[4].v;  
+			B.t=hyouka_data_koyuu[i].tyouten[3].t;B.v=hyouka_data_koyuu[i].tyouten[3].v;  
+			C.t=hyouka_data_koyuu[i].tyouten[2].t;C.v=hyouka_data_koyuu[i].tyouten[2].v;  
+			D.t=hyouka_data_koyuu[i].tyouten[1].t;D.v=hyouka_data_koyuu[i].tyouten[1].v;  
+			E.t=hyouka_data_koyuu[i].tyouten[0].t;E.v=hyouka_data_koyuu[i].tyouten[0].v;  
+			//A(x)BCD  (ACDE)
+			ret_channel=	chk_WithInRange_chanell_E_point(A,C,D,E, nn,F)  ;
+
+			//エントリーできるか   
+			if(ret_channel == true){
+                    //tp/sl割合の確認
+                    //CE　を　E起点にしてGを求める→下方向に比率分ずらしたものをGとして求める
+                        //線分abの延長bcに線（AB実践、BC点線）
+                        //ab -> bc のcを求める
+                        //real_point F;
+                        imi_point Ci,Ei,Gi,Di,PCi,PEi,PGi,Zi;
+                        datetime Tk = C.t;
+                    
+                        //chg_r2i(C,Ci,Tk);
+                        //chg_r2i(E,Ei,Tk);
+                        //move_LineAB_To_startpointC_imi(Ci,Ei,Ei,Gi);// C
+
+                        //chg_i2r(Gi,G,Tk);
+
+                    //CEの線分DFの線分があるとき、CEの線分を５％内側にしたときの結果にしたい。
+                    //CEの線分を距離ddの５％減らしたところに移動し、そこからGを求める
+
+                    //
+                    double hiritu = 0.05;
+                    chg_r2i(C,Ci,Tk);
+                    chg_r2i(D,Di,Tk);
+                    chg_r2i(E,Ei,Tk);
+                    get_Move_point_hiritu_down_imi(Ci,Di,PCi,hiritu); //get Pi
+                    move_LineAB_To_startpointC_imi(Ci,Ei,PCi,PEi);// C
+                    move_LineAB_To_startpointC_imi(PCi,PEi,PEi,PGi);// C
+                    chg_i2r(PGi,G,Tk);
+
+
+
+
+                    double tp,sl,entry_v;
+                    double L_v=0;
+                    double hiritu_tpsl=0;
+                    if(A.v > D.v){L_v= D.v;}else{L_v= A.v;}
+                    entry_v= now;
+                    tp = G.v-entry_v;
+                    sl = entry_v-L_v;                        
+                    if(sl!=0){
+                        hiritu_tpsl = tp/sl;
+                    }
+                    if(hiritu_tpsl >1.1){
+                        printf("tp/sl="+DoubleToString(hiritu_tpsl,1));
+                        //エントリー
+                        entry_syori(i,now,now_time,1);// buyの形
+                        //エントリー後の状態へ移行
+                        hyouka_data[i].status =2;
+                        
+                        //debug
+                        ret_channel=	chk_WithInRange_chanell_E_point(A,C,D,E, nn,F)  ;
+                    }
+
+
+
+			}else if(candle.zigzag_chg_flag==true&&candle.zigzag_chg_flag_status==0){
+				//登録後Zigが変更になったかどうか確認し、更新
+				int iret=
+				chk_chg_zigdata_for_pt(i);
+				if(iret ==2){ //ptと形が異なるようになったので　無効化へ
+					hyouka_data[i].status = 0;
+				}
+			}
+
+		
+	
+			break;
          case 2://エントリー中
 			//Exitか？
 			   
@@ -250,99 +343,6 @@ void TradeMethod_A1_5::hyouka_zig_kakutei(void){ // Zig確定で呼ばれる想�
 
    for(int i = 0; i<hyouka_data_num ;i++){
       switch(hyouka_data[i].status){
-         case 1:// CEラインがD通ったライン付近に現在値がなったか？
-         	//////////////////////////////
-         	//** 評価パターン０：
-         	//////////////////////////////
-            
-
-			//Eの場所かの判断はBDの平行線をCを起点にして、CEのラインの上下ddの5%以内に入ったらTrue
-			//          D
-			//    B
-			//            E         
-			//A     C
-			//  x 
-			//  p1=A,p2=B,p3=C,p4=D,(p5=E)
-			//チャネルBD、CEのEの部分になっているか？ CE線分の延長線上の　距離（BDとCの距離）の5％（10％の幅）範囲内ならtrueを返す
-			//bool chk_WithInRange_chanell_E_point(real_point &p1,real_point &p2,real_point &p3,real_point &p4,real_point &nowpoint,real_point &p5_e){
-			//  bool ret = false;
-			//  imi_point a,b,c,d,e,n;
-			
-			A.t=hyouka_data_koyuu[i].tyouten[4].t;A.v=hyouka_data_koyuu[i].tyouten[4].v;  
-			B.t=hyouka_data_koyuu[i].tyouten[3].t;B.v=hyouka_data_koyuu[i].tyouten[3].v;  
-			C.t=hyouka_data_koyuu[i].tyouten[2].t;C.v=hyouka_data_koyuu[i].tyouten[2].v;  
-			D.t=hyouka_data_koyuu[i].tyouten[1].t;D.v=hyouka_data_koyuu[i].tyouten[1].v;  
-			E.t=hyouka_data_koyuu[i].tyouten[0].t;E.v=hyouka_data_koyuu[i].tyouten[0].v;  
-			//A(x)BCD  (ACDE)
-			ret_channel=	chk_WithInRange_chanell_E_point(A,C,D,E, nn,F)  ;
-
-			//エントリーできるか   
-			if(ret_channel == true){
-                    //tp/sl割合の確認
-                    //CE　を　E起点にしてGを求める→下方向に比率分ずらしたものをGとして求める
-                        //線分abの延長bcに線（AB実践、BC点線）
-                        //ab -> bc のcを求める
-                        //real_point F;
-                        imi_point Ci,Ei,Gi,Di,PCi,PEi,PGi,Zi;
-                        datetime Tk = C.t;
-                    
-                        //chg_r2i(C,Ci,Tk);
-                        //chg_r2i(E,Ei,Tk);
-                        //move_LineAB_To_startpointC_imi(Ci,Ei,Ei,Gi);// C
-
-                        //chg_i2r(Gi,G,Tk);
-
-                    //CEの線分DFの線分があるとき、CEの線分を５％内側にしたときの結果にしたい。
-                    //CEの線分を距離ddの５％減らしたところに移動し、そこからGを求める
-
-                    //
-                    double hiritu = 0.05;
-                    chg_r2i(C,Ci,Tk);
-                    chg_r2i(D,Di,Tk);
-                    chg_r2i(E,Ei,Tk);
-                    get_Move_point_hiritu_down_imi(Ci,Di,PCi,hiritu); //get Pi
-                    move_LineAB_To_startpointC_imi(Ci,Ei,PCi,PEi);// C
-                    move_LineAB_To_startpointC_imi(PCi,PEi,PEi,PGi);// C
-                    chg_i2r(PGi,G,Tk);
-
-
-
-
-                    double tp,sl,entry_v;
-                    double L_v=0;
-                    double hiritu_tpsl=0;
-                    if(A.v > D.v){L_v= D.v;}else{L_v= A.v;}
-                    entry_v= now;
-                    tp = G.v-entry_v;
-                    sl = entry_v-L_v;                        
-                    if(sl!=0){
-                        hiritu_tpsl = tp/sl;
-                    }
-                    if(hiritu_tpsl >1.1){
-                        printf("tp/sl="+DoubleToString(hiritu_tpsl,1));
-                        //エントリー
-                        entry_syori(i,now,now_time,1);// buyの形
-                        //エントリー後の状態へ移行
-                        hyouka_data[i].status =2;
-                        
-                        //debug
-                        ret_channel=	chk_WithInRange_chanell_E_point(A,C,D,E, nn,F)  ;
-                    }
-
-
-
-			}else if(candle.zigzag_chg_flag==true&&candle.zigzag_chg_flag_status==0){
-				//登録後Zigが変更になったかどうか確認し、更新
-				int iret=
-				chk_chg_zigdata_for_pt(i);
-				if(iret ==2){ //ptと形が異なるようになったので　無効化へ
-					hyouka_data[i].status = 0;
-				}
-			}
-
-		
-	
-			break;
          case 2://エントリー中
 			//Exitか？
 			   
