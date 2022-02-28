@@ -246,8 +246,8 @@ void allcandle::calc_new_bar_flag(datetime &pre_time,datetime &t){
     MqlDateTime dt_struct;
     flagchgbarM1=false;flagchgbarM5=false;flagchgbarM15=false;flagchgbarM30=false;flagchgbarH1=false;flagchgbarH4=false;flagchgbarD1=false;flagchgbarW1=false;flagchgbarMN1=false;
     TimeToStruct(t,dt_struct);
-    TimeToStruct(pre_timeM1,pre_dt_struct);
-	if(pre_timeM1 !=t){
+    TimeToStruct(pre_time,pre_dt_struct);//chg 20220228 不具合対応
+	if(pre_time !=t){//chg 20220228 不具合対応
 	    flagchgbarM1=true;
 	    this.set_new_bar_flag(PERIOD_M1,true);
 	}
