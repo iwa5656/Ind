@@ -69,6 +69,8 @@ public:
 	}
 
 void hyouka_zig_kakutei(void); // 足確定で呼ばれる想定
+void hyouka_kakutei(void);// 足確定で呼ばれる想定
+
  void SetSendData_forEntry(int a,int a2,int b,int c,double d,double e,double f){
 	GlobalVariableSet("Ind_EntryNo",a);
 	GlobalVariableSet("Ind_EntryDirect",a2);
@@ -111,34 +113,13 @@ void debug_A1_tp_sl_idx(int idx);
     
 };//end class def
 
-
-void TradeMethod_A1_4::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
+void TradeMethod_A1_4::hyouka_kakutei(void){ // 足確定で呼ばれる想定
 // 
 //real_point　zzzz;
 	//real_point a,b,c,d,e,f,nn;
 	real_point nn;
 	double sa;//基準値からの損益価格
 	double sa_pips;
-    //追加必要か？
-    // パターン成立したか？
- //       //Zigzag変化したとき
-//        if(candle.zigzag_chg_flag==true){
-   		if(candle.zigzag_chg_flag==true&&      
-   		  (candle.zigzag_chg_flag_status==1||candle.zigzag_chg_flag_status==0||candle.zigzag_chg_flag_status==-1)){
-            //パターン成立
-            if(Is_pattern()){
-   						
-                //評価データに追加、状態を１へ、重複しないように同じZigzagパターン番号の時で既にあるなら追加しない。（add処理で実現）
-                //get_pattern_key_id(&key_id);
-                add_hyouka_data(last_zigidx_E);
-                
-
-                
-            }
-		}
-//    	}
-    //
-
     //
    double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
    datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
@@ -221,9 +202,6 @@ void TradeMethod_A1_4::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想�
 					hyouka_data[i].status = 0;
 				}
 			}
-
-		
-	
 			break;
          case 2://エントリー中
 			//Exitか？
@@ -293,6 +271,33 @@ void TradeMethod_A1_4::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想�
    }//for
     
     //return(0);
+
+
+}
+void TradeMethod_A1_4::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
+// 
+//real_point　zzzz;
+	//real_point a,b,c,d,e,f,nn;
+	real_point nn;
+	double sa;//基準値からの損益価格
+	double sa_pips;
+    //追加必要か？
+    // パターン成立したか？
+ //       //Zigzag変化したとき
+//        if(candle.zigzag_chg_flag==true){
+   		if(candle.zigzag_chg_flag==true&&      
+   		  (candle.zigzag_chg_flag_status==1||candle.zigzag_chg_flag_status==0||candle.zigzag_chg_flag_status==-1)){
+            //パターン成立
+            if(Is_pattern()){
+   						
+                //評価データに追加、状態を１へ、重複しないように同じZigzagパターン番号の時で既にあるなら追加しない。（add処理で実現）
+                //get_pattern_key_id(&key_id);
+                add_hyouka_data(last_zigidx_E);
+                
+
+                
+            }
+		}
 }
 int TradeMethod_A1_4::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変更した1（パターン成立）、未変更０、パターン成立しない２
    bool bchg=false;
