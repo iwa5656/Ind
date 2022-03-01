@@ -69,6 +69,8 @@ public:
     //データ
     void addcandle(ENUM_TIMEFRAMES period,candle_data *d);//<-使わない　コンストラクタ時に全部作成しておく
     candle_data *get_candle_data_pointer(ENUM_TIMEFRAMES period);
+	bool allcandle::get_candle_flagchgbar(ENUM_TIMEFRAMES period);
+
     int get_datanum(void){return m_num;};
     bool add_new_bar(ENUM_TIMEFRAMES period,datetime t);
     int Oncalculate_ZIGZAG(ENUM_TIMEFRAMES period);
@@ -190,7 +192,43 @@ candle_data *allcandle::get_candle_data_pointer(ENUM_TIMEFRAMES period){
 	}
 	return c;
 }	
-
+bool allcandle::get_candle_flagchgbar(ENUM_TIMEFRAMES period){
+	bool c=NULL;
+	switch(period)
+	{
+		case PERIOD_M1:
+			c=this.flagchgbarM1;
+			break;
+		case PERIOD_M5:
+			c=this.flagchgbarM5;
+			break;
+		case PERIOD_M15:
+			c=this.flagchgbarM15;
+			break;
+		case PERIOD_M30:
+			c=this.flagchgbarM30;
+			break;
+		case PERIOD_H1:
+			c=this.flagchgbarH1;
+			break;
+		case PERIOD_H4:
+			c=this.flagchgbarH4;
+			break;
+		case PERIOD_D1:
+			c=this.flagchgbarD1;
+			break;
+		case PERIOD_W1:
+			c=this.flagchgbarW1;
+			break;
+		case PERIOD_MN1:
+			c=this.flagchgbarMN1;
+			break;
+		default:
+			break;
+		
+	}
+	return c;
+}	
 bool allcandle::add_new_bar(ENUM_TIMEFRAMES period,datetime t){
 	candle_data *c=get_candle_data_pointer(period);
 	if(c!=NULL){
