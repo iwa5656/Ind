@@ -211,7 +211,7 @@ public:
    
    	//syouritu
    	double syouritu = 99999;
-   	if((count_of_win+count_of_loss)>0){syouritu = (double)sum_win_Pips/ (double)(count_of_win+count_of_loss);	}	
+   	if((count_of_win+count_of_loss)>0){syouritu = (double)count_of_win/ (double)(count_of_win+count_of_loss);	}	
    	//makeritu
    	double makeritu = 1.0-syouritu;
    	//期待値
@@ -224,12 +224,16 @@ public:
    	if(sum_loss_Pips!=0){	pf=sum_win_Pips/sum_loss_Pips; }
    
    
-
-    
+	double tapu_kitaichi=0;
+    if(sum_loss_Pips!=0){   tapu_kitaichi =kitaichi/(sum_loss_Pips); }
+	
+	//"タープ期待値" ：負けトレード１通貨あたりの期待値="+DoubleToString(kitaichi/(losspips*(-1)))); }else{printf("");}
+        
    	
    	if(count_of_win!=0 && count_of_loss!=0){
+		printf("★TimeFrame="+EnumToString(candle.Inp_base_time_frame));
    		printf(
-   		"name="+ name+" ; "+
+   		"★結果:name="+ name+" ; "+
    		"数="+IntegerToString((int)count_of_win + count_of_loss)+" ; "+
    		"勝数="+IntegerToString((int)count_of_win)+" ; "+
    		"負数="+IntegerToString((int)count_of_loss)+" ; "+
@@ -240,7 +244,8 @@ public:
    					kitaichi
    				
    				)+" ; "+
-   		"Pf="+DoubleToString(pf,2)
+   		"Pf="+DoubleToString(pf,2)+" ; "+
+		"タープ期待値="+ DoubleToString(tapu_kitaichi)
    		);
    	}
    
