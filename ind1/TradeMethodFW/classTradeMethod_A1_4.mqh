@@ -54,8 +54,9 @@ public:
 //各処理
 	int		hyouka(void){//　評価・状態遷移含む処理
 		
-		bool isnew_bar=p_allcandle.flagchgbarM15;//　tbd ★★どのの時間軸使用するかは。。。使用するcandleのフラグにした方が良い
-  		if(isnew_bar == true){
+		//bool isnew_bar=p_allcandle.flagchgbarM15;//　tbd ★★どのの時間軸使用するかは。。。使用するcandleのフラグにした方が良い
+        bool isnew_bar=p_allcandle.get_candle_flagchgbar(this.period);
+        if(isnew_bar == true){
 			hyouka_kakutei();
 		
 

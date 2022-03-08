@@ -54,7 +54,8 @@ public:
 //各処理
 	int		hyouka(void){//　評価・状態遷移含む処理
 		
-		bool isnew_bar=p_allcandle.flagchgbarM15;//　tbd ★★どのの時間軸使用するかは。。。使用するcandleのフラグにした方が良い
+		//bool isnew_bar=p_allcandle.flagchgbarM15;//　tbd ★★どのの時間軸使用するかは。。。使用するcandleのフラグにした方が良い
+        bool isnew_bar=p_allcandle.get_candle_flagchgbar(this.period);
   		if(isnew_bar == true){
 			hyouka_kakutei();
 		
@@ -170,7 +171,8 @@ void TradeMethod_A1_2::hyouka_kakutei(void){ // 足確定で呼ばれる想定
 				if(iret ==2){ //ptと形が異なるようになったので　無効化へ
 					hyouka_data[i].status = 0;
 				}
-			}
+			} 
+			break;
 
          case 2://エントリー中
 			//Exitか？
