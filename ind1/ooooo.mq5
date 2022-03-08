@@ -5,7 +5,7 @@
 //---------------------------
 //#define USE_CALC_PASS_kako
 //#define USE_HYOUKA
-//#define USE_ZIGZAG_M1 
+#define USE_ZIGZAG_M1 
 #define USE_ZIGZAG_M5 
 #define USE_ZIGZAG_M15
 
@@ -225,14 +225,16 @@ allcandle *p_allcandle;
 // hyouka
 //TradeMethodbase ctrl data
 #include "TradeMethodFW\classTradeMethodbase.mqh"
-//#include "TradeMethodFW\classTradeMethod_A1.mqh"
-//#include "TradeMethodFW\classTradeMethod_A1_2.mqh"
+#include "TradeMethodFW\classTradeMethod_A1.mqh"
+#include "TradeMethodFW\classTradeMethod_A1_1_2.mqh"
+#include "TradeMethodFW\classTradeMethod_A1_1_3.mqh"
+#include "TradeMethodFW\classTradeMethod_A1_2.mqh"
 #include "TradeMethodFW\classTradeMethod_A1_3.mqh"
 #include "TradeMethodFW\classTradeMethod_A1_3_1.mqh"
-//#include "TradeMethodFW\classTradeMethod_A1_4.mqh"
-//#include "TradeMethodFW\classTradeMethod_A1_5.mqh"
+#include "TradeMethodFW\classTradeMethod_A1_4.mqh"
+#include "TradeMethodFW\classTradeMethod_A1_5.mqh"
 
-#define NUM_OF_TMBs 2
+#define NUM_OF_TMBs 8
 TradeMethodbase *TMBs[NUM_OF_TMBs];
 int count_TMBs;
 void On_init_TMBs(){count_TMBs=0;
@@ -248,8 +250,19 @@ void On_init_TMBs(){count_TMBs=0;
 
 //TMBs[0]=new TradeMethod_A1_3_1("method_A1_3_1",PERIOD_M15,p_allcandle.get_candle_data_pointer(PERIOD_M15),p_allcandle);count_TMBs++;
 //TMBs[1]=new TradeMethod_A1_3("method_A1_3",PERIOD_M15,p_allcandle.get_candle_data_pointer(PERIOD_M15),p_allcandle);count_TMBs++;
-TMBs[0]=new TradeMethod_A1_3_1("method_A1_3_1",PERIOD_M5,p_allcandle.get_candle_data_pointer(PERIOD_M5),p_allcandle);count_TMBs++;
-TMBs[1]=new TradeMethod_A1_3("method_A1_3",PERIOD_M5,p_allcandle.get_candle_data_pointer(PERIOD_M5),p_allcandle);count_TMBs++;
+//TMBs[0]=new TradeMethod_A1_3_1("method_A1_3_1",PERIOD_M5,p_allcandle.get_candle_data_pointer(PERIOD_M5),p_allcandle);count_TMBs++;
+//TMBs[1]=new TradeMethod_A1_3("method_A1_3",PERIOD_M5,p_allcandle.get_candle_data_pointer(PERIOD_M5),p_allcandle);count_TMBs++;
+
+
+ENUM_TIMEFRAMES period_inp = Inp_base_time_frame;
+TMBs[0]=new TradeMethod_A1("method_A1",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[1]=new TradeMethod_A1_1_2("method_A1_1_2",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[2]=new TradeMethod_A1_1_3("method_A1_1_3",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[3]=new TradeMethod_A1_2("method_A1_2",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[4]=new TradeMethod_A1_3("method_A1_3",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[5]=new TradeMethod_A1_3_1("method_A1_3_1",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[6]=new TradeMethod_A1_4("method_A1_4",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[7]=new TradeMethod_A1_5("method_A1_5",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 
 }
 
