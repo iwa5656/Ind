@@ -34,7 +34,7 @@ public:
 		double exit_v;
 		datetime exit_t;
 		int dir;//0無効、１ｂｕｙ、-1　sell
-
+		int Ind_EntryNo;//EntryNoの記憶用
 
 
 
@@ -259,6 +259,11 @@ public:
 		datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
 		double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
 		view_entry(now,now_time,IntegerToString(hyouka_data_num));
+
+		//Entry Send for EA
+		//void SetSendData_forEntry_sokuji(int EntryDirect,int hyoukaNo,int hyoukaSyuhouNo,double EntryPrice,double Tp_Price,double Sl_Price,double lots){
+		SetSendData_forEntry_sokuji(para_dir,0,0,0.0,0.0,0.0,0.1);// lot は固定で0.1　（変更したい場合は、任意に変えること）
+		hyouka_data[hyouka_idx].Ind_EntryNo = Ind_EntryNo;//指定のエントリーのIDを記憶しておく
 		
 
 	}
@@ -268,6 +273,9 @@ public:
 		double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
 		view_exit(now,now_time,IntegerToString(hyouka_data_num));
 		view_entryToExit(hyouka_idx);
+
+		//Exit Send For EA
+		SetSendData_forExit(hyouka_data[hyouka_idx].Ind_EntryNo);
 		
 
 	}
