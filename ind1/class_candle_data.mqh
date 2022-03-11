@@ -164,6 +164,7 @@ public:
 #ifdef USE_LCn
 		init_LCn();
 #endif //USE_LCn
+
 	   };
 	~candle_data(void){
 	   // ((allcandle*) m_allcandle).rest_new_bar_flag();
@@ -608,11 +609,22 @@ public:
 			if(n<0){return 0.0;}
 			return(close[n]);
 		}
+		double get_low(int i){
+			int n = CANDLE_BUFFER_MAX_NUM-1-i;
+			if(n<0){return 0.0;}
+			return(low[n]);
+		}
+		double get_high(int i){
+			int n = CANDLE_BUFFER_MAX_NUM-1-i;
+			if(n<0){return 0.0;}
+			return(high[n]);
+		}
 		datetime get_time(int i){
 			int n = CANDLE_BUFFER_MAX_NUM-1-i;
 			if(n<0){return 0;}
 			return(time[n]);
-		}		//目線データ
+		}		
+		//目線データ
 //		struct struct_mesen_C{
 //			int dir;//1上、-1下方向, 0無効
 //			int no;// Zigzag count.　ラインの右側（新しい時間の点のもの）
@@ -734,6 +746,8 @@ public:
 #ifdef USE_LCn
 		calc_LCn();
 #endif//USE_LCn
+
+
     }
 	double ZigX(int inp_idx){// 単位は秒数のdatetime
 	    int base_idx = zigzagdata_count-1;
