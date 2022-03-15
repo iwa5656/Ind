@@ -330,13 +330,13 @@ public:
  virtual void OnDeinit(const int reason);
 //各処理
  void SetSendData_forEntry(int a,int a2,int b,int c,double d,double e,double f){
-	GlobalVariableSet("Ind_EntryNo",a);
 	GlobalVariableSet("Ind_EntryDirect",a2);
 	GlobalVariableSet("Ind_hyoukaNo",b);
 	GlobalVariableSet("Ind_hyoukaSyuhouNo",c);
 	GlobalVariableSet("Ind_EntryPrice",d);
 	GlobalVariableSet("Ind_Tp_Price",e);
 	GlobalVariableSet("Ind_Sl_Price",f);
+	GlobalVariableSet("Ind_EntryNo",a);
  }
 void set_EntryData(int i,int kekkano){
     SetSendData_forEntry(
