@@ -235,7 +235,7 @@ allcandle *p_allcandle;
 #include "TradeMethodFW\classTradeMethod_A1_4.mqh"
 #include "TradeMethodFW\classTradeMethod_A1_5.mqh"
 #include "TradeMethodFW\classTradeMethod_A1_6.mqh"
-#endif //aasdafasdfasdf
+
 #include "TradeMethodFW\classTradeMethod_A2_1.mqh"
 #include "TradeMethodFW\classTradeMethod_A2_2.mqh"
 #include "TradeMethodFW\classTradeMethod_A2_3.mqh"
@@ -243,6 +243,10 @@ allcandle *p_allcandle;
 #include "TradeMethodFW\classTradeMethod_A2_5_1.mqh"
 #include "TradeMethodFW\classTradeMethod_A2_5_2.mqh"
 #include "TradeMethodFW\classTradeMethod_A2_6.mqh"
+#endif //aasdafasdfasdf
+
+#include "TradeMethodFW\classTradeMethod_A2_3.mqh"
+#include "TradeMethodFW\classTradeMethod_A2_3_T.mqh"
 
 #define NUM_OF_TMBs 7
 TradeMethodbase *TMBs[NUM_OF_TMBs];
@@ -276,13 +280,15 @@ ENUM_TIMEFRAMES period_inp = Inp_base_time_frame;
 
 //TMBs[0]=new TradeMethod_A1_6("method_A1_6",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 
-TMBs[count_TMBs]=new TradeMethod_A2_1("method_A2_1",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+//TMBs[count_TMBs]=new TradeMethod_A2_1("method_A2_1",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 //TMBs[count_TMBs]=new TradeMethod_A2_2("method_A2_2",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
-//TMBs[count_TMBs]=new TradeMethod_A2_3("method_A2_3",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[count_TMBs]=new TradeMethod_A2_3("method_A2_3",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 //TMBs[count_TMBs]=new TradeMethod_A2_4("method_A2_4",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 //TMBs[count_TMBs]=new TradeMethod_A2_5_1("method_A2_5_1",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 //TMBs[count_TMBs]=new TradeMethod_A2_5_2("method_A2_5_2",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 //TMBs[count_TMBs]=new TradeMethod_A2_6("method_A2_6",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+
+TMBs[count_TMBs]=new TradeMethod_A2_3_T("method_A2_3_T",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 
 }
 

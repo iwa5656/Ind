@@ -1,5 +1,5 @@
-#ifndef classTradeMethod_A1_1_3
-#define classTradeMethod_A1_1_3
+#ifndef classTradeMethod_A2_3_T
+#define classTradeMethod_A2_3_T
 
 #include "..\class_candle_data.mqh"
 #include "..\class_allcandle.mqh"
@@ -8,25 +8,43 @@
 #include "..\lib\lib_xy_func.mqh"
 #include "classTradeMethodbase.mqh"
 
+#ifdef commentttt
+３_Tのパターン  A-Eを 通常のZigzagとする
+
+"切り替わりし、一つ続伸後、
+１Entry：C、利確；E、損切：D未満
+２Entry：A、利確；E、損切：D未満
+３Entry：Ｄ、利確；E、損切：D起点かＣＤ分下へ
+４Entry：Ｄ、利確；E、損切：B未満
+５Entry：Ｄ、利確；E→G※１、損切：B未満
+６Entry：Ｄより下に髭があるが、実体はＤ以上、利確；E、損切：D起点かＣＤ分下へ
+※１：Ｅ起点でＣＤＥのＥを移動Ｇまで。（過去のCDEと同じように伸びる想定）
+
+切り替わり後、目線再度変えて、前回起点切り替わりまで試す
+Entry：B、利確；E、損切：B起点からＢＣ分したへ
+Entry：B、利確；E、損切：B起点からＡＢ分したへ
+Entry：B、利確；Ｃ、損切：B起点からＢＣ分したへ
+Entry：B、利確；Ｃ、損切：B起点からＡＢ分したへ"
+#endif //commentttt
 
 
 extern datetime pre_timeM1;
-class TradeMethod_A1_1_3 :public TradeMethodbase 
+class TradeMethod_A2_3_T :public TradeMethodbase 
 {
 public:
    int hyouka_data_koyuu_num;
 
 	//--- コンストラクタとデストラクタ
-	TradeMethod_A1_1_3(void){};
-	TradeMethod_A1_1_3(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = s;period = p;candle = c; p_allcandle = a;hyouka_data_koyuu_num=0;
+	TradeMethod_A2_3_T(void){};
+	TradeMethod_A2_3_T(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = s;period = p;candle = c; p_allcandle = a;hyouka_data_koyuu_num=0;
 		init_mem_hyouka_data_koyuu();
 	};
-	~TradeMethod_A1_1_3(void){view_kekka_youso(1);};
+	~TradeMethod_A2_3_T(void){view_kekka_youso(1);};
 	//--- オブジェクトを初期化する
    void Oninit(void){}
    void OnDeinit(const int reason){
-      debug_A1_1_3_tp_sl_All();
-      kekka_calc();printf("instantA1");
+      debug_A2_3_Tp_sl_All();
+      kekka_calc();printf("instant_A2_3_T");
    }
     //関数
 //	int		hyouka(void);//　評価・状態遷移含む処理
@@ -108,13 +126,13 @@ void chk_mem_hyouka_data_koyuu(int i){
 	}
 	ArrayResize(hyouka_data_koyuu,i,NUM_YOBI_HYOUKA_DATA_MEM);	
 }
-void debug_A1_1_3_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point &F,real_point &G);
-void TradeMethod_A1_1_3::debug_A1_1_3_tp_sl_All(void);
-void debug_A1_1_3_tp_sl_idx(int idx);
+void debug_A2_3_Tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point &F,real_point &G);
+void TradeMethod_A2_3_T::debug_A2_3_Tp_sl_All(void);
+void debug_A2_3_Tp_sl_idx(int idx);
     
 };//end class def
 
-void TradeMethod_A1_1_3::hyouka_kakutei(void){ // 足確定で呼ばれる想定
+void TradeMethod_A2_3_T::hyouka_kakutei(void){ // 足確定で呼ばれる想定
 // 
 //real_point　zzzz;
 	real_point a,b,c,d,e,f,nn;
@@ -129,6 +147,8 @@ void TradeMethod_A1_1_3::hyouka_kakutei(void){ // 足確定で呼ばれる想定
    bool flag_exit_syori=false;
    real_point A,M,C,B,D,E;
    int ret_b_up=false;
+   bool ret_entry=false;
+
    for(int i = 0; i<hyouka_data_num ;i++){
       switch(hyouka_data[i].status){
          case 1:// CEラインがD通ったライン付近に現在値がなったか？
@@ -136,7 +156,23 @@ void TradeMethod_A1_1_3::hyouka_kakutei(void){ // 足確定で呼ばれる想定
          	//** 評価パターン０：
          	//////////////////////////////
             
+#ifdef comment
+						　　　　G
+                E
+        C
+                    F
+A           D
 
+    B
+#endif //comment
+
+			a.t=hyouka_data_koyuu[i].tyouten[4].t;a.v=hyouka_data_koyuu[i].tyouten[4].v;  
+			b.t=hyouka_data_koyuu[i].tyouten[3].t;b.v=hyouka_data_koyuu[i].tyouten[3].v;  
+			c.t=hyouka_data_koyuu[i].tyouten[2].t;c.v=hyouka_data_koyuu[i].tyouten[2].v;  
+			d.t=hyouka_data_koyuu[i].tyouten[1].t;d.v=hyouka_data_koyuu[i].tyouten[1].v;  
+			e.t=hyouka_data_koyuu[i].tyouten[0].t;e.v=hyouka_data_koyuu[i].tyouten[0].v;  
+
+#ifdef delll
 			//Eの場所かの判断はBDの平行線をCを起点にして、CEのラインの上下ddの5%以内に入ったらTrue
 			//          D
 			//    B
@@ -148,17 +184,15 @@ void TradeMethod_A1_1_3::hyouka_kakutei(void){ // 足確定で呼ばれる想定
 			//bool chk_WithInRange_chanell_E_point(real_point &p1,real_point &p2,real_point &p3,real_point &p4,real_point &nowpoint,real_point &p5_e){
 			//  bool ret = false;
 			//  imi_point a,b,c,d,e,n;
-			
-			a.t=hyouka_data_koyuu[i].tyouten[4].t;a.v=hyouka_data_koyuu[i].tyouten[4].v;  
-			b.t=hyouka_data_koyuu[i].tyouten[3].t;b.v=hyouka_data_koyuu[i].tyouten[3].v;  
-			c.t=hyouka_data_koyuu[i].tyouten[2].t;c.v=hyouka_data_koyuu[i].tyouten[2].v;  
-			d.t=hyouka_data_koyuu[i].tyouten[1].t;d.v=hyouka_data_koyuu[i].tyouten[1].v;  
-			e.t=hyouka_data_koyuu[i].tyouten[0].t;e.v=hyouka_data_koyuu[i].tyouten[0].v;  
 			//A(x)BCD  (ACDE)
 			ret_channel=	chk_WithInRange_chanell_E_point(a,c,d,e, nn,f)  ;
-
+#endif//delll
+         //エントリー条件判断
+         if(nn.v<= d.v){//★
+            ret_entry=true;
+         }         
 			//エントリーできるか   
-			if(ret_channel == true){
+			if(ret_entry == true){
 
 				//エントリー
 				entry_syori(i,now,now_time,1);// buyの形
@@ -193,11 +227,14 @@ void TradeMethod_A1_1_3::hyouka_kakutei(void){ // 足確定で呼ばれる想定
 				//線分abと点cの位置関係を知る(上か下か線上か？)
       				//int chk_point_line_upperordownside(real_point &a,real_point &b,real_point &c){
       				//int ret=0;//上：1　下-1、　線分上0
-            ret_b_up=chk_point_line_upperordownside(C,E,nn);
-            if(ret_b_up == 1||ret_b_up == 0){//上のチャネルにぶつかる
+            //ret_b_up=chk_point_line_upperordownside(C,E,nn);
+            
+            //利確/損切条件判断
+            //if(ret_b_up == 1||ret_b_up == 0){//上のチャネルにぶつかる
+            if(E.v<=nn.v){// 利確★
                //exit syori
                flag_exit_syori=true;
-            }else if(D.v>nn.v){ //Dのラインを下に割る
+            }else if(D.v- MathAbs(C.v-D.v)>nn.v){ //*のラインを下に割る　//損切★
 //            }else if(B.v>nn.v){ //Bのラインを下に割る
       			//A未満になったらExit			前提条件が崩れているので撤退
                //exit syori
@@ -222,7 +259,7 @@ void TradeMethod_A1_1_3::hyouka_kakutei(void){ // 足確定で呼ばれる想定
       			}
       			if(hyouka_data[i].winloss!=0){
          			printf(aaa + getPips(MathAbs(hyouka_data[i].entry_v-hyouka_data[i].exit_v))
-         			+"   ikey="+IntegerToString(hyouka_data[i].reg_ikey)
+         			+"   ikey="+IntegerToString(hyouka_data[i].reg_ikey) + " = "+ name
          			);
          			printf("   entv="+DoubleToString(hyouka_data[i].entry_v,2)+"  exitv="+DoubleToString( hyouka_data[i].exit_v,2));
          			printf("   entt="+TimeToString(hyouka_data[i].entry_t)+"  exitt="+TimeToString( hyouka_data[i].exit_t));
@@ -246,7 +283,7 @@ void TradeMethod_A1_1_3::hyouka_kakutei(void){ // 足確定で呼ばれる想定
     //return(0);
 
 }
-void TradeMethod_A1_1_3::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
+void TradeMethod_A2_3_T::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
 // 
 //real_point　zzzz;
 	real_point a,b,c,d,e,f,nn;
@@ -271,7 +308,7 @@ void TradeMethod_A1_1_3::hyouka_zig_kakutei(void){ // 足確定で呼ばれる�
 		}
 
 }
-int TradeMethod_A1_1_3::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変更した1（パターン成立）、未変更０、パターン成立しない２
+int TradeMethod_A2_3_T::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変更した1（パターン成立）、未変更０、パターン成立しない２
    bool bchg=false;
 	for(int i=0;i<5;i++){
 		if(candle.zigzagdata[hyouka_data_koyuu[idx].tyouten[4-i].no-1].value != hyouka_data_koyuu[idx].tyouten[4-i].v){
@@ -305,7 +342,7 @@ int TradeMethod_A1_1_3::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変
 	return 0;
 
 }
-bool    TradeMethod_A1_1_3::add_hyouka_data_koyuu(int para_refidx){
+bool    TradeMethod_A2_3_T::add_hyouka_data_koyuu(int para_refidx){
     bool ret = false;
     if(hyouka_data_koyuu_num > 0){
         //最後のものと異なっていたら追加
@@ -341,11 +378,11 @@ bool    TradeMethod_A1_1_3::add_hyouka_data_koyuu(int para_refidx){
 	}
     return(ret);
 }
-//bool    TradeMethod_A1_1_3::Is_pattern(void){
+//bool    TradeMethod_A2_3_T::Is_pattern(void){
 //    int base_idx = candle.zigzagdata_count-1;
 //	return(Is_pattern(base_idx));
 //}
-bool    TradeMethod_A1_1_3::Is_pattern(int base_idx){  //  基準となるzigzagcountからー１した値　　　　 int base_idx = candle.zigzagdata_count-1;
+bool    TradeMethod_A2_3_T::Is_pattern(int base_idx){  //  基準となるzigzagcountからー１した値　　　　 int base_idx = candle.zigzagdata_count-1;
     bool ret = false;
     
    //初回の前提条件が成立したかどうか確認
@@ -361,7 +398,7 @@ bool    TradeMethod_A1_1_3::Is_pattern(int base_idx){  //  基準となるzigzag
 
 
 //void test_kiriage_channel_kakutei(void){
-bool    TradeMethod_A1_1_3::Is_pattern(void){// 成否返す。成立時　last_zigzag_E, Aの点、cn_outのABCDEの点を保持する
+bool    TradeMethod_A2_3_T::Is_pattern(void){// 成否返す。成立時　last_zigzag_E, Aの点、cn_outのABCDEの点を保持する
     bool ret = false;
     int out_dir=0;
     int chk_zigcount;
@@ -384,10 +421,21 @@ bool    TradeMethod_A1_1_3::Is_pattern(void){// 成否返す。成立時　last_
 //         		bool ret = false;
             //struct_mesen_tyouten_zokushin *cn_out;
 			   //cn_out=&tmp_tyouten;
-            bool ret_kirikawari_sokusin =               c.get_mesen_Cn_kirikawari_zokusin(5, cn_out);
+            //bool ret_kirikawari_sokusin =               c.get_mesen_Cn_kirikawari_zokusin(5, cn_out);
+            bool ret_kirikawari_sokusin = false;
+            if(c.zigzagdata_count > 6){
+                for(int i;i<5;i++){
+                    int idx =       c.zigzagdata_count-1-i;
+                    cn_out[i].v=    c.zigzagdata[idx].value;
+                    cn_out[i].t=    c.zigzagdata[idx].time;
+                    cn_out[i].dir=  c.zigzagdata[idx].kind;
+                    cn_out[i].no=   idx+1;
+                }
+                ret_kirikawari_sokusin=true;
+            }
 
 #ifdef comment
-						G
+						　　　　G
                 E
         C
                     F
@@ -419,7 +467,15 @@ A           D
                 if( A.v < C.v){
                   aaaa=aaaa+2;
                 }
-                if(aaaa==3){
+                //BCが目線が切り替わったときが条件
+                int zigidx = cn_out[2].no-1;
+                int bkirikawari=0;
+                if(zigidx >=0&& zigidx<= c.zigzagdata_count-1){
+                    if(c.zigzagdata[zigidx].mesen.kind == 1 && c.zigzagdata[zigidx].mesen.dir == 1){
+                        bkirikawari =1;
+                    }
+                }
+                if(aaaa==3&& bkirikawari==1){
                     aaaa = 9;
                     for(int nn=0;nn<4;nn++){
                        string name1 = name+"PPPtn"+IntegerToString(cn_out[nn].no-1)+"_"+IntegerToString(cn_out[nn+1].no-1)+
@@ -438,7 +494,7 @@ A           D
                    
 					//F 
 					//G　point  ＣＥとFＧ（ｅとおるＤＥ）
-					debug_A1_1_3_tp_sl(A,B,C,D,E,F,G);
+					debug_A2_3_Tp_sl(A,B,C,D,E,F,G);
 					
 
 
@@ -469,7 +525,7 @@ A           D
 
 
 
-void TradeMethod_A1_1_3::debug_A1_1_3_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point& F,real_point &G){
+void TradeMethod_A2_3_T::debug_A2_3_Tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point& F,real_point &G){
 							move_LineAB_To_startpointC(C,E,D,F);
 							move_LineAB_To_startpointC(D,E,F,G);
 							double dd_chanell = cal_point_line_dist(C,E,D);
@@ -491,16 +547,16 @@ void TradeMethod_A1_1_3::debug_A1_1_3_tp_sl(real_point &A,real_point &B,real_poi
 							printf("   dd_F_B_sl=   "+getPips(dd_F_B_sl));
 }
 
-void TradeMethod_A1_1_3::debug_A1_1_3_tp_sl_All(void){
+void TradeMethod_A2_3_T::debug_A2_3_Tp_sl_All(void){
    printf("勝ち負け"+":"+"pips"+":"+"lastzig"+":"+"b_same_A_D="+":"+"   dd_F_G_rieki="+":"+"   dd_F_D_sl=   "+":"+"   dd_F_A_sl=   "+":"+"   dd_F_B_sl=   ");
    for(int i = 0;i< hyouka_data_koyuu_num;i++){
       if(hyouka_data[i].status ==999){
-         debug_A1_1_3_tp_sl_idx(i);
+         debug_A2_3_Tp_sl_idx(i);
       }
    }
 }
 
-void TradeMethod_A1_1_3::debug_A1_1_3_tp_sl_idx(int idx){
+void TradeMethod_A2_3_T::debug_A2_3_Tp_sl_idx(int idx){
 
    real_point A,B,C,D,E,F,G;
    
@@ -541,7 +597,7 @@ void TradeMethod_A1_1_3::debug_A1_1_3_tp_sl_idx(int idx){
      );
 }
 
-#endif//classTradeMethod_A1_1_3
+#endif//classTradeMethod_A2_3_T
 
 
 

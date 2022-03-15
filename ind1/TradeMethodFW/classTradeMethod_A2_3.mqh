@@ -259,7 +259,7 @@ A           D
       			}
       			if(hyouka_data[i].winloss!=0){
          			printf(aaa + getPips(MathAbs(hyouka_data[i].entry_v-hyouka_data[i].exit_v))
-         			+"   ikey="+IntegerToString(hyouka_data[i].reg_ikey)
+         			+"   ikey="+IntegerToString(hyouka_data[i].reg_ikey)+" = "+name
          			);
          			printf("   entv="+DoubleToString(hyouka_data[i].entry_v,2)+"  exitv="+DoubleToString( hyouka_data[i].exit_v,2));
          			printf("   entt="+TimeToString(hyouka_data[i].entry_t)+"  exitt="+TimeToString( hyouka_data[i].exit_t));
@@ -467,7 +467,7 @@ A           D
                 if(aaaa==3&& bkirikawari==1){
                     aaaa = 9;
                     for(int nn=0;nn<4;nn++){
-                       string name1 = "PPPtn"+IntegerToString(cn_out[nn].no-1)+"_"+IntegerToString(cn_out[nn+1].no-1)+
+                       string name1 = name+"PPPtn"+IntegerToString(cn_out[nn].no-1)+"_"+IntegerToString(cn_out[nn+1].no-1)+
                         "("+IntegerToString(cn_out[4].no-1)+"_"+IntegerToString(cn_out[0].no-1)+")";
                        
                        //TrendCreate(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7);

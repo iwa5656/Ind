@@ -422,7 +422,7 @@ A           D
                 if(aaaa==3){
                     aaaa = 9;
                     for(int nn=0;nn<4;nn++){
-                       string name1 = "PPPtn"+IntegerToString(cn_out[nn].no-1)+"_"+IntegerToString(cn_out[nn+1].no-1)+
+                       string name1 =  name+"PPPtn"+IntegerToString(cn_out[nn].no-1)+"_"+IntegerToString(cn_out[nn+1].no-1)+
                         "("+IntegerToString(cn_out[4].no-1)+"_"+IntegerToString(cn_out[0].no-1)+")";
                        
                        //TrendCreate(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7);
