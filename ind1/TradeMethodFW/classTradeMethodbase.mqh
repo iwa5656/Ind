@@ -160,7 +160,7 @@ public:
        	// view mark 
        	double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
        	datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
-       	view_start(now,now_time, IntegerToString(hyouka_data_num));
+       	view_start(now,now_time, "ptnfind"+IntegerToString(hyouka_data_num));
        				
 		}
 		return ret;
@@ -258,7 +258,7 @@ public:
 		hyouka_data[hyouka_idx].entry_v = v;hyouka_data[hyouka_idx].entry_t = t;hyouka_data[hyouka_idx].dir = para_dir;
 		datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
 		double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
-		view_entry(now,now_time,IntegerToString(hyouka_data_num));
+		view_entry(now,now_time,"entry"+IntegerToString(hyouka_data_num));
 
 		//Entry Send for EA
 		//void SetSendData_forEntry_sokuji(int EntryDirect,int hyoukaNo,int hyoukaSyuhouNo,double EntryPrice,double Tp_Price,double Sl_Price,double lots){
@@ -271,7 +271,7 @@ public:
 		hyouka_data[hyouka_idx].exit_v = v;hyouka_data[hyouka_idx].exit_t = t;
 		datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
 		double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
-		view_exit(now,now_time,IntegerToString(hyouka_data_num));
+		view_exit(now,now_time,"exit"+IntegerToString(hyouka_data_num));
 		view_entryToExit(hyouka_idx);
 
 		//Exit Send For EA

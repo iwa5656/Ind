@@ -1,5 +1,5 @@
-#ifndef classTradeMethod_A2_3
-#define classTradeMethod_A2_3
+#ifndef classTradeMethod_Z1_1
+#define classTradeMethod_Z1_1
 
 #include "..\class_candle_data.mqh"
 #include "..\class_allcandle.mqh"
@@ -9,6 +9,7 @@
 #include "classTradeMethodbase.mqh"
 
 #ifdef commentttt
+目線切り替わりの点を表示
 ３のパターン
 
 "切り替わりし、一つ続伸後、
@@ -31,24 +32,24 @@ Entry：B、利確；Ｃ、損切：B起点からＡＢ分したへ"
 //#define USE_View_Pattern_data_A_E_out_Line     //パターン成立時、その線分を白で表示（デバッグ用）
 //#define USE_View_out_hyoukadata //エントリーしたか、勝ち負け、そのサイズなどを表示（数字のみ）
 extern datetime pre_timeM1;
-class TradeMethod_A2_3 :public TradeMethodbase 
+class TradeMethod_Z1_1 :public TradeMethodbase 
 {
 public:
    int hyouka_data_koyuu_num;
 
 	//--- コンストラクタとデストラクタ
-	TradeMethod_A2_3(void){};
-	TradeMethod_A2_3(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = s;period = p;candle = c; p_allcandle = a;hyouka_data_koyuu_num=0;
+	TradeMethod_Z1_1(void){};
+	TradeMethod_Z1_1(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = s;period = p;candle = c; p_allcandle = a;hyouka_data_koyuu_num=0;
 		init_mem_hyouka_data_koyuu();
 	};
-	~TradeMethod_A2_3(void){view_kekka_youso(1);};
+	~TradeMethod_Z1_1(void){view_kekka_youso(1);};
 	//--- オブジェクトを初期化する
    void Oninit(void){}
    void OnDeinit(const int reason){
       #ifdef USE_View_out_hyoukadata
-      debug_A2_3_tp_sl_All();
+      debug_Z1_1_tp_sl_All();
       #endif //USE_View_out_hyoukadata
-      kekka_calc();printf("instant_A2_3");
+      kekka_calc();printf("instant_Z1_1");
    }
     //関数
 //	int		hyouka(void);//　評価・状態遷移含む処理
@@ -130,13 +131,13 @@ void chk_mem_hyouka_data_koyuu(int i){
 	}
 	ArrayResize(hyouka_data_koyuu,i,NUM_YOBI_HYOUKA_DATA_MEM);	
 }
-void debug_A2_3_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point &F,real_point &G);
-void TradeMethod_A2_3::debug_A2_3_tp_sl_All(void);
-void debug_A2_3_tp_sl_idx(int idx);
+void debug_Z1_1_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point &F,real_point &G);
+void TradeMethod_Z1_1::debug_Z1_1_tp_sl_All(void);
+void debug_Z1_1_tp_sl_idx(int idx);
     
 };//end class def
 
-void TradeMethod_A2_3::hyouka_kakutei(void){ // 足確定で呼ばれる想定
+void TradeMethod_Z1_1::hyouka_kakutei(void){ // 足確定で呼ばれる想定
 // 
 //real_point　zzzz;
 	real_point a,b,c,d,e,f,nn;
@@ -287,7 +288,7 @@ A           D
     //return(0);
 
 }
-void TradeMethod_A2_3::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
+void TradeMethod_Z1_1::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
 // 
 //real_point　zzzz;
 	real_point a,b,c,d,e,f,nn;
@@ -312,7 +313,7 @@ void TradeMethod_A2_3::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想�
 		}
 
 }
-int TradeMethod_A2_3::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変更した1（パターン成立）、未変更０、パターン成立しない２
+int TradeMethod_Z1_1::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変更した1（パターン成立）、未変更０、パターン成立しない２
    bool bchg=false;
 	for(int i=0;i<5;i++){
 		if(candle.zigzagdata[hyouka_data_koyuu[idx].tyouten[4-i].no-1].value != hyouka_data_koyuu[idx].tyouten[4-i].v){
@@ -346,7 +347,7 @@ int TradeMethod_A2_3::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変�
 	return 0;
 
 }
-bool    TradeMethod_A2_3::add_hyouka_data_koyuu(int para_refidx){
+bool    TradeMethod_Z1_1::add_hyouka_data_koyuu(int para_refidx){
     bool ret = false;
     if(hyouka_data_koyuu_num > 0){
         //最後のものと異なっていたら追加
@@ -382,11 +383,11 @@ bool    TradeMethod_A2_3::add_hyouka_data_koyuu(int para_refidx){
 	}
     return(ret);
 }
-//bool    TradeMethod_A2_3::Is_pattern(void){
+//bool    TradeMethod_Z1_1::Is_pattern(void){
 //    int base_idx = candle.zigzagdata_count-1;
 //	return(Is_pattern(base_idx));
 //}
-bool    TradeMethod_A2_3::Is_pattern(int base_idx){  //  基準となるzigzagcountからー１した値　　　　 int base_idx = candle.zigzagdata_count-1;
+bool    TradeMethod_Z1_1::Is_pattern(int base_idx){  //  基準となるzigzagcountからー１した値　　　　 int base_idx = candle.zigzagdata_count-1;
     bool ret = false;
     
    //初回の前提条件が成立したかどうか確認
@@ -402,7 +403,7 @@ bool    TradeMethod_A2_3::Is_pattern(int base_idx){  //  基準となるzigzagco
 
 
 //void test_kiriage_channel_kakutei(void){
-bool    TradeMethod_A2_3::Is_pattern(void){// 成否返す。成立時　last_zigzag_E, Aの点、cn_outのABCDEの点を保持する
+bool    TradeMethod_Z1_1::Is_pattern(void){// 成否返す。成立時　last_zigzag_E, Aの点、cn_outのABCDEの点を保持する
     bool ret = false;
     int out_dir=0;
     int chk_zigcount;
@@ -416,7 +417,7 @@ bool    TradeMethod_A2_3::Is_pattern(void){// 成否返す。成立時　last_zi
     if(c!=NULL){
         chk_zigcount=c.zigzagdata_count;
         
-        if(c.zigzagdata_count >400 && pre_t_zigzag_count != c.zigzagdata_count
+        if(c.zigzagdata_count >100 && pre_t_zigzag_count != c.zigzagdata_count
          && c.zigzag_chg_flag==true&&        (c.zigzag_chg_flag_status==1||c.zigzag_chg_flag_status==0||c.zigzag_chg_flag_status==-1)
         ){
  //         	//n個分の　目線の切り替わり＋続伸の線分を取得する(中途半場は除く（切り替わり線分と続伸線分を取得）)
@@ -426,6 +427,37 @@ bool    TradeMethod_A2_3::Is_pattern(void){// 成否返す。成立時　last_zi
             //struct_mesen_tyouten_zokushin *cn_out;
 			   //cn_out=&tmp_tyouten;
             bool ret_kirikawari_sokusin =               c.get_mesen_Cn_kirikawari_zokusin(5, cn_out);
+            bool ret_kirikawari = false;
+            if(c.zigzagdata_count > 6){
+                for(int i;i<5;i++){
+                    int idx =       c.zigzagdata_count-1-i;
+                    cn_out[i].v=    c.zigzagdata[idx].value;
+                    cn_out[i].t=    c.zigzagdata[idx].time;
+                    cn_out[i].dir=  c.zigzagdata[idx].kind;
+                    cn_out[i].no=   idx+1;
+                }
+
+                int zigidx = c.zigzagdata_count-1;
+                int bkirikawari=0;
+                if(zigidx >=0&& zigidx<= c.zigzagdata_count-1){
+                    if(c.zigzagdata[zigidx].mesen.kind == 1){
+                        double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
+                        datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
+                        string s=IntegerToString(zigidx);                        
+                        if( c.zigzagdata[zigidx].mesen.dir == 1){
+                            CreateArrowRightPrice(0,"up_"+s+TimeToString(now_time),0,now_time,now,clrBlue,2);
+                            printf("★"+"up_"+s+TimeToString(now_time));
+                            
+                        }else{
+                            CreateArrowRightPrice(0,"dn_"+s+TimeToString(now_time),0,now_time,now,clrRed,2);
+                            printf("★"+"dn_"+s+TimeToString(now_time));
+                        }
+                        pre_t_zigzag_count = c.zigzagdata_count;
+                        
+                    }
+                }
+            }
+
 
 #ifdef comment
 						　　　　G
@@ -492,7 +524,7 @@ A           D
 #ifdef USE_debug_USE_View_Pattern_data_A_E_out_debugwindow
 					//F 
 					//G　point  ＣＥとFＧ（ｅとおるＤＥ）
-					debug_A2_3_tp_sl(A,B,C,D,E,F,G);
+					debug_Z1_1_tp_sl(A,B,C,D,E,F,G);
 #endif//USE_debug_USE_View_Pattern_data_A_E_out_debugwindow
 					
 
@@ -519,14 +551,16 @@ A           D
                 viewed=3;
             }
         }
-        pre_t_zigzag_count = t_zigzag_count;
+        //pre_t_zigzag_count = t_zigzag_count;
     }
+
+    ret = false;
     return ret;
 }
 
 
 
-void TradeMethod_A2_3::debug_A2_3_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point& F,real_point &G){
+void TradeMethod_Z1_1::debug_Z1_1_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point& F,real_point &G){
 							move_LineAB_To_startpointC(C,E,D,F);
 							move_LineAB_To_startpointC(D,E,F,G);
 							double dd_chanell = cal_point_line_dist(C,E,D);
@@ -548,16 +582,16 @@ void TradeMethod_A2_3::debug_A2_3_tp_sl(real_point &A,real_point &B,real_point &
 							printf("   dd_F_B_sl=   "+getPips(dd_F_B_sl));
 }
 
-void TradeMethod_A2_3::debug_A2_3_tp_sl_All(void){
+void TradeMethod_Z1_1::debug_Z1_1_tp_sl_All(void){
    printf("勝ち負け"+":"+"pips"+":"+"lastzig"+":"+"b_same_A_D="+":"+"   dd_F_G_rieki="+":"+"   dd_F_D_sl=   "+":"+"   dd_F_A_sl=   "+":"+"   dd_F_B_sl=   ");
    for(int i = 0;i< hyouka_data_koyuu_num;i++){
       if(hyouka_data[i].status ==999){
-         debug_A2_3_tp_sl_idx(i);
+         debug_Z1_1_tp_sl_idx(i);
       }
    }
 }
 
-void TradeMethod_A2_3::debug_A2_3_tp_sl_idx(int idx){
+void TradeMethod_Z1_1::debug_Z1_1_tp_sl_idx(int idx){
 
    real_point A,B,C,D,E,F,G;
    
@@ -598,7 +632,7 @@ void TradeMethod_A2_3::debug_A2_3_tp_sl_idx(int idx){
      );
 }
 
-#endif//classTradeMethod_A2_3
+#endif//classTradeMethod_Z1_1
 
 
 
