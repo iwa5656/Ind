@@ -93,7 +93,7 @@ public:
 			hyouka_kakutei();
 		
 
-   	}
+   	    }
 
    		//if(candle.zigzag_chg_flag==true&&      
    		//  (candle.zigzag_chg_flag_status==1||candle.zigzag_chg_flag_status==0||candle.zigzag_chg_flag_status==-1)){
@@ -440,7 +440,7 @@ bool    TradeMethod_B1_1::Is_pattern(void){// 成否返す。成立時　last_zi
     if(c!=NULL){
         chk_zigcount=c.zigzagdata_count;
         
-        if(c.zigzagdata_count >50 && pre_t_zigzag_count != c.zigzagdata_count
+        if(c.zigzagdata_count >10 && pre_t_zigzag_count != c.zigzagdata_count
          && c.zigzag_chg_flag==true&&        (c.zigzag_chg_flag_status==1||c.zigzag_chg_flag_status==0||c.zigzag_chg_flag_status==-1)
         ){
  //         	//n個分の　目線の切り替わり＋続伸の線分を取得する(中途半場は除く（切り替わり線分と続伸線分を取得）)
