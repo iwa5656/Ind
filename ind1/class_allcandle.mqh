@@ -99,6 +99,8 @@ public:
 	bool    Is_pattern_flag(ENUM_TIMEFRAMES period);
 	bool Is_exist_pt_flag(ENUM_TIMEFRAMES period,int idx);// aru true,nashi false
     int get_pt_flag(ENUM_TIMEFRAMES period,struct_pt_flag &pt);    
+	ENUM_TIMEFRAMES get_UpperTimeFrame(ENUM_TIMEFRAMES period);
+	ENUM_TIMEFRAMES get_LowerTimeFrame(ENUM_TIMEFRAMES period);
 };
 void allcandle::OnDeinit(const int reason){
 		int max = ArraySize(period_hairetu);
@@ -429,4 +431,102 @@ int allcandle::get_pt_flag(ENUM_TIMEFRAMES period,struct_pt_flag &pt){
 }
 #endif //USE_pt_range_flag_sup
 
+
+
+candle_data *allcandle::get_updown_TimeFrame(int updn,ENUM_TIMEFRAMES period){// updn分TimeFrameを変更したcandle_dataのPointerを取得
+	candle_data *c=NULL;
+	ENUM_TIMEFRAMES tf= period;
+	if(updn == 0){return c;}
+
+	int i=0;
+	ind dir=0;
+	if(updn >0){dir=1;}if(updn<0){dir=-1;}
+	if(dir==1){
+		for(i=0;i<updn;i++){
+			tf=get_UpperTimeFrame(tf);
+		}
+		c=get_candle_data_pointer(tf);
+	}else {
+		for(i=0;i<updn*(-1);i++){
+			tf=get_LowerTimeFrame(tf);
+		}
+		c=get_candle_data_pointer(tf);
+
+	}
+	return c;	
+}
+
+ENUM_TIMEFRAMES allcandle::get_UpperTimeFrame(ENUM_TIMEFRAMES period){
+	ENUM_TIMEFRAMES c=period;
+	switch(period)
+	{
+		case PERIOD_M1:
+			c=PERIOD_M5;
+			break;
+		case PERIOD_M5:
+			c=PERIOD_M15;
+			break;
+		case PERIOD_M15:
+			c=PERIOD_M30;
+			break;
+		case PERIOD_M30:
+			c=PERIOD_H1;
+			break;
+		case PERIOD_H1:
+			c=PERIOD_H4;
+			break;
+		case PERIOD_H4:
+			c=PERIOD_D1;
+			break;
+		case PERIOD_D1:
+			c=PERIOD_W1;
+			break;
+		case PERIOD_W1:
+			c=PERIOD_MN1;
+			break;
+		case PERIOD_MN1:
+			c=PERIOD_MN1;
+			break;
+		default:
+			break;
+	}
+	return c;
+}	
+
+ENUM_TIMEFRAMES allcandle::get_LowerTimeFrame(ENUM_TIMEFRAMES period){
+	ENUM_TIMEFRAMES c=period;
+	switch(period)
+	{
+		case PERIOD_M1:
+			c=PERIOD_M1;
+			break;
+		case PERIOD_M5:
+			c=PERIOD_M1;
+			break;
+		case PERIOD_M15:
+			c=PERIOD_M5;
+			break;
+		case PERIOD_M30:
+			c=PERIOD_M15;
+			break;
+		case PERIOD_H1:
+			c=PERIOD_M30;
+			break;
+		case PERIOD_H4:
+			c=PERIOD_H1;
+			break;
+		case PERIOD_D1:
+			c=PERIOD_H4;
+			break;
+		case PERIOD_W1:
+			c=PERIOD_D1;
+			break;
+		case PERIOD_MN1:
+			c=PERIOD_W1;
+			break;
+		default:
+			break;
+	}
+	return c;
+}		
 #endif//class_allcandle
