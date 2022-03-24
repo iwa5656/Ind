@@ -38,9 +38,10 @@ Dから時間がBCD＊１．５倍たったら抜ける。）"
 
 #endif //commentttt
 
-//#define USE_View_Pattern_data_A_E_out_debugwindow     //パターン成立時、各点をデバッグウインドに表示（デバッグ用）
-//#define USE_View_Pattern_data_A_E_out_Line     //パターン成立時、その線分を白で表示（デバッグ用）
-//#define USE_View_out_hyoukadata //エントリーしたか、勝ち負け、そのサイズなどを表示（数字のみ）
+//debug viwe
+#define USE_View_Pattern_data_A_E_out_debugwindow     //パターン成立時、各点をデバッグウインドに表示（デバッグ用）
+#define USE_View_Pattern_data_A_E_out_Line     //パターン成立時、その線分を白で表示（デバッグ用）
+#define USE_View_out_hyoukadata //エントリーしたか、勝ち負け、そのサイズなどを表示（数字のみ）
 extern datetime pre_timeM1;
 class TradeMethod_B1_1 :public TradeMethodbase 
 {
@@ -163,7 +164,11 @@ void TradeMethod_B1_1::hyouka_kakutei(void){ // 足確定で呼ばれる想定
    real_point A,M,C,B,D,E;
    int ret_b_up=false;
    bool ret_entry=false;
-
+   double dd_BD=0;
+   double x=0;
+   double kiten_BD_joui_xper=0;
+   int zigidx = 0;
+   int bkirikawari=0;
    for(int i = 0; i<hyouka_data_num ;i++){
       switch(hyouka_data[i].status){
          case 1:// 
@@ -186,13 +191,13 @@ A
          //エントリー条件判断
             //下位足で目線が下
             //　値がBDの上位X％だったら、下へエントリー
-        double dd_BD=MathAbs(b.v-b.d);
-        double x=20.0;
-        double kiten_BD_joui_xper=b.v-dd_BD*x/100.0;
+        dd_BD=MathAbs(b.v-d.v);
+        x=20.0;
+        kiten_BD_joui_xper=b.v-dd_BD*x/100.0;
 
         //下位足で目線したになったか？
-        int zigidx = candle.zigzagdata_count-1;
-        int bkirikawari=0;
+        zigidx = candle.zigzagdata_count-1;
+        bkirikawari=0;
         if(zigidx >=0&& zigidx<= candle.zigzagdata_count-1){
             if(candle.zigzagdata[zigidx].mesen.kind == 1){
                 if( candle.zigzagdata[zigidx].mesen.dir == -1){
@@ -210,7 +215,8 @@ A
 			if(ret_entry == true){
 
 				//エントリー
-				entry_syori(i,now,now_time,1);// buyの形
+                int i_dir=-1;
+				entry_syori(i,now,now_time,i_dir);// buyの形
 				//エントリー後の状態へ移行
 				hyouka_data[i].status =2;
 			}else if(candle.zigzag_chg_flag==true&&candle.zigzag_chg_flag_status==0){
@@ -234,11 +240,11 @@ A
             //real_point a;
             //real_point　h;
 
-            A.v = hyouka_data_koyuu[i].tyouten[4].v;/*y*/            A.t = hyouka_data_koyuu[i].tyouten[4].t;//x
-            B.v = hyouka_data_koyuu[i].tyouten[3].v;/*y*/            B.t = hyouka_data_koyuu[i].tyouten[3].t;//x
-            C.v = hyouka_data_koyuu[i].tyouten[2].v;/*y*/            C.t = hyouka_data_koyuu[i].tyouten[2].t;//x
-            D.v = hyouka_data_koyuu[i].tyouten[1].v;/*y*/            D.t = hyouka_data_koyuu[i].tyouten[1].t;//x
-            E.v = hyouka_data_koyuu[i].tyouten[0].v;/*y*/            E.t = hyouka_data_koyuu[i].tyouten[0].t;//x
+            A.v = hyouka_data_koyuu[i].tyouten[3].v;/*y*/            A.t = hyouka_data_koyuu[i].tyouten[3].t;//x
+            B.v = hyouka_data_koyuu[i].tyouten[2].v;/*y*/            B.t = hyouka_data_koyuu[i].tyouten[2].t;//x
+            C.v = hyouka_data_koyuu[i].tyouten[1].v;/*y*/            C.t = hyouka_data_koyuu[i].tyouten[1].t;//x
+            D.v = hyouka_data_koyuu[i].tyouten[0].v;/*y*/            D.t = hyouka_data_koyuu[i].tyouten[0].t;//x
+            //E.v = hyouka_data_koyuu[i].tyouten[0].v;/*y*/            E.t = hyouka_data_koyuu[i].tyouten[0].t;//x
 				//線分abと点cの位置関係を知る(上か下か線上か？)
       				//int chk_point_line_upperordownside(real_point &a,real_point &b,real_point &c){
       				//int ret=0;//上：1　下-1、　線分上0
@@ -299,7 +305,7 @@ A
 void TradeMethod_B1_1::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
 // 
 //real_point　zzzz;
-	real_point a,b,c,d,e,f,nn;
+	//real_point a,b,c,d,e,f,nn;
 	double sa;//基準値からの損益価格
 	double sa_pips;
     //上位足からのキャンドルポインタを取得して、パターンを判断する。下記を使用する。
@@ -323,7 +329,7 @@ void TradeMethod_B1_1::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想�
 
                 
             }
-		}
+		   }
 
 }
 int TradeMethod_B1_1::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変更した1（パターン成立）、未変更０、パターン成立しない２
@@ -331,7 +337,8 @@ int TradeMethod_B1_1::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変�
    int midx=3;//hyouka_data_koyuuの最後のidx
     int upTf=2;// 何個上にするか？
     candle_data *c=p_allcandle.get_updown_TimeFrame(upTf,p_allcandle.Inp_base_time_frame);
-	for(int i=0;i<5;i++){
+    //if(c.zigzagdata_count>6){}
+	for(int i=0;i<=midx;i++){
 		if(c.zigzagdata[hyouka_data_koyuu[idx].tyouten[midx-i].no-1].value != hyouka_data_koyuu[idx].tyouten[midx-i].v){
 		   hyouka_data_koyuu[idx].tyouten[midx-i].v = c.zigzagdata[hyouka_data_koyuu[idx].tyouten[midx-i].no-1].value;
 		   hyouka_data_koyuu[idx].tyouten[midx-i].t = c.zigzagdata[hyouka_data_koyuu[idx].tyouten[midx-i].no-1].time;
@@ -453,7 +460,7 @@ bool    TradeMethod_B1_1::Is_pattern(void){// 成否返す。成立時　last_zi
             bool ret_kirikawari = false;
             bool ret_kirikawari_sokusin = false;
             if(c.zigzagdata_count > 6){
-                for(int i;i<5;i++){
+                for(int i=0;i<5;i++){
                     int idx =       c.zigzagdata_count-1-i;
                     cn_out[i].v=    c.zigzagdata[idx].value;
                     cn_out[i].t=    c.zigzagdata[idx].time;
@@ -495,9 +502,9 @@ A
                 if( joukenn==true){
 
 #ifdef USE_View_Pattern_data_A_E_out_Line
-                    for(int nn=0;nn<4;nn++){
+                    for(int nn=0;nn<4-1;nn++){
                        string name1 = name+"PPPtn"+IntegerToString(cn_out[nn].no-1)+"_"+IntegerToString(cn_out[nn+1].no-1)+
-                        "("+IntegerToString(cn_out[4].no-1)+"_"+IntegerToString(cn_out[0].no-1)+")";
+                        "("+IntegerToString(cn_out[3].no-1)+"_"+IntegerToString(cn_out[0].no-1)+")";
                        
                        //TrendCreate(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7);
                        c.CreateTline(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7,name);
@@ -505,11 +512,11 @@ A
 #endif //USE_View_Pattern_data_A_E_out_Line
 #ifdef USE_View_Pattern_data_A_E_out_debugwindow                    
                     printf("###"+IntegerToString(cn_out[0].no-1));
-                    printf("   "+"idx="+IntegerToString(cn_out[4].no-1)+":  "+DoubleToString(A.v,2)+"  "+TimeToString(A.t));
-                    printf("   "+"idx="+IntegerToString(cn_out[3].no-1)+":  "+DoubleToString(B.v,2)+"  "+TimeToString(B.t));
-                    printf("   "+"idx="+IntegerToString(cn_out[2].no-1)+":  "+DoubleToString(C.v,2)+"  "+TimeToString(C.t));
-                    printf("   "+"idx="+IntegerToString(cn_out[1].no-1)+":  "+DoubleToString(D.v,2)+"  "+TimeToString(D.t));
-                    printf("   "+"idx="+IntegerToString(cn_out[0].no-1)+":  "+DoubleToString(E.v,2)+"  "+TimeToString(E.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[3].no-1)+":  "+DoubleToString(A.v,2)+"  "+TimeToString(A.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[2].no-1)+":  "+DoubleToString(B.v,2)+"  "+TimeToString(B.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[1].no-1)+":  "+DoubleToString(C.v,2)+"  "+TimeToString(C.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[0].no-1)+":  "+DoubleToString(D.v,2)+"  "+TimeToString(D.t));
+                   // printf("   "+"idx="+IntegerToString(cn_out[0].no-1)+":  "+DoubleToString(E.v,2)+"  "+TimeToString(E.t));
 #endif //USE_View_Pattern_data_A_E_out_debugwindow                    
                    
 #ifdef USE_debug_USE_View_Pattern_data_A_E_out_debugwindow

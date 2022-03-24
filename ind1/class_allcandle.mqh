@@ -101,6 +101,8 @@ public:
     int get_pt_flag(ENUM_TIMEFRAMES period,struct_pt_flag &pt);    
 	ENUM_TIMEFRAMES get_UpperTimeFrame(ENUM_TIMEFRAMES period);
 	ENUM_TIMEFRAMES get_LowerTimeFrame(ENUM_TIMEFRAMES period);
+	candle_data *get_updown_TimeFrame(int updn,ENUM_TIMEFRAMES period);// updn分TimeFrameを変更したcandle_dataのPointerを取得
+	
 };
 void allcandle::OnDeinit(const int reason){
 		int max = ArraySize(period_hairetu);
@@ -439,7 +441,7 @@ candle_data *allcandle::get_updown_TimeFrame(int updn,ENUM_TIMEFRAMES period){//
 	if(updn == 0){return c;}
 
 	int i=0;
-	ind dir=0;
+	int dir=0;
 	if(updn >0){dir=1;}if(updn<0){dir=-1;}
 	if(dir==1){
 		for(i=0;i<updn;i++){
