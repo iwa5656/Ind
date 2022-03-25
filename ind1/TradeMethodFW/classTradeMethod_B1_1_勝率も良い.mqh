@@ -38,10 +38,9 @@ Dから時間がBCD＊１．５倍たったら抜ける。）"
 
 #endif //commentttt
 
-//debug viwe
-#define USE_View_Pattern_data_A_E_out_debugwindow     //パターン成立時、各点をデバッグウインドに表示（デバッグ用）
-#define USE_View_Pattern_data_A_E_out_Line     //パターン成立時、その線分を白で表示（デバッグ用）
-#define USE_View_out_hyoukadata //エントリーしたか、勝ち負け、そのサイズなどを表示（数字のみ）
+//#define USE_View_Pattern_data_A_E_out_debugwindow     //パターン成立時、各点をデバッグウインドに表示（デバッグ用）
+//#define USE_View_Pattern_data_A_E_out_Line     //パターン成立時、その線分を白で表示（デバッグ用）
+//#define USE_View_out_hyoukadata //エントリーしたか、勝ち負け、そのサイズなどを表示（数字のみ）
 extern datetime pre_timeM1;
 class TradeMethod_B1_1 :public TradeMethodbase 
 {
@@ -215,7 +214,7 @@ A
 			if(ret_entry == true){
 
 				//エントリー
-                int i_dir=-1;
+                int i_dir=1;
 				entry_syori(i,now,now_time,i_dir);// buyの形
 				//エントリー後の状態へ移行
 				hyouka_data[i].status =2;
@@ -240,11 +239,11 @@ A
             //real_point a;
             //real_point　h;
 
-            A.v = hyouka_data_koyuu[i].tyouten[3].v;/*y*/            A.t = hyouka_data_koyuu[i].tyouten[3].t;//x
-            B.v = hyouka_data_koyuu[i].tyouten[2].v;/*y*/            B.t = hyouka_data_koyuu[i].tyouten[2].t;//x
-            C.v = hyouka_data_koyuu[i].tyouten[1].v;/*y*/            C.t = hyouka_data_koyuu[i].tyouten[1].t;//x
-            D.v = hyouka_data_koyuu[i].tyouten[0].v;/*y*/            D.t = hyouka_data_koyuu[i].tyouten[0].t;//x
-            //E.v = hyouka_data_koyuu[i].tyouten[0].v;/*y*/            E.t = hyouka_data_koyuu[i].tyouten[0].t;//x
+            A.v = hyouka_data_koyuu[i].tyouten[4].v;/*y*/            A.t = hyouka_data_koyuu[i].tyouten[4].t;//x
+            B.v = hyouka_data_koyuu[i].tyouten[3].v;/*y*/            B.t = hyouka_data_koyuu[i].tyouten[3].t;//x
+            C.v = hyouka_data_koyuu[i].tyouten[2].v;/*y*/            C.t = hyouka_data_koyuu[i].tyouten[2].t;//x
+            D.v = hyouka_data_koyuu[i].tyouten[1].v;/*y*/            D.t = hyouka_data_koyuu[i].tyouten[1].t;//x
+            E.v = hyouka_data_koyuu[i].tyouten[0].v;/*y*/            E.t = hyouka_data_koyuu[i].tyouten[0].t;//x
 				//線分abと点cの位置関係を知る(上か下か線上か？)
       				//int chk_point_line_upperordownside(real_point &a,real_point &b,real_point &c){
       				//int ret=0;//上：1　下-1、　線分上0
@@ -502,9 +501,9 @@ A
                 if( joukenn==true){
 
 #ifdef USE_View_Pattern_data_A_E_out_Line
-                    for(int nn=0;nn<4-1;nn++){
+                    for(int nn=0;nn<4;nn++){
                        string name1 = name+"PPPtn"+IntegerToString(cn_out[nn].no-1)+"_"+IntegerToString(cn_out[nn+1].no-1)+
-                        "("+IntegerToString(cn_out[3].no-1)+"_"+IntegerToString(cn_out[0].no-1)+")";
+                        "("+IntegerToString(cn_out[4].no-1)+"_"+IntegerToString(cn_out[0].no-1)+")";
                        
                        //TrendCreate(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7);
                        c.CreateTline(0,name1,0,cn_out[nn].t,cn_out[nn].v    ,cn_out[nn+1].t,cn_out[nn+1].v,clrWhiteSmoke,STYLE_SOLID,7,name);
@@ -512,11 +511,11 @@ A
 #endif //USE_View_Pattern_data_A_E_out_Line
 #ifdef USE_View_Pattern_data_A_E_out_debugwindow                    
                     printf("###"+IntegerToString(cn_out[0].no-1));
-                    printf("   "+"idx="+IntegerToString(cn_out[3].no-1)+":  "+DoubleToString(A.v,2)+"  "+TimeToString(A.t));
-                    printf("   "+"idx="+IntegerToString(cn_out[2].no-1)+":  "+DoubleToString(B.v,2)+"  "+TimeToString(B.t));
-                    printf("   "+"idx="+IntegerToString(cn_out[1].no-1)+":  "+DoubleToString(C.v,2)+"  "+TimeToString(C.t));
-                    printf("   "+"idx="+IntegerToString(cn_out[0].no-1)+":  "+DoubleToString(D.v,2)+"  "+TimeToString(D.t));
-                   // printf("   "+"idx="+IntegerToString(cn_out[0].no-1)+":  "+DoubleToString(E.v,2)+"  "+TimeToString(E.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[4].no-1)+":  "+DoubleToString(A.v,2)+"  "+TimeToString(A.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[3].no-1)+":  "+DoubleToString(B.v,2)+"  "+TimeToString(B.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[2].no-1)+":  "+DoubleToString(C.v,2)+"  "+TimeToString(C.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[1].no-1)+":  "+DoubleToString(D.v,2)+"  "+TimeToString(D.t));
+                    printf("   "+"idx="+IntegerToString(cn_out[0].no-1)+":  "+DoubleToString(E.v,2)+"  "+TimeToString(E.t));
 #endif //USE_View_Pattern_data_A_E_out_debugwindow                    
                    
 #ifdef USE_debug_USE_View_Pattern_data_A_E_out_debugwindow
