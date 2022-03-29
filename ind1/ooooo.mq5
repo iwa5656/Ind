@@ -9,7 +9,7 @@
 #define USE_ZIGZAG_M5 
 #define USE_ZIGZAG_M15
 
-//#define USE_ZIGZAG_M30
+#define USE_ZIGZAG_M30
 #define USE_ZIGZAG_H1
 #define USE_ZIGZAG_H4
 #define USE_ZIGZAG_D1
@@ -384,6 +384,13 @@ init_zigzag_debug();//debug 20200603
         bUSE_view_output_Cn_kirikawari,
         Inp_base_time_frame
     );
+    p_allcandle.set_Inp_para_double1(Inp_para_double1);
+    p_allcandle.set_Inp_para_double2(Inp_para_double2);
+    p_allcandle.set_Inp_para_double3(Inp_para_double3);
+    p_allcandle.set_Inp_para_double4(Inp_para_double4);
+    p_allcandle.set_Inp_para_int1(Inp_para_int1);
+    p_allcandle.set_Inp_para_int2(Inp_para_int2);
+    p_allcandle.set_Inp_para_int3(Inp_para_int3);
 	p_allcandle.Oninit();
 //	m_hyouka = new MethodPattern_range("Wtop",PERIOD_M1,p_allcandle.get_candle_data_pointer(PERIOD_M1),p_allcandle);
 //	m_hyouka = new MethodPattern_range("Wtop",Inp_base_time_frame,p_allcandle.get_candle_data_pointer(Inp_base_time_frame),p_allcandle);
