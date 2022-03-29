@@ -26,7 +26,14 @@ public:
    bool bUSE_view_mesenkirikawari_arrow;//クラス内でコピーで持つ	//目線切り替わりを矢印で表示　黒塗り斜めは目線切り替わり。中抜け矢印は続伸	
    bool bUSE_view_output_Cn_kirikawari;//クラス内でコピーで持つ		//Cn　続伸、逆　をジャーナルにテキスト出力
    ENUM_TIMEFRAMES	Inp_base_time_frame;//クラス内でコピーで持つ	// 評価時間軸
-	
+
+	double Inp_para_double1;//double para1
+	double Inp_para_double2;//double para2
+	double Inp_para_double3;//double para3
+	double Inp_para_double4;//double para4
+	int Inp_para_int1;//int para1
+	int Inp_para_int2;//int para2
+	int Inp_para_int3;//int para2	
 	
 	//--- コンストラクタとデストラクタ
 	//allcandle(void){
@@ -102,6 +109,20 @@ public:
 	ENUM_TIMEFRAMES get_UpperTimeFrame(ENUM_TIMEFRAMES period);
 	ENUM_TIMEFRAMES get_LowerTimeFrame(ENUM_TIMEFRAMES period);
 	candle_data *get_updown_TimeFrame(int updn,ENUM_TIMEFRAMES period);// updn分TimeFrameを変更したcandle_dataのPointerを取得
+    void set_Inp_para_double1(double a){Inp_para_double1=a;};
+    void set_Inp_para_double2(double a){Inp_para_double2=a;};
+    void set_Inp_para_double3(double a){Inp_para_double3=a;};
+    void set_Inp_para_double4(double a){Inp_para_double4=a;};
+    void set_Inp_para_int1(int a){Inp_para_int1=a;};
+    void set_Inp_para_int2(int a){Inp_para_int2=a;};
+    void set_Inp_para_int3(int a){Inp_para_int3=a;};
+    double get_Inp_para_double1(void){return(Inp_para_double1);};
+    double get_Inp_para_double2(void){return(Inp_para_double2);};
+    double get_Inp_para_double3(void){return(Inp_para_double3);};
+    double get_Inp_para_double4(void){return(Inp_para_double4);};
+    int    get_Inp_para_int1(   void){return(Inp_para_int1);};
+    int    get_Inp_para_int2(   void){return(Inp_para_int2);};
+    int    get_Inp_para_int3(   void){return(Inp_para_int3);};
 	
 };
 void allcandle::OnDeinit(const int reason){

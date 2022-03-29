@@ -22,6 +22,11 @@ A.v>C.v && B.v>D.v
 ・AorCを超えたら、パターン不成立とする
 ・Dの値を更新
 
+para::
+Inp_para_double1 =0.1;//double para1    x%
+Inp_para_int1 =0;//int para1            baseからどれだけずらすか１で一つ上
+
+
 （別途確認
 エントリー時にTP,SLを確認
 Now,C（損切幅）
@@ -47,10 +52,15 @@ class TradeMethod_B1_1 :public TradeMethodbase
 {
 public:
    int hyouka_data_koyuu_num;
+   double x_hiritu;//inp x％
+   int timeframes_chg_to_upper_num;// 上位タイムフレームのシフト数
 
 	//--- コンストラクタとデストラクタ
 	TradeMethod_B1_1(void){};
 	TradeMethod_B1_1(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = "Method_B1_1";period = p;candle = c; p_allcandle = a;hyouka_data_koyuu_num=0;
+        x_hiritu=p_allcandle.get_Inp_para_double1();
+        timeframes_chg_to_upper_num=p_allcandle.get_Inp_para_int1();
+        if(timeframes_chg_to_upper_num==0){printf("not set timeframes_chg_to_upper_num");}
 		init_mem_hyouka_data_koyuu();
 	};
 	~TradeMethod_B1_1(void){view_kekka_youso(1);};
@@ -61,6 +71,8 @@ public:
       debug_B1_1_tp_sl_All();
       #endif //USE_View_out_hyoukadata
       kekka_calc();printf("instant_B1_1");
+      candle_data *c=p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
+      printf("★upperFrame="+EnumToString(c.period));
    }
     //関数
 //	int		hyouka(void);//　評価・状態遷移含む処理
@@ -310,8 +322,8 @@ void TradeMethod_B1_1::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想�
 	double sa_pips;
     //上位足からのキャンドルポインタを取得して、パターンを判断する。下記を使用する。
     //candle_data *allcandle::get_updown_TimeFrame(int updn,ENUM_TIMEFRAMES period){// updn分TimeFrameを変更したcandle_dataのPointerを取得
-    int upTf=2;// 何個上にするか？
-    candle_data *c=p_allcandle.get_updown_TimeFrame(upTf,p_allcandle.Inp_base_time_frame);
+    //int timeframes_chg_to_upper_num=2;// 何個上にするか？
+    candle_data *c=p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
 
     //追加必要か？
     // パターン成立したか？
@@ -335,10 +347,15 @@ void TradeMethod_B1_1::hyouka_zig_kakutei(void){ // 足確定で呼ばれる想�
 int TradeMethod_B1_1::chk_chg_zigdata_for_pt(int idx){// 更新し、値を変更した1（パターン成立）、未変更０、パターン成立しない２
    bool bchg=false;
    int midx=3;//hyouka_data_koyuuの最後のidx
-    int upTf=2;// 何個上にするか？
-    candle_data *c=p_allcandle.get_updown_TimeFrame(upTf,p_allcandle.Inp_base_time_frame);
+    //int timeframes_chg_to_upper_num=2;// 何個上にするか？
+    candle_data *c=p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
     //if(c.zigzagdata_count>6){}
 	for(int i=0;i<=midx;i++){
+        if(c.zigzagdata_count < hyouka_data_koyuu[idx].tyouten[midx-i].no){
+            printf("error over ");
+            return 2;
+        }
+      //printf(IntegerToString(hyouka_data_koyuu[idx].tyouten[midx-i].no));
 		if(c.zigzagdata[hyouka_data_koyuu[idx].tyouten[midx-i].no-1].value != hyouka_data_koyuu[idx].tyouten[midx-i].v){
 		   hyouka_data_koyuu[idx].tyouten[midx-i].v = c.zigzagdata[hyouka_data_koyuu[idx].tyouten[midx-i].no-1].value;
 		   hyouka_data_koyuu[idx].tyouten[midx-i].t = c.zigzagdata[hyouka_data_koyuu[idx].tyouten[midx-i].no-1].time;
@@ -441,8 +458,8 @@ bool    TradeMethod_B1_1::Is_pattern(void){// 成否返す。成立時　last_zi
     //candle_data *allcandle::get_updown_TimeFrame(int updn,ENUM_TIMEFRAMES period){// updn分TimeFrameを変更したcandle_dataのPointerを取得
 
 //    candle_data *c=candle;//pac.get_candle_data_pointer(PERIOD_M15);
-    int upTf=2;// 何個上にするか？
-    candle_data *c=p_allcandle.get_updown_TimeFrame(upTf,p_allcandle.Inp_base_time_frame);
+    //int timeframes_chg_to_upper_num=2;// 何個上にするか？
+    candle_data *c=p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
 
     if(c!=NULL){
         chk_zigcount=c.zigzagdata_count;
