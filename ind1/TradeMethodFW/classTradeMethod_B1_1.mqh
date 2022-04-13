@@ -181,6 +181,9 @@ void TradeMethod_B1_1::hyouka_kakutei(void){ // 足確定で呼ばれる想定
    double kiten_BD_joui_xper=0;
    int zigidx = 0;
    int bkirikawari=0;
+
+    datetime Tk=0;
+   imi_point ai,bi,ci,di,ei,nni;
    for(int i = 0; i<hyouka_data_num ;i++){
       switch(hyouka_data[i].status){
          case 1:// 
@@ -200,11 +203,14 @@ A
 			b.t=hyouka_data_koyuu[i].tyouten[2].t;b.v=hyouka_data_koyuu[i].tyouten[2].v;  
 			c.t=hyouka_data_koyuu[i].tyouten[1].t;c.v=hyouka_data_koyuu[i].tyouten[1].v;  
 			d.t=hyouka_data_koyuu[i].tyouten[0].t;d.v=hyouka_data_koyuu[i].tyouten[0].v;  
+
+            Tk = a.t;
          //エントリー条件判断
             //下位足で目線が下
             //　値がBDの上位X％だったら、下へエントリー
         dd_BD=MathAbs(b.v-d.v);
-        x=20.0;
+        //x=20.0;
+        x=x_hiritu*100.0;// para double 1
         kiten_BD_joui_xper=b.v-dd_BD*x/100.0;
 
         //下位足で目線したになったか？
@@ -238,9 +244,19 @@ A
 				if(iret ==2){ //ptと形が異なるようになったので　無効化へ
 					hyouka_data[i].status = 0;
 				}
-			}
+			}else if(nn.v > c.v){// 無効の形になったら完了
+					hyouka_data[i].status = 0;
+            }
+            //実時間から意味座標変換してバーの数を数えて、  
+            //同じサイズ分より超えていたら、無効にする。
+                //D-Aのバーの数、Dからのバーの数進めた時間より超えたら無効へ
+                chg_r2i(a,ai,Tk);
+                chg_r2i(d,di,Tk);
+                chg_r2i(nn,nni,Tk);
+                if(di.x+MathAbs(ai.x-di.x)<nni.x){
+                    hyouka_data[i].status = 0;
+                }
 
-		
 	
 			break;
          case 2://エントリー中
