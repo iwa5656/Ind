@@ -246,7 +246,8 @@ allcandle *p_allcandle;
 #endif //aasdafasdfasdf
 
 //#include "TradeMethodFW\classTradeMethod_Z1_1.mqh"
-#include "TradeMethodFW\classTradeMethod_B1_1.mqh"
+//#include "TradeMethodFW\classTradeMethod_B1_1.mqh"
+#include "TradeMethodFW\classTradeMethod_B1_2.mqh"
 
 
 #define NUM_OF_TMBs 7
@@ -292,7 +293,8 @@ ENUM_TIMEFRAMES period_inp = Inp_base_time_frame;
 //TMBs[count_TMBs]=new TradeMethod_A2_3_T("method_A2_3_T",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 
 
-TMBs[count_TMBs]=new TradeMethod_B1_1("method_B1_1",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+//TMBs[count_TMBs]=new TradeMethod_B1_1("method_B1_1",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[count_TMBs]=new TradeMethod_B1_2("method_B1_2",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 
 }
 
