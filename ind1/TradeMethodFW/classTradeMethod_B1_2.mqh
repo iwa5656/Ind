@@ -55,8 +55,8 @@ Dから時間がBCD＊１．５倍たったら抜ける。）"
 #endif //commentttt
 
 //debug viwe
-#define USE_View_Pattern_data_A_E_out_debugwindow     //パターン成立時、各点をデバッグウインドに表示（デバッグ用）
-#define USE_View_Pattern_data_A_E_out_Line     //パターン成立時、その線分を白で表示（デバッグ用）
+//#define USE_View_Pattern_data_A_E_out_debugwindow     //パターン成立時、各点をデバッグウインドに表示（デバッグ用）
+//#define USE_View_Pattern_data_A_E_out_Line     //パターン成立時、その線分を白で表示（デバッグ用）
 #define USE_View_out_hyoukadata //エントリーしたか、勝ち負け、そのサイズなどを表示（数字のみ）
 extern datetime pre_timeM1;
 class TradeMethod_B1_2 :public TradeMethodbase 
