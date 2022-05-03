@@ -20,6 +20,7 @@ public:
 	bool flagchgbarD1;
 	bool flagchgbarW1;
 	bool flagchgbarMN1;
+	datetime pre_time_for_flag;// フラグ用に前回扱った時間を記憶する
 	//MethodPattern *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
 	
    bool bUSE_view_Zigzag_chgpoint;//クラス内でコピーで持つ			//zigzagの線がどこで確定するかわかるようにする。
@@ -65,6 +66,9 @@ public:
 			    m_data[i] = NULL;
 			}
 		}
+
+		pre_time_for_flag=0;//init
+
 		//m_hyouka = new MethodPattern("Wtop",m_data[0].period,m_data[0]);
 	        //MethodPattern(string s,ENUM_TIMEFRAMES p,candle_data *c){name = s;period = p;candle = c; hyouka_data_num=0;};
 
@@ -91,7 +95,8 @@ public:
     	int &k,
     	int &count
     );
-    void calc_new_bar_flag(datetime &t1,datetime &t2);
+    //void calc_new_bar_flag(datetime &t1,datetime &t2);
+    void calc_new_bar_flag(datetime &t2);//chg 20220503
     void rest_new_bar_flag(void);
     bool get_new_bar_flag(ENUM_TIMEFRAMES p);
     bool set_new_bar_flag(ENUM_TIMEFRAMES p,bool f);
@@ -218,7 +223,7 @@ candle_data *allcandle::get_candle_data_pointer(ENUM_TIMEFRAMES period){
 	return c;
 }	
 bool allcandle::get_candle_flagchgbar(ENUM_TIMEFRAMES period){
-	bool c=NULL;
+	bool c=false;
 	switch(period)
 	{
 		case PERIOD_M1:
@@ -300,7 +305,8 @@ bool allcandle::get_zigzagdata(
 
 }
 
-void allcandle::calc_new_bar_flag(datetime &pre_time,datetime &t){
+//void allcandle::calc_new_bar_flag(datetime &pre_time,datetime &t){
+void allcandle::calc_new_bar_flag(datetime &t){	
 	rest_new_bar_flag();// リセット
 //ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 //新規足有無の確認
@@ -308,11 +314,17 @@ void allcandle::calc_new_bar_flag(datetime &pre_time,datetime &t){
     MqlDateTime pre_dt_struct;
     MqlDateTime dt_struct;
     flagchgbarM1=false;flagchgbarM5=false;flagchgbarM15=false;flagchgbarM30=false;flagchgbarH1=false;flagchgbarH4=false;flagchgbarD1=false;flagchgbarW1=false;flagchgbarMN1=false;
+	if(pre_time_for_flag ==0){//初回のみ前回地を覚える
+		pre_time_for_flag=t;
+		return;
+	}
     TimeToStruct(t,dt_struct);
-    TimeToStruct(pre_time,pre_dt_struct);//chg 20220228 不具合対応
-	if(pre_time !=t){//chg 20220228 不具合対応
+    TimeToStruct(pre_time_for_flag,pre_dt_struct);//chg 20220228 不具合対応
+	if(pre_time_for_flag !=t){//chg 20220228 不具合対応
 	    flagchgbarM1=true;
 	    this.set_new_bar_flag(PERIOD_M1,true);
+	    
+	    //printf("flag on M1="+TimeToString(t));//debug
 	}
     
     if(((int)pre_dt_struct.min/5) != ((int)dt_struct.min/5)){
@@ -367,6 +379,8 @@ void allcandle::calc_new_bar_flag(datetime &pre_time,datetime &t){
 			    set_new_bar_flag(PERIOD_W1,true);
 
     }
+	//前回値の保持
+	pre_time_for_flag = t;
     return;    
 }
 void allcandle::rest_new_bar_flag(void){

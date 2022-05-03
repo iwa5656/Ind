@@ -87,6 +87,13 @@ input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_M5;// 評価時間軸
 //input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_H1;// 評価時間軸
 //input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_H4;// 評価時間軸
 
+
+input int Inp_MAPO_period0=20;//MA周期Fast
+input int Inp_MAPO_period1=75;//MA周期Middle
+input int Inp_MAPO_period2=200;//MA周期Slow
+input int Inp_MAPO_matype=1;//SMA:0,EMA:1
+
+
 //#define Lib_iunima_mtf_ru
 
 int idebug;
@@ -222,6 +229,11 @@ bool flagchgbarM1,flagchgbarM5,flagchgbarM15,flagchgbarM30,flagchgbarH1,flagchgb
 datetime pre_timeM1;
 //allcandle
 allcandle *p_allcandle;
+
+//MApo
+#include "candle_cal\cal_MA\MA_torimatome1.mqh"
+MA_torimatome1 *p_MA_torimatome1;
+
 // hyouka
 //TradeMethodbase ctrl data
 #ifdef aasdfadfasdfaf
@@ -311,6 +323,15 @@ void De_init_TMBs(int ccc){
     }
 }
 
+void On_init_MA_torimatome1(){
+    candle_data *cc= p_allcandle.get_candle_data_pointer(Inp_base_time_frame);
+    if(cc!=NULL){
+        p_MA_torimatome1 = new MA_torimatome1(cc);
+        p_MA_torimatome1.reg_MApf(0,Inp_MAPO_period0,Inp_MAPO_matype);
+        p_MA_torimatome1.reg_MApf(1,Inp_MAPO_period1,Inp_MAPO_matype);
+        p_MA_torimatome1.reg_MApf(2,Inp_MAPO_period2,Inp_MAPO_matype);
+    }
+}
 
 #ifdef USE_HYOUKA
 //MethodPattern *m_hyouka;// ★★ 複数のMethodPatternを持てるようにして、平行にしょりするには
@@ -402,6 +423,7 @@ init_zigzag_debug();//debug 20200603
 	m_hyouka.Oninit();
 #endif//USE_HYOUKA
     On_init_TMBs();
+    On_init_MA_torimatome1();
 //--- indicator buffers mapping
 //Assign the arrays with the indicator buffers
    SetIndexBuffer(0,buffer_open	,INDICATOR_DATA);
@@ -620,7 +642,8 @@ if(use_calc_pass_kako == true) {
                 //データの作成処理：フラクタル、ライン情報、Zigzag情報作成
 //        datetime t1=time[i-1],t2=time[i];
         datetime t1=time[i+1],t2=time[i];
-        p_allcandle.calc_new_bar_flag(t1,t2);// 前後の時間を渡し、フラグを設定してもらう。（呼び出し時に初期化する）
+        //p_allcandle.calc_new_bar_flag(t1,t2);// 前後の時間を渡し、フラグを設定してもらう。（呼び出し時に初期化する）
+        p_allcandle.calc_new_bar_flag(t2);// 前後の時間を渡し、フラグを設定してもらう。（呼び出し時に初期化する）
         //各時間足確定時の処理        
         if(flagchgbarM1){
 #ifdef USE_ZIGZAG_M1 
@@ -665,6 +688,7 @@ if(use_calc_pass_kako == true) {
                 int ret4 = p_allcandle.Oncalculate_Fractals(peri);
 #endif //USE_Fractals
                 p_allcandle.calc_kakutei(peri);//パターンなどの確定した後に計算するものを実行
+                //test_ma();//test test test 20220503
 #ifdef USE_HYOUKA
                 if(peri== Inp_base_time_frame){
     	            m_hyouka.hyouka();
@@ -903,6 +927,17 @@ if(use_calc_pass_kako == true) {
                         #ifdef	USE_debug_Lcn_2kaicall
                             printf(__FUNCTION__+"★pre　chk_trade_forTick");
                         #endif//USE_debug_Lcn_2kaicall
+        //ma,po
+        //足が確定したときのみ、計算
+        if(p_allcandle.get_candle_flagchgbar(Inp_base_time_frame)){//　変化フラグが変わったか？
+            //candle_data *cc= p_allcandle.get_candle_data_pointer(Inp_base_time_frame);
+            candle_data *cc= p_MA_torimatome1.m_c;
+            if(cc!=NULL){
+                p_MA_torimatome1.add_new_bar_calc(cc.close,cc._CANDLE_BUFFER_MAX_NUM-1,cc.candle_bar_count);
+            }
+        }
+
+
         chk_trade_forTick(close[i],time[i],p_allcandle,true);
                         #ifdef	USE_debug_Lcn_2kaicall
                             printf(__FUNCTION__+"★after　chk_trade_forTick");
@@ -2257,6 +2292,39 @@ void test_sturct_mesen_tyouten_mesenKirikawariKyouka(){
             printf( TimeToString( c.get_now_time()) +"②  sma="+DoubleToString(ma_sma_20_cal)+"  sma="+DoubleToString(ma_sma_20)+"sa="+DoubleToString(ma_sma_20_cal-ma_sma_20));
         }
     }
+}
+void test_ma(){
+    //addbarの時に呼び出しのイメージ
+    // 足確定時の最新と確定足の足の情報とＭＡ情報を計算する。
+    bool ret = false;
+    int out_dir=0;
+    int chk_zigcount;
+    //allcandle *pac = p_allcandle;//pac global dell
+    if(pac==NULL){return;}
+    candle_data *c=pac.get_candle_data_pointer(PERIOD_M1);
+    if(c!=NULL){
+        chk_zigcount=c.zigzagdata_count;
+        if(c.zigzagdata_count >400){
+            //get_mesen_tyouten_mesenKirikawariKyoukai(PERIOD_M5,c.zigzagdata_count-1
+            //,5,vtdata);
+
+            //int ma_handle = c.handle_sma_20;
+            //double ma_sma_20_cal; 
+            //bool rr=false;
+            //datetime tt=c.get_now_time();
+            //rr = c.ma_get_value_now(ma_handle,ma_sma_20_cal,tt);
+
+
+            double ma_sma,ma_ema;
+            //bool rr2,rr3;rr2=false;rr3=false;
+            ma_sma = c.MAprice(3,MODE_SMA,0);
+            ma_ema = c.MAprice(3,MODE_EMA,0);
+            printf( TimeToString( c.time[299]) +"①  ema="+DoubleToString(ma_ema)+"  sma="+DoubleToString(ma_sma));
+            ma_sma = c.MAprice(3,MODE_SMA,1);
+            ma_ema = c.MAprice(3,MODE_EMA,1);
+            printf( TimeToString( c.time[298]) +"①  ema="+DoubleToString(ma_ema)+"  sma="+DoubleToString(ma_sma));
+        }
+    }    
 }
 
 #ifdef delll

@@ -133,7 +133,8 @@ public:
    //allcandle *m_allcandle;
    //allcandle *abcde;
    // void *m_allcandle;
-
+   #define CANDLE_BUFFER_MAX_NUM 300
+   int _CANDLE_BUFFER_MAX_NUM;
    bool bUSE_view_Zigzag_chgpoint;//クラス内でコピーで持つ			//zigzagの線がどこで確定するかわかるようにする。
    bool bUSE_view_mesenkirikawari_arrow;//クラス内でコピーで持つ	//目線切り替わりを矢印で表示　黒塗り斜めは目線切り替わり。中抜け矢印は続伸	
    bool bUSE_view_output_Cn_kirikawari;//クラス内でコピーで持つ		//Cn　続伸、逆　をジャーナルにテキスト出力
@@ -165,6 +166,9 @@ public:
 		init_LCn();
 #endif //USE_LCn
 
+
+      _CANDLE_BUFFER_MAX_NUM = CANDLE_BUFFER_MAX_NUM;
+
 	   };
 	~candle_data(void){
 	   // ((allcandle*) m_allcandle).rest_new_bar_flag();
@@ -182,7 +186,7 @@ public:
 		int handle_cci;
         //zigzag
         #define ZIGZAG_BUFFER_MAX_NUM 300
-        #define CANDLE_BUFFER_MAX_NUM ZIGZAG_BUFFER_MAX_NUM
+        //#define CANDLE_BUFFER_MAX_NUM ZIGZAG_BUFFER_MAX_NUM
 		#define NUM_YOBI_ZIGZAG_MEM 3000 // Mem予備
         //#define ZIGZAG_MAX_NUM 600000			
         struct struct_zigzagdata{
