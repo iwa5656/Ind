@@ -613,6 +613,11 @@ public:
 			if(n<0){return 0.0;}
 			return(close[n]);
 		}
+		double get_open(int i){
+			int n = CANDLE_BUFFER_MAX_NUM-1-i;
+			if(n<0){return 0.0;}
+			return(open[n]);
+		}
 		double get_low(int i){
 			int n = CANDLE_BUFFER_MAX_NUM-1-i;
 			if(n<0){return 0.0;}
@@ -880,6 +885,20 @@ public:
 					finded_count++;
 				}
 			}
+		}
+		return ret;
+	}
+	bool is_now_candle_yousen(){
+		bool ret=false;
+		if(close[CANDLE_BUFFER_MAX_NUM-1]>open[CANDLE_BUFFER_MAX_NUM-1]){
+			ret = true;
+		}
+		return ret;
+	}
+	bool is_now_candle_insen(){
+		bool ret=false;
+		if(close[CANDLE_BUFFER_MAX_NUM-1]<open[CANDLE_BUFFER_MAX_NUM-1]){
+			ret = true;
 		}
 		return ret;
 	}

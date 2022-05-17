@@ -91,6 +91,7 @@ input ENUM_TIMEFRAMES Inp_base_time_frame = PERIOD_M5;// 評価時間軸
 input int Inp_MAPO_period0=20;//MA周期Fast
 input int Inp_MAPO_period1=75;//MA周期Middle
 input int Inp_MAPO_period2=200;//MA周期Slow
+input int Inp_MAPO_period3=10;//MA周期VeryFast
 input int Inp_MAPO_matype=1;//SMA:0,EMA:1
 
 
@@ -261,7 +262,8 @@ MA_torimatome1 *p_MA_torimatome1;
 //#include "TradeMethodFW\classTradeMethod_B1_1.mqh"
 //#include "TradeMethodFW\classTradeMethod_B1_2.mqh"
 //#include "TradeMethodFW\classTradeMethod_B1_3.mqh"
-#include "TradeMethodFW\classTradeMethod_B1_3_PO.mqh"
+//#include "TradeMethodFW\classTradeMethod_B1_3_PO.mqh"
+#include "TradeMethodFW\classTradeMethod_C1_1_PO.mqh"
 
 
 #define NUM_OF_TMBs 7
@@ -308,7 +310,8 @@ ENUM_TIMEFRAMES period_inp = Inp_base_time_frame;
 
 
 //TMBs[count_TMBs]=new TradeMethod_B1_1("method_B1_1",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
-TMBs[count_TMBs]=new TradeMethod_B1_3_PO("method_B1_3_PO",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+//TMBs[count_TMBs]=new TradeMethod_B1_3_PO("method_B1_3_PO",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
+TMBs[count_TMBs]=new TradeMethod_C1_1_PO("method_C1_1_PO",period_inp,p_allcandle.get_candle_data_pointer(period_inp),p_allcandle);count_TMBs++;
 
 }
 
@@ -323,7 +326,11 @@ void De_init_TMBs(int ccc){
         TMBs[i].OnDeinit(ccc);
     }
 }
-
+void Notice_TorihikikikannNai_TMBs(){
+    for(int i=0;i<count_TMBs;i++){
+        TMBs[i].notice_TorihikikikannNai();
+    }
+}
 void On_init_MA_torimatome1(){
     candle_data *cc= p_allcandle.get_candle_data_pointer(Inp_base_time_frame);
     if(cc!=NULL){
@@ -331,6 +338,7 @@ void On_init_MA_torimatome1(){
         p_MA_torimatome1.reg_MApf(0,Inp_MAPO_period0,Inp_MAPO_matype);
         p_MA_torimatome1.reg_MApf(1,Inp_MAPO_period1,Inp_MAPO_matype);
         p_MA_torimatome1.reg_MApf(2,Inp_MAPO_period2,Inp_MAPO_matype);
+        p_MA_torimatome1.reg_MApf(3,Inp_MAPO_period3,Inp_MAPO_matype);
     }
 }
 
@@ -574,6 +582,7 @@ int OnCalculate(const int rates_total,
         }else{
             if(prev_calculated!=0 && time[prev_calculated-1]>pre_test_starttime){
                 b_during_test_piriod=true;
+                Notice_TorihikikikannNai_TMBs();//取引FWオブジェクトに期間内になったことを連絡
                 printf("b_during_test_piriod=true  計算がテスト期間内に入った★");
             }
         }

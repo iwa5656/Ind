@@ -3,17 +3,20 @@
 #include "MApf.mqh"
 #include "../../class_candle_data.mqh"
 
+//debug opt
+#define USE_debug_view_torimatome1
+
 //
 class MA_torimatome1
 {
 public:
-    // ①all candle作成後、ベースのcandledataを対象に作成し、その後、MAを登録（０１２）          //p_MA_torimatome1,
+    // ①all candle作成後、ベースのcandledataを対象に作成し、その後、MAを登録（０１２はPMO用、3以降は自由）          //p_MA_torimatome1,
     //　②ベースの足確定のところに次の通知を追加　add_new_bar_calc(double &v[],int maxidx,int count)
     //　③データ利用は、①のオブジェクト経由でMA,POを取得する
     candle_data *m_c;
     #define NUM_OF_BUFFER_PO 300
     //#define NUM_OF_POs 300
-    double POs[NUM_OF_BUFFER_PO];//  0が一番古い、         前回値、前々回、前々々回　　　　　上にPO中　、下にPO中　、崩れた
+    double POs[NUM_OF_BUFFER_PO];//  idx[0]が一番古い、     前回値、前々回、前々々回　　　　　値：上にPO中1、下にPO中-1　、崩れた0
     int po_count;  
     double pre_po;
 
@@ -22,11 +25,9 @@ public:
     bool flag_po_dn_to_0;//パーフェクトオーダー下の状態から、そうでない状態になった     （足確定時に更新：add_new_bar_calc）
     bool flag_po_up_to_0;//パーフェクトオーダー上の状態から、そうでない状態になった     （足確定時に更新：add_new_bar_calc）
 
-
-
 	//--- コンストラクタとデストラクタ
 	MA_torimatome1(void){};
-    #define NUM_OF_CHAILD_MA 3
+    #define NUM_OF_CHAILD_MA 5
 //	MA_torimatome1(candle_data &p){ m_c=p;  // all candle作成後、ベースのcandledataを対象に作成する。
 	MA_torimatome1(candle_data* p){ m_c=p;  // all candle作成後、ベースのcandledataを対象に作成する。
         for(int i=0;i<NUM_OF_CHAILD_MA;i++){
@@ -49,7 +50,7 @@ public:
     //子供のma
     //    MApf objs
     //        f,m,s,ss
-            MApf *MApfs[4];
+            MApf *MApfs[NUM_OF_CHAILD_MA];
 
 
 //登録		
@@ -102,20 +103,20 @@ public:
         if(pre_po != po){
             if(po ==1){
                 flag_po_0_to_up=true;
-               printf("★上のパーフェクトオーダー　Start");
+               debug_printf("★上のパーフェクトオーダー　Start");
             }
             else if(po==-1){
                 flag_po_0_to_dn=true;
-               printf("★下のパーフェクトオーダー　Start");
+               debug_printf("★下のパーフェクトオーダー　Start");
             }
             else if(po == 0){
                if(pre_po==1){
                    flag_po_up_to_0=true;
-                  printf("★上のパーフェクトオーダー　End");
+                  debug_printf("★上のパーフェクトオーダー　End");
                }
                else if(pre_po==-1){
                    flag_po_dn_to_0=true;
-                  printf("★下のパーフェクトオーダー　End");
+                  debug_printf("★下のパーフェクトオーダー　End");
                }
             
             }
@@ -168,9 +169,18 @@ public:
         }
         return false;
     }
+    bool is_po(){
+        if(POs[NUM_OF_BUFFER_PO-1]==1||POs[NUM_OF_BUFFER_PO-1]==-1){
+            return true;
+        }
+        return false;
+    }
     int get_status_po(){
         return(POs[NUM_OF_BUFFER_PO-1]);
     }
+    //int get_po_count(){
+    //    return(PO_count);
+    //}
     //フラグ
     // 各フラグ参照
     // flag_po_0_to_dn
@@ -178,7 +188,105 @@ public:
     // flag_po_dn_to_0
     // flag_po_up_to_0
 
+    int get_near_idx_po_start_end(int &idx_s,int &idx_e,int &po_type){//直近Poの開始と終了idxを得る。PO中ならStartのみ、POでない場合は、過去のｓとe。
+        //戻り値：０以外は、idx_sは意味あるものとなっている。
+            //　PO期間がなかった:0    見つからなかった
+            //  ない状態からPoを期間を見つけた
+            //        ｓ、e見つけた           1
+            //        ｓはみつけられなかった      2
+            //　初めからPOでstartが見つかった： 3
+            //  初めからPOでstartがみつからなかった： 4
+        int iret = 0;
+        //初めの処理
+        idx_s=0;idx_e=NUM_OF_BUFFER_PO-1;
+        int flag_last_PO  =POs[NUM_OF_BUFFER_PO-1];
+        
+        int search_type =0;
+        po_type=0;
+        if(POs[NUM_OF_BUFFER_PO-1]=0){
+            search_type=0;//startとendを探す
+        }else{
+            search_type=1;//startのみ探す
+        }
+        po_type=POs[NUM_OF_BUFFER_PO-1];
 
+        int seqno=search_type;
+        bool flag_finded_start = false;
+        bool flag_finded_end = false;
+        for(int i=NUM_OF_BUFFER_PO-1;i>0;i--){
+            //endを探す
+            if(seqno==0){
+                if(POs[i]!=POs[i-1]){
+                    //変化ありなので po記憶
+                    po_type=POs[i-1];
+                    idx_e = i-1;
+                    flag_finded_end =true;
+                    seqno++;
+                }
+            }else if(seqno==1){
+                //startを探す
+                if(POs[i]!=POs[i-1]){
+                    //変化ありなので po記憶
+                    idx_s = i;
+                    flag_finded_start =true;
+                    break;
+                }
+            }
+        }
+        if(search_type==0 ){
+            if(flag_finded_end ==false){
+                //Po見つからない
+                iret=0;
+            }else if(flag_finded_start == false){
+                //Poがずっとつずいているので、一番古いものを渡す
+                iret=2;
+            }else {
+                //両方見つかった
+                iret=1;
+            }
+        }else if(search_type==1){
+            if(flag_finded_start == false){
+                //Poがずっとつずいているので、一番古いものを渡す
+                iret = 4;
+            }else {
+                //start見つかった、endはない。
+                iret = 3;
+            }            
+        }
+        return iret;
+    }
+    bool get_near_po_tyouten(double &tyouten_v,int &idx,int &po_type){//Po中の頂点,idxを取得する（PO上なら一番大きい値）
+        //戻り値　取得できたtrue,　　できないfalse
+        bool bret=false;
+        int idx_s=0,idx_e=0;
+        int iret=0;
+        iret = get_near_idx_po_start_end(idx_s,idx_e,po_type);
+
+        if(iret == true  && m_c !=NULL ){
+            double value;
+            value = m_c.close[idx_e];idx=idx_e;//初期値
+            for(int i=idx_e;i>=idx_s;i--){
+                double tmp_v=m_c.close[i];
+                if(po_type==1){
+                    //max　さがす
+                    if(tmp_v>value){value = tmp_v;idx=i;}
+                }else if(po_type ==0){
+                    //min　さがす
+                    if(tmp_v<value){value = tmp_v;idx=i;}
+                }
+            }
+            bret = true;
+        }else{
+            //bret = false;
+        }
+        return bret;
+    }
+
+    void debug_printf(string s){
+    #ifdef USE_debug_view_torimatome1
+        printf(s);
+    #endif//USE_debug_view_torimatome1
+    }
 
 };
 #endif// classMA_torimatome1

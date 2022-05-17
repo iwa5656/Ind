@@ -1,5 +1,5 @@
-#ifndef classTradeMethod_B1_3_PO
-#define classTradeMethod_B1_3_PO
+#ifndef classTradeMethod_C1_1_PO
+#define classTradeMethod_C1_1_PO
 
 #include "..\class_candle_data.mqh"
 #include "..\class_allcandle.mqh"
@@ -10,46 +10,16 @@
 #include "..\candle_cal\cal_MA\MA_torimatome1.mqh"
 extern MA_torimatome1 *p_MA_torimatome1;
 #ifdef commentttt
-"押し戻り：
-上位足A-Dが目線が下、かつ
-CDの上位(C側から）X％以内で、下位足の目線が下
-
-パターン
-　ABCD　下のNの形、目線は下
-
-パターン無効：以下のいずれか
-    現在値がCを超えたら無効化
-    A-Dの期間の2倍の時間がたったら無効化
 エントリー
+    パーフェクトオーダー（PO)の時に、EMA10をPO方向に抜けたた、支えられたとき
+    entry_pt
+        0:①確定足で跨いでいる
+        1:②髭がEMAを跨いでいる。PO方向の足（EMAを試している形）
+利確、損切
+    過去75の足の上下幅の   3分の1で利確、4分の1で損切を実施する。
+パラメータ
+    int1 エントリーパターン　01・・・・ entry_pt
 
-利確
-    ①D以下
-    ②CDの下位X％以内になったとき。
-
-上位足
-A.v>C.v && B.v>D.v
-下位足で目線が下
-　値がCDの上位X％だったら、下へエントリー
-
-・AorCを超えたら、パターン不成立とする
-・Dの値を更新
-
-para::
-Inp_para_double1 =0.1;//double para1    x%
-Inp_para_int1 =0;//int para1            baseからどれだけずらすか１で一つ上
-Inp_para_int2 =-1;// int para2 PO状態の指定（-1下、上１、どちらでもない０、　　条件無効：３
-
-（別途確認
-エントリー時にTP,SLを確認
-Now,C（損切幅）
-Now.D（利確幅）
-利確が多いときエントリ
-）"	"D以下で利確
-
-
-（別途確認（時間的に勢い内）↓
-D以下で利確
-Dから時間がBCD＊１．５倍たったら抜ける。）"
 
 
 
@@ -60,35 +30,46 @@ Dから時間がBCD＊１．５倍たったら抜ける。）"
 //#define USE_View_Pattern_data_A_E_out_Line     //パターン成立時、その線分を白で表示（デバッグ用）
 #define USE_View_out_hyoukadata //エントリーしたか、勝ち負け、そのサイズなどを表示（数字のみ）
 extern datetime pre_timeM1;
-class TradeMethod_B1_3_PO :public TradeMethodbase 
+class TradeMethod_C1_1_PO :public TradeMethodbase 
 {
 public:
    int hyouka_data_koyuu_num;
    double x_hiritu;//inp x％
-   int timeframes_chg_to_upper_num;// 上位タイムフレームのシフト数
-   int status_po_entry_condition;
+   //int timeframes_chg_to_upper_num;// 上位タイムフレームのシフト数
+   //上記の削除-> ok
+   //int status_po_entry_condition;
+   //上記の削除
+   int entry_pt;
+   int intpara2,intpara3;
+    int pre_start_idx_hyouka;//高速化のため使用。評価データの先頭部分の無効部分を飛ばすことに使用
 
 	//--- コンストラクタとデストラクタ
-	TradeMethod_B1_3_PO(void){};
-	TradeMethod_B1_3_PO(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = "Method_B1_3_PO";period = p;candle = c; p_allcandle = a;hyouka_data_koyuu_num=0;
+	TradeMethod_C1_1_PO(void){};
+	TradeMethod_C1_1_PO(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = "Method_C1_1_PO";period = p;candle = c; p_allcandle = a;hyouka_data_koyuu_num=0;
         x_hiritu=p_allcandle.get_Inp_para_double1();
-        timeframes_chg_to_upper_num=p_allcandle.get_Inp_para_int1();
-        status_po_entry_condition=p_allcandle.get_Inp_para_int2();
-        if(timeframes_chg_to_upper_num==0){printf("not set timeframes_chg_to_upper_num");}
+        entry_pt=p_allcandle.get_Inp_para_int1();//エントリーパターン
+        intpara2=p_allcandle.get_Inp_para_int2();//
+        intpara3=p_allcandle.get_Inp_para_int3();//
+        //timeframes_chg_to_upper_num=p_allcandle.get_Inp_para_int1();
+
+
+        //status_po_entry_condition=p_allcandle.get_Inp_para_int2();
+        //if(timeframes_chg_to_upper_num==0){printf("not set timeframes_chg_to_upper_num");}
+        pre_start_idx_hyouka=0;
 		init_mem_hyouka_data_koyuu();
 	};
-	~TradeMethod_B1_3_PO(void){view_kekka_youso(1);};
+	~TradeMethod_C1_1_PO(void){view_kekka_youso(1);};
 	//--- オブジェクトを初期化する
    void Oninit(void){}
    void OnDeinit(const int reason){
       #ifdef USE_View_out_hyoukadata
-      debug_B1_3_PO_tp_sl_All();
+      debug_C1_1_PO_tp_sl_All();
       #endif //USE_View_out_hyoukadata
       //test input 
-      printf("x="+DoubleToString(x_hiritu,2)+",frameupper="+IntegerToString(timeframes_chg_to_upper_num)+"POcond="+IntegerToString(status_po_entry_condition));
-      kekka_calc();printf("instant_B1_3_PO");
-      candle_data *c=p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
-      printf("★upperFrame="+EnumToString(c.period));
+      printf("★entry_pt="+IntegerToString(entry_pt)+"intpara2="+IntegerToString(intpara2));
+      kekka_calc();printf("instant_C1_1_PO");
+      candle_data *c=candle;//p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
+      printf("★baseFrame="+EnumToString(c.period));
    }
     //関数
 //	int		hyouka(void);//　評価・状態遷移含む処理
@@ -110,12 +91,16 @@ public:
       struct_mesen_tyouten_zokushin tyouten[5];
       int last_zigidx;// E
       int first_zigidx;// A
+
+      double sl_v;//exit価格　dir 1 なら　現在価格が左記をしたまわるとExit。　dir-1なら現在価格が上回るとExit
+      double tp_v;//exit価格　dir 1 なら　現在価格が左記をうわまわるとExit。　dir-1なら現在価格がした回るとExit
    };
    struct_hyouka_data_TradeMethodbaseA1 hyouka_data_koyuu[];
 
 //各処理
 	int		hyouka(void){//　評価・状態遷移含む処理
-		
+		if(bTorihikikikannNai==false){return -1;}//取引外の期間は評価しないように変更
+        
 		//bool isnew_bar=p_allcandle.flagchgbarM15;//　tbd ★★どのの時間軸使用するかは。。。使用するcandleのフラグにした方が良い
         bool isnew_bar=p_allcandle.get_candle_flagchgbar(this.period);
   		if(isnew_bar == true){
@@ -128,12 +113,15 @@ public:
    		//  (candle.zigzag_chg_flag_status==1||candle.zigzag_chg_flag_status==0||candle.zigzag_chg_flag_status==-1)){
    			  hyouka_zig_kakutei();
    		//}
+
+        hyouka_tick();// 
 		return 0;
 	}
 
 //void hyouka_zig_kakutei(void); // 足確定で呼ばれる想定
 //void hyouka_kakutei(void);// 足確定で呼ばれる想定
 
+#ifdef delll
  void SetSendData_forEntry(int a,int a2,int b,int c,double d,double e,double f){
 	GlobalVariableSet("Ind_EntryNo",a);
 	GlobalVariableSet("Ind_EntryDirect",a2);
@@ -156,7 +144,7 @@ void set_EntryData(int i,int kekkano){
     datetime test =  candle.time[0];
     datetime test2 = candle.time[299];       
 }
-
+#endif //delll
 //mem
 void init_mem_hyouka_data_koyuu(void){
 	ArrayResize(hyouka_data_koyuu,1,NUM_YOBI_HYOUKA_DATA_MEM); 
@@ -196,120 +184,236 @@ void hyouka_kakutei(void){ // 足確定で呼ばれる想定
 
     datetime Tk=0;
    imi_point ai,bi,ci,di,ei,nni;
-   for(int i = 0; i<hyouka_data_num ;i++){
+
+   //パターン成立したか？したら評価データに登録
+   if(Is_pattern()==true){
+       //add 
+       add_hyouka_data(hyouka_data_num);
+   }
+
+   int status_po=0;
+   double ema_v=0.0;
+   bool bret;
+
+   double maxv=0.0;
+   double minv=10000;
+   double tmpv=0;
+   double diff_v=0;
+   
+   int ma_no=0;
+    bool b_renzoku_off=true;
+//   for(int i = 0; i<hyouka_data_num ;i++){
+   for(int i = pre_start_idx_hyouka; i<hyouka_data_num ;i++){
       switch(hyouka_data[i].status){
          case 1:// 
          	//////////////////////////////
          	//** 評価パターン０：
          	//////////////////////////////
-            
-#ifdef comment
-A
-        C
-    B
 
-		    D	
-#endif //comment
 
-			a.t=hyouka_data_koyuu[i].tyouten[3].t;a.v=hyouka_data_koyuu[i].tyouten[3].v;  
-			b.t=hyouka_data_koyuu[i].tyouten[2].t;b.v=hyouka_data_koyuu[i].tyouten[2].v;  
-			c.t=hyouka_data_koyuu[i].tyouten[1].t;c.v=hyouka_data_koyuu[i].tyouten[1].v;  
-			d.t=hyouka_data_koyuu[i].tyouten[0].t;d.v=hyouka_data_koyuu[i].tyouten[0].v;  
 
-            Tk = a.t;
-         //エントリー条件判断
-            //下位足で目線が下
-            //　値がCDの上位X％だったら、下へエントリー
-        dd_CD=MathAbs(c.v-d.v);
-        //x=20.0;
-        x=x_hiritu*100.0;// para double 1
-        kiten_CD_joui_xper=c.v-dd_CD*x/100.0;
+            //EMAを取得　（idx　3がema10）
+            status_po = p_MA_torimatome1.get_status_po();//PO状態（１Up,ー１ｄｎ、０どちらでもない）
+            if(status_po == 0){ 
+                //poでなくなったら評価しないようにする。
+                hyouka_data[i].status=0;
+            }else {
+                ma_no = 3;
+                bret=p_MA_torimatome1.get_ma(ma_no,0,ema_v);
+                if(bret == true){// EMA１０　取得できたら
+                    if(entry_pt==0){
+                        //①確定足で跨いでいる
+                        //PO 上の時、　EMAまたぎ、かつ、エントリー中でない
+                        if( status_po==1 && ema_v >= candle.get_close(1) && ema_v < candle.get_close(0) 
+                        && is_exist_entry_position_buy()==false){
+                            ret_entry=true;
+                        }
+                            
+                        //PO下のとき、EMAまたぎ、かつ、エントリー中でない
+                        if( status_po==-1 && ema_v <= candle.get_close(1) && ema_v > candle.get_close(0)
+                        && is_exist_entry_position_sell()==false){
+                            ret_entry=true;
+                        }
 
-        //下位足で目線したになったか？
-        zigidx = candle.zigzagdata_count-1;
-        bkirikawari=0;
-        if(zigidx >=0&& zigidx<= candle.zigzagdata_count-1){
-            if(candle.zigzagdata[zigidx].mesen.kind == 1 ||
-                candle.zigzagdata[zigidx].mesen.kind == 2 //add 続伸
-                ){
-                // chg  目線は関係なし
-                //if( candle.zigzagdata[zigidx].mesen.dir == -1){
-                    bkirikawari=1;
-                //}else{
 
-                //}
-            }    
-        }
+                    }else if(entry_pt==1){
+                        //MA10の値が、	
+                        //PO上のとき、lowとopenの間である（髭がMA上にある）
+                        if( status_po==1 && ema_v > candle.get_low(0) && ema_v < candle.get_open(0) 
+                        && is_exist_entry_position_buy()==false){
+                            ret_entry=true;
+                        }
+                            
+                        //PO下のとき、highとopenの間である（髭がMA上にある）
+                        if( status_po==-1 && ema_v < candle.get_high(0) && ema_v > candle.get_open(0)
+                        && is_exist_entry_position_buy()==false){
+                            ret_entry=true;
+                        }
 
-        if(bkirikawari==1 && kiten_CD_joui_xper <= nn.v){//★　目線がsita かつ　値がCDの上位X％だったら、下へエントリー
-            int po_sataus = p_MA_torimatome1.get_status_po();
-            //if(p_MA_torimatome1.is_po_dn()==true){
-            if( po_sataus ==  status_po_entry_condition  || status_po_entry_condition == 2 ){// POが指定された状態のときのみエントリー。または、指定なし（３）の時は無条件
-               ret_entry=true;
+                    }else if(entry_pt==2){
+                    }else if(entry_pt==3){
+                    }else if(entry_pt==4){
+
+                    }
+                }// bret == true // EMA１０        
             }
-         }         
 			//エントリーできるか   
 			if(ret_entry == true){
-
 				//エントリー
-                int i_dir=-1;
-				entry_syori(i,now,now_time,i_dir);// buyの形
+                int i_dir=status_po;
+                //if(i_dir == -1){
+                //    i_dir = 1;
+                //}
+				entry_syori(i,now,now_time,i_dir);// 
 				//エントリー後の状態へ移行
 				hyouka_data[i].status =2;
-			}else if(candle.zigzag_chg_flag==true&&candle.zigzag_chg_flag_status==0){
-				//登録後Zigが変更になったかどうか確認し、更新
-				int iret=
-				chk_chg_zigdata_for_pt(i);
-				if(iret ==2){ //ptと形が異なるようになったので　無効化へ
-					hyouka_data[i].status = 0;
-				}
-			}else if(nn.v > c.v){// 無効の形になったら完了
-					hyouka_data[i].status = 0;
-            }
-            //実時間から意味座標変換してバーの数を数えて、  
-            //同じサイズ分より超えていたら、無効にする。
-                //D-Aのバーの数、Dからのバーの数進めた時間より超えたら無効へ
-                chg_r2i(a,ai,Tk);
-                chg_r2i(d,di,Tk);
-                chg_r2i(nn,nni,Tk);
-                if(di.x+MathAbs(ai.x-di.x)<nni.x){
-                    hyouka_data[i].status = 0;
-                }
 
-	
+                //sl,tp価格の設定
+                //過去７０足中の最大、最小の価格差を求める
+                for(int k=0;k<75;k++){
+                    tmpv=candle.get_close(k);
+                    if(tmpv>maxv){maxv=tmpv;}
+                    if(tmpv<minv){minv=tmpv;}
+                }
+                diff_v=maxv-minv;
+                if(hyouka_data[i].dir ==1){
+                    hyouka_data_koyuu[i].tp_v = hyouka_data[i].entry_v + diff_v/3.0;
+                    hyouka_data_koyuu[i].sl_v = hyouka_data[i].entry_v - diff_v/4.0;
+                }else if(hyouka_data[i].dir == -1){
+                    hyouka_data_koyuu[i].tp_v = hyouka_data[i].entry_v - diff_v/3.0;
+                    hyouka_data_koyuu[i].sl_v = hyouka_data[i].entry_v + diff_v/4.0;
+                }
+                 
+
+			}
+			break;
+         case 2://エントリー中
+         #ifdef aaaaaaa
+			//Exitか？
+            if(hyouka_data[i].dir ==1){
+                if(hyouka_data_koyuu[i].tp_v<nn.v || hyouka_data_koyuu[i].sl_v>nn.v){flag_exit_syori=true;}
+            }else if(hyouka_data[i].dir == -1){
+                if(hyouka_data_koyuu[i].tp_v>nn.v || hyouka_data_koyuu[i].sl_v<nn.v){flag_exit_syori=true;}
+            }
+            if(flag_exit_syori==true){
+                exit_syori(i,nn.v,nn.t);
+                //exit
+                hyouka_data[i].status = 999;//評価完了
+      	      
+      	      
+               double ddd=hyouka_data[i].exit_v-hyouka_data[i].entry_v;
+               if(ddd==0.0){hyouka_data[i].winloss=0;}
+               else if(hyouka_data[i].dir == 1 && ddd>0){hyouka_data[i].winloss=1;}
+               else if(hyouka_data[i].dir == 1 && ddd<0){hyouka_data[i].winloss=-1;}
+               else if(hyouka_data[i].dir == -1 && ddd>0){hyouka_data[i].winloss=-1;}
+               else if(hyouka_data[i].dir == -1 && ddd<0){hyouka_data[i].winloss=1;}
+               string aaa="負け:=";
+      			if(hyouka_data[i].winloss==1){
+      				//win
+      				aaa="勝ち:=";
+      			}
+      			if(hyouka_data[i].winloss!=0){
+         			printf(aaa + getPips(MathAbs(hyouka_data[i].entry_v-hyouka_data[i].exit_v))
+         			+"   ikey="+IntegerToString(hyouka_data[i].reg_ikey)+" = "+name
+         			);
+         			printf("   entv="+DoubleToString(hyouka_data[i].entry_v,2)+"  exitv="+DoubleToString( hyouka_data[i].exit_v,2));
+         			printf("   entt="+TimeToString(hyouka_data[i].entry_t)+"  exitt="+TimeToString( hyouka_data[i].exit_t));
+         			
+               }
+
+      	      
+      	   }
+         #endif//aaaaaaa
+
+      
+             break;
+         case 3:
+      
+         
+             break;
+         default:
+             break;
+         
+      }//すぃｔｃｈ
+
+      //速度向上のための対策
+      if(b_renzoku_off==true){
+          if(hyouka_data[i].status==0||hyouka_data[i].status==999){//　0は無効   999が完了　　を飛ばす
+            pre_start_idx_hyouka++;
+          }else{
+              //有効データを発見した場合は
+                b_renzoku_off=false;
+                pre_start_idx_hyouka=i;
+          }
+      }
+   }//for
+    
+    //return(0);
+
+}
+void hyouka_tick(void){
+// 
+//real_point　zzzz;
+    real_point a,b,c,d,e,f,nn;
+    double sa;//基準値からの損益価格
+    double sa_pips;
+    double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
+    datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
+    nn.v=now;
+    nn.t=now_time;
+    double o_bid,  o_ask;
+    RefreshPrice(o_bid, o_ask);
+
+    bool ret_channel=false;
+    bool flag_exit_syori=false;
+    real_point A,M,C,B,D,E;
+    int ret_b_up=false;
+    bool ret_entry=false;
+    double dd_CD=0;
+    double x=0;
+    double kiten_CD_joui_xper=0;
+    int zigidx = 0;
+    int bkirikawari=0;
+
+    datetime Tk=0;
+    imi_point ai,bi,ci,di,ei,nni;
+
+
+    int status_po=0;
+    double ema_v=0.0;
+    bool bret;
+
+    double maxv=0.0;
+    double minv=10000;
+    double tmpv=0;
+    double diff_v=0;
+
+    int ma_no=0;
+
+    #ifdef commenntt 
+        エントリー時に買うときの評価・比較はaskと比べること	
+        エントリー時に売るときの評価・比較はbidと比べること	
+            
+        利確や損切りしたいときは	
+            ポジションが買いからスタートしたものは、決済は売りなので、bidの価格で評価する。
+            ポジションが売りからスタートしたものは、決済は買いなので、askの価格で評価する。
+    #endif //comment
+    double exit_v=0.0;
+    for(int i = pre_start_idx_hyouka; i<hyouka_data_num ;i++){
+      switch(hyouka_data[i].status){
+         case 1:// 
 			break;
          case 2://エントリー中
 			//Exitか？
-			   
-			//CEにタッチしたらExit		勝ち
-            //形になっているか判定
-            //real_point A,M,C,B,D,E;
-            //real_point a;
-            //real_point　h;
-
-            A.v = hyouka_data_koyuu[i].tyouten[3].v;/*y*/            A.t = hyouka_data_koyuu[i].tyouten[3].t;//x
-            B.v = hyouka_data_koyuu[i].tyouten[2].v;/*y*/            B.t = hyouka_data_koyuu[i].tyouten[2].t;//x
-            C.v = hyouka_data_koyuu[i].tyouten[1].v;/*y*/            C.t = hyouka_data_koyuu[i].tyouten[1].t;//x
-            D.v = hyouka_data_koyuu[i].tyouten[0].v;/*y*/            D.t = hyouka_data_koyuu[i].tyouten[0].t;//x
-            //E.v = hyouka_data_koyuu[i].tyouten[0].v;/*y*/            E.t = hyouka_data_koyuu[i].tyouten[0].t;//x
-				//線分abと点cの位置関係を知る(上か下か線上か？)
-      				//int chk_point_line_upperordownside(real_point &a,real_point &b,real_point &c){
-      				//int ret=0;//上：1　下-1、　線分上0
-            //ret_b_up=chk_point_line_upperordownside(C,E,nn);
-            
-            //利確/損切条件判断
-            //if(ret_b_up == 1||ret_b_up == 0){//上のチャネルにぶつかる
-            if(D.v>=nn.v){// 利確★
-               //exit syori
-               flag_exit_syori=true;
-            }else if(C.v<=nn.v){ //*のラインを上に割る　//損切★
-               //exit syori
-               flag_exit_syori=true;
+            if(hyouka_data[i].dir ==1){//買いポジションのExit判定　
+                if(hyouka_data_koyuu[i].tp_v< o_bid || hyouka_data_koyuu[i].sl_v>o_bid){flag_exit_syori=true;exit_v=o_bid;}
+            }else if(hyouka_data[i].dir == -1){//売りポジションのExit判定　
+                if(hyouka_data_koyuu[i].tp_v>o_ask || hyouka_data_koyuu[i].sl_v<o_ask){flag_exit_syori=true;exit_v=o_ask;}
             }
-      	   if(flag_exit_syori==true){
-      	      exit_syori(i,nn.v,nn.t);
-      	      //exit
-      	      hyouka_data[i].status = 999;//評価完了
+            if(flag_exit_syori==true){
+                exit_syori(i,exit_v,nn.t);
+                //exit
+                hyouka_data[i].status = 999;//評価完了
       	      
       	      
                double ddd=hyouka_data[i].exit_v-hyouka_data[i].entry_v;
@@ -345,11 +449,10 @@ A
          
       }//すぃｔｃｈ
    }//for
-    
-    //return(0);
 
 }
 void hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
+#ifdef dellll
 // 
 //real_point　zzzz;
 	//real_point a,b,c,d,e,f,nn;
@@ -358,7 +461,7 @@ void hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
     //上位足からのキャンドルポインタを取得して、パターンを判断する。下記を使用する。
     //candle_data *allcandle::get_updown_TimeFrame(int updn,ENUM_TIMEFRAMES period){// updn分TimeFrameを変更したcandle_dataのPointerを取得
     //int timeframes_chg_to_upper_num=2;// 何個上にするか？
-    candle_data *c=p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
+    candle_data *c=candle;//p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
 
     //追加必要か？
     // パターン成立したか？
@@ -377,13 +480,13 @@ void hyouka_zig_kakutei(void){ // 足確定で呼ばれる想定
                 
             }
 		   }
-
+#endif //dellll
 }
 int chk_chg_zigdata_for_pt(int idx){// 更新し、値を変更した1（パターン成立）、未変更０、パターン成立しない２
    bool bchg=false;
    int midx=3;//hyouka_data_koyuuの最後のidx
     //int timeframes_chg_to_upper_num=2;// 何個上にするか？
-    candle_data *c=p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
+    candle_data *c=candle;//p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
     //if(c.zigzagdata_count>6){}
 	for(int i=0;i<=midx;i++){
         if(c.zigzagdata_count < hyouka_data_koyuu[idx].tyouten[midx-i].no){
@@ -457,6 +560,7 @@ bool    add_hyouka_data_koyuu(int para_refidx){
 	}
     return(ret);
 }
+
 //bool    Is_pattern(void){
 //    int base_idx = candle.zigzagdata_count-1;
 //	return(Is_pattern(base_idx));
@@ -494,9 +598,19 @@ bool    Is_pattern(void){// 成否返す。成立時　last_zigzag_E, Aの点、
 
 //    candle_data *c=candle;//pac.get_candle_data_pointer(PERIOD_M15);
     //int timeframes_chg_to_upper_num=2;// 何個上にするか？
-    candle_data *c=p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
+    candle_data *c=candle;//p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
 
     if(c!=NULL){
+        //if( p_MA_torimatome1.is_po()==true ){
+            //パーフェクトオーダー？ かつ　同じ方向の評価データが有効でないとき
+            if( p_MA_torimatome1.is_po_up()==true && exist_live_hyouka_data() == false){//
+                ret = true;
+            }else if(p_MA_torimatome1.is_po_dn()==true && exist_live_hyouka_data()== false){
+                ret = true;
+            }
+        //}
+
+#ifdef dellll
         chk_zigcount=c.zigzagdata_count;
         
         if(c.zigzagdata_count >10 && pre_t_zigzag_count != c.zigzagdata_count
@@ -574,7 +688,7 @@ A
 #ifdef USE_debug_USE_View_Pattern_data_A_E_out_debugwindow
 					//F 
 					//G　point  ＣＥとFＧ（ｅとおるＤＥ）
-					debug_B1_3_PO_tp_sl(A,B,C,D,E,F,G);
+					debug_C1_1_PO_tp_sl(A,B,C,D,E,F,G);
 #endif//USE_debug_USE_View_Pattern_data_A_E_out_debugwindow
 					
 
@@ -604,6 +718,8 @@ A
             }
         }
         //pre_t_zigzag_count = t_zigzag_count;
+#endif//dell
+
     }
 
     return ret;
@@ -611,7 +727,7 @@ A
 
 
 
-void debug_B1_3_PO_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point& F,real_point &G){
+void debug_C1_1_PO_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D,real_point &E,real_point& F,real_point &G){
 							move_LineAB_To_startpointC(C,E,D,F);
 							move_LineAB_To_startpointC(D,E,F,G);
 							double dd_chanell = cal_point_line_dist(C,E,D);
@@ -633,16 +749,16 @@ void debug_B1_3_PO_tp_sl(real_point &A,real_point &B,real_point &C,real_point &D
 							printf("   dd_F_B_sl=   "+getPips(dd_F_B_sl));
 }
 
-void debug_B1_3_PO_tp_sl_All(void){
+void debug_C1_1_PO_tp_sl_All(void){
    printf("勝ち負け"+":"+"pips"+":"+"lastzig"+":"+"b_same_A_D="+":"+"   dd_F_G_rieki="+":"+"   dd_F_D_sl=   "+":"+"   dd_F_A_sl=   "+":"+"   dd_F_B_sl=   ");
    for(int i = 0;i< hyouka_data_koyuu_num;i++){
       if(hyouka_data[i].status ==999){
-         debug_B1_3_PO_tp_sl_idx(i);
+         debug_C1_1_PO_tp_sl_idx(i);
       }
    }
 }
 
-void debug_B1_3_PO_tp_sl_idx(int idx){
+void debug_C1_1_PO_tp_sl_idx(int idx){
 
    real_point A,B,C,D,E,F,G;
    
@@ -685,7 +801,7 @@ void debug_B1_3_PO_tp_sl_idx(int idx){
 
 };//end class def
 
-#endif//classTradeMethod_B1_3_PO
+#endif//classTradeMethod_C1_1_PO
 
 
 

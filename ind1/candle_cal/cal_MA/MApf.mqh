@@ -63,7 +63,7 @@ void	Init_ma(void){//	初期化:配列、数を初期化
 }					
 bool	get_ma(int idx, double &out_data){//idx指定でmaを取得　　Input para:idx:最新0,1がその次に新しい。戻り値成功失敗。
     if(idx > ma_count-1){return false;}
-    out_data = ma[idx];
+    out_data = ma[NUM_OF_BUFFER_MA-1-idx];
     return true;
 }							
 	

@@ -19,6 +19,10 @@ public:
 	allcandle *p_allcandle;
 	candle_data *candle;
 
+	//取引期間開始したかの状態保持（NOTICEされたあと有効になる）
+	bool bTorihikikikannNai;//true 取引期間内になった状態、false：取引期間前
+	void notice_TorihikikikannNai(void){bTorihikikikannNai=true;}
+
 
 
 	#define NUM_OF_HYOUKA_PATTERN 1
@@ -82,6 +86,7 @@ public:
 	TradeMethodbase(void){};
 	TradeMethodbase(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = s;period = p;candle = c; p_allcandle = a;hyouka_data_num=0;
 		init_mem_hyouka_data();
+		bTorihikikikannNai=false;
 	};
 	~TradeMethodbase(void){kekka_calc();};
 	
@@ -164,6 +169,18 @@ public:
        				
 		}
 		return ret;
+	}
+	virtual bool exist_live_hyouka_data(){//すでに現在評価中の評価データがあるかどうか　あり：true、なし：false
+		bool bret=false;
+		int last_num = 0;
+		if( hyouka_data_num!=0 ){
+			last_num = hyouka_data_num-1;
+			int st = hyouka_data[last_num].status;
+			if( st== 1 || st==2){
+				bret = true;
+			}
+		}
+		return bret;
 	}
     virtual bool    add_hyouka_data_koyuu(int para_ikey){return(false);};
 	
@@ -275,7 +292,7 @@ public:
 		view_entryToExit(hyouka_idx);
 
 		//Exit Send For EA
-		SetSendData_forExit(hyouka_data[hyouka_idx].Ind_EntryNo);
+		SetSendData_forExit(hyouka_data[hyouka_idx].Ind_EntryNo,hyouka_data[hyouka_idx].dir);
 		
 
 	}
