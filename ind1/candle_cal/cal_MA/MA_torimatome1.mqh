@@ -169,6 +169,18 @@ public:
         }
         return false;
     }
+    bool is_po_dn_edge(){
+        if(POs[NUM_OF_BUFFER_PO-1]==-1&& POs[NUM_OF_BUFFER_PO-1-1]!=-1&&po_count>3){
+            return true;
+        }
+        return false;
+    }
+    bool is_po_up_edge(){
+        if(POs[NUM_OF_BUFFER_PO-1]==1&& POs[NUM_OF_BUFFER_PO-1-1]!=1&&po_count>3){
+            return true;
+        }
+        return false;
+    }
     bool is_po(){
         if(POs[NUM_OF_BUFFER_PO-1]==1||POs[NUM_OF_BUFFER_PO-1]==-1){
             return true;
@@ -203,7 +215,7 @@ public:
         
         int search_type =0;
         po_type=0;
-        if(POs[NUM_OF_BUFFER_PO-1]=0){
+        if(POs[NUM_OF_BUFFER_PO-1]==0){
             search_type=0;//startとendを探す
         }else{
             search_type=1;//startのみ探す
