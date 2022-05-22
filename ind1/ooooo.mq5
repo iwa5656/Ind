@@ -94,6 +94,8 @@ input int Inp_MAPO_period2=200;//MA周期Slow
 input int Inp_MAPO_period3=10;//MA周期VeryFast
 input int Inp_MAPO_matype=1;//SMA:0,EMA:1
 
+input bool Inp_bOnly_IND=true;//Indのみで動作（true）。（EAはない前提とする）
+input bool Inp_Use_ind_lot_sikinkannri=true;//Lotを1回のトレードの負けが、資金の１％以内とするようにする。
 
 //#define Lib_iunima_mtf_ru
 
@@ -263,7 +265,7 @@ MA_torimatome1 *p_MA_torimatome1;
 //#include "TradeMethodFW\classTradeMethod_B1_2.mqh"
 //#include "TradeMethodFW\classTradeMethod_B1_3.mqh"
 //#include "TradeMethodFW\classTradeMethod_B1_3_PO.mqh"
-#include "TradeMethodFW\classTradeMethod_C1_1_PO.mqh"
+#include "TradeMethodFW\classTradeMethod_C1_1_PO_only.mqh"
 
 
 #define NUM_OF_TMBs 7
@@ -424,6 +426,9 @@ init_zigzag_debug();//debug 20200603
     p_allcandle.set_Inp_para_int1(Inp_para_int1);
     p_allcandle.set_Inp_para_int2(Inp_para_int2);
     p_allcandle.set_Inp_para_int3(Inp_para_int3);
+    p_allcandle.set_Inp_bOnly_IND(Inp_bOnly_IND);
+    p_allcandle.set_Inp_Use_ind_lot_sikinkannri(Inp_Use_ind_lot_sikinkannri);
+
 	p_allcandle.Oninit();
 //	m_hyouka = new MethodPattern_range("Wtop",PERIOD_M1,p_allcandle.get_candle_data_pointer(PERIOD_M1),p_allcandle);
 //	m_hyouka = new MethodPattern_range("Wtop",Inp_base_time_frame,p_allcandle.get_candle_data_pointer(Inp_base_time_frame),p_allcandle);

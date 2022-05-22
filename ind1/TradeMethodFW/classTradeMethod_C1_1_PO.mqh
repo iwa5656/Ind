@@ -35,6 +35,9 @@ class TradeMethod_C1_1_PO :public TradeMethodbase
 public:
    int hyouka_data_koyuu_num;
    double x_hiritu;//inp x％
+   double rikaku_wariai;//過去のある期間の上下の幅の何％（１００％＝１）
+   double sonngiri_wariai;//過去のある期間の上下の幅の何％（１００％＝１）
+   int jouge_kikan;//収集Barの数、過去のある期間の上下の幅
    //int timeframes_chg_to_upper_num;// 上位タイムフレームのシフト数
    //上記の削除-> ok
    //int status_po_entry_condition;
@@ -46,10 +49,22 @@ public:
 	//--- コンストラクタとデストラクタ
 	TradeMethod_C1_1_PO(void){};
 	TradeMethod_C1_1_PO(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = "Method_C1_1_PO";period = p;candle = c; p_allcandle = a;hyouka_data_koyuu_num=0;
-        x_hiritu=p_allcandle.get_Inp_para_double1();
+        //親のコンストラクタの内容を実施
+   		bTorihikikikannNai=false;
+		init_shikinkannri();
+		bInp_bOnly_IND=p_allcandle.get_Inp_bOnly_IND();
+        Inp_Use_ind_lot_sikinkannri=p_allcandle.get_Inp_Use_ind_lot_sikinkannri();
+
+	    //子供のコンストラクタ実施
+	
+        rikaku_wariai=p_allcandle.get_Inp_para_double1();
+        sonngiri_wariai=p_allcandle.get_Inp_para_double2();
+        
         entry_pt=p_allcandle.get_Inp_para_int1();//エントリーパターン
-        intpara2=p_allcandle.get_Inp_para_int2();//
+        jouge_kikan=p_allcandle.get_Inp_para_int2();//収集Barの数、過去のある期間の上下の幅
         intpara3=p_allcandle.get_Inp_para_int3();//
+
+
         //timeframes_chg_to_upper_num=p_allcandle.get_Inp_para_int1();
 
 
@@ -92,8 +107,8 @@ public:
       int last_zigidx;// E
       int first_zigidx;// A
 
-      double sl_v;//exit価格　dir 1 なら　現在価格が左記をしたまわるとExit。　dir-1なら現在価格が上回るとExit
-      double tp_v;//exit価格　dir 1 なら　現在価格が左記をうわまわるとExit。　dir-1なら現在価格がした回るとExit
+      //double sl_v;//exit価格　dir 1 なら　現在価格が左記をしたまわるとExit。　dir-1なら現在価格が上回るとExit
+      //double tp_v;//exit価格　dir 1 なら　現在価格が左記をうわまわるとExit。　dir-1なら現在価格がした回るとExit
    };
    struct_hyouka_data_TradeMethodbaseA1 hyouka_data_koyuu[];
 
@@ -202,6 +217,7 @@ void hyouka_kakutei(void){ // 足確定で呼ばれる想定
    
    int ma_no=0;
     bool b_renzoku_off=true;
+    double ema_fast=0.0;
 //   for(int i = 0; i<hyouka_data_num ;i++){
    for(int i = pre_start_idx_hyouka; i<hyouka_data_num ;i++){
       switch(hyouka_data[i].status){
@@ -220,17 +236,21 @@ void hyouka_kakutei(void){ // 足確定で呼ばれる想定
             }else {
                 ma_no = 3;
                 bret=p_MA_torimatome1.get_ma(ma_no,0,ema_v);
+
                 if(bret == true){// EMA１０　取得できたら
+                    bret=p_MA_torimatome1.get_ma(0,0,ema_fast);
                     if(entry_pt==0){
                         //①確定足で跨いでいる
                         //PO 上の時、　EMAまたぎ、かつ、エントリー中でない
-                        if( status_po==1 && ema_v >= candle.get_close(1) && ema_v < candle.get_close(0) 
+                        if( status_po==1 //&& ema_v>ema_fast
+                        && ema_v >= candle.get_close(1) && ema_v < candle.get_close(0) 
                         && is_exist_entry_position_buy()==false){
                             ret_entry=true;
                         }
                             
                         //PO下のとき、EMAまたぎ、かつ、エントリー中でない
-                        if( status_po==-1 && ema_v <= candle.get_close(1) && ema_v > candle.get_close(0)
+                        if( status_po==-1 //&& ema_v<ema_fast
+                        && ema_v <= candle.get_close(1) && ema_v > candle.get_close(0)
                         && is_exist_entry_position_sell()==false){
                             ret_entry=true;
                         }
@@ -264,26 +284,28 @@ void hyouka_kakutei(void){ // 足確定で呼ばれる想定
                 //if(i_dir == -1){
                 //    i_dir = 1;
                 //}
-				entry_syori(i,now,now_time,i_dir);// 
-				//エントリー後の状態へ移行
-				hyouka_data[i].status =2;
 
                 //sl,tp価格の設定
                 //過去７０足中の最大、最小の価格差を求める
-                for(int k=0;k<75;k++){
+                for(int k=0;k<jouge_kikan;k++){
                     tmpv=candle.get_close(k);
                     if(tmpv>maxv){maxv=tmpv;}
                     if(tmpv<minv){minv=tmpv;}
                 }
                 diff_v=maxv-minv;
-                if(hyouka_data[i].dir ==1){
-                    hyouka_data_koyuu[i].tp_v = hyouka_data[i].entry_v + diff_v/3.0;
-                    hyouka_data_koyuu[i].sl_v = hyouka_data[i].entry_v - diff_v/4.0;
-                }else if(hyouka_data[i].dir == -1){
-                    hyouka_data_koyuu[i].tp_v = hyouka_data[i].entry_v - diff_v/3.0;
-                    hyouka_data_koyuu[i].sl_v = hyouka_data[i].entry_v + diff_v/4.0;
+                hyouka_data[i].entry_v=now;
+                if(i_dir ==1){
+                    hyouka_data[i].tp_v = hyouka_data[i].entry_v + diff_v*rikaku_wariai;
+                    hyouka_data[i].sl_v = hyouka_data[i].entry_v - diff_v*sonngiri_wariai;
+                }else if(i_dir == -1){
+                    hyouka_data[i].tp_v = hyouka_data[i].entry_v - diff_v*rikaku_wariai;
+                    hyouka_data[i].sl_v = hyouka_data[i].entry_v + diff_v*sonngiri_wariai;
                 }
                  
+				//entry_syori(i,now,now_time,i_dir);// 
+				entry_syori(i,now,now_time,i_dir,hyouka_data[i].tp_v,hyouka_data[i].sl_v);// 
+				//エントリー後の状態へ移行
+				hyouka_data[i].status =2;
 
 			}
 			break;
@@ -406,9 +428,9 @@ void hyouka_tick(void){
          case 2://エントリー中
 			//Exitか？
             if(hyouka_data[i].dir ==1){//買いポジションのExit判定　
-                if(hyouka_data_koyuu[i].tp_v< o_bid || hyouka_data_koyuu[i].sl_v>o_bid){flag_exit_syori=true;exit_v=o_bid;}
+                if(hyouka_data[i].tp_v< o_bid || hyouka_data[i].sl_v>o_bid){flag_exit_syori=true;exit_v=o_bid;}
             }else if(hyouka_data[i].dir == -1){//売りポジションのExit判定　
-                if(hyouka_data_koyuu[i].tp_v>o_ask || hyouka_data_koyuu[i].sl_v<o_ask){flag_exit_syori=true;exit_v=o_ask;}
+                if(hyouka_data[i].tp_v>o_ask || hyouka_data[i].sl_v<o_ask){flag_exit_syori=true;exit_v=o_ask;}
             }
             if(flag_exit_syori==true){
                 exit_syori(i,exit_v,nn.t);

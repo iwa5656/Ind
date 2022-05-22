@@ -35,6 +35,8 @@ public:
 	int Inp_para_int1;//int para1
 	int Inp_para_int2;//int para2
 	int Inp_para_int3;//int para2	
+	bool Inp_bOnly_IND;//Inp_bOnly_IND
+	bool Inp_Use_ind_lot_sikinkannri;//Lotを1回のトレードの負けが、資金の１％以内とするようにする。
 	
 	//--- コンストラクタとデストラクタ
 	//allcandle(void){
@@ -121,6 +123,8 @@ public:
     void set_Inp_para_int1(int a){Inp_para_int1=a;};
     void set_Inp_para_int2(int a){Inp_para_int2=a;};
     void set_Inp_para_int3(int a){Inp_para_int3=a;};
+	void set_Inp_bOnly_IND(bool bb){Inp_bOnly_IND=bb;};
+	void set_Inp_Use_ind_lot_sikinkannri(bool bb){Inp_Use_ind_lot_sikinkannri=bb;};
     double get_Inp_para_double1(void){return(Inp_para_double1);};
     double get_Inp_para_double2(void){return(Inp_para_double2);};
     double get_Inp_para_double3(void){return(Inp_para_double3);};
@@ -128,7 +132,9 @@ public:
     int    get_Inp_para_int1(   void){return(Inp_para_int1);};
     int    get_Inp_para_int2(   void){return(Inp_para_int2);};
     int    get_Inp_para_int3(   void){return(Inp_para_int3);};
-	
+	bool get_Inp_bOnly_IND(void){return(Inp_bOnly_IND);};
+	bool get_Inp_Use_ind_lot_sikinkannri(void){return(Inp_Use_ind_lot_sikinkannri);};
+
 };
 void allcandle::OnDeinit(const int reason){
 		int max = ArraySize(period_hairetu);

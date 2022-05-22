@@ -40,6 +40,9 @@ public:
 		int dir;//0無効、１ｂｕｙ、-1　sell
 		int Ind_EntryNo;//EntryNoの記憶用
 
+		double tp_v;//指定なしなら０
+		double sl_v;//指定なしなら０
+		double dlot;
 
 
 		int reg_zigzagcount;//登録時のカウント数（add処理で同一か見るため）
@@ -81,12 +84,17 @@ public:
 	//#define NUMOFMAX_HYOUKA_DATA 100000
 	#define NUM_YOBI_HYOUKA_DATA_MEM 10 // Mem予備
 	struct_hyouka_data hyouka_data[];
-	
+	bool bInp_bOnly_IND;
+	bool Inp_Use_ind_lot_sikinkannri;
 	//--- コンストラクタとデストラクタ
 	TradeMethodbase(void){};
 	TradeMethodbase(string s,ENUM_TIMEFRAMES p,candle_data *c,allcandle *a){name = s;period = p;candle = c; p_allcandle = a;hyouka_data_num=0;
 		init_mem_hyouka_data();
 		bTorihikikikannNai=false;
+		init_shikinkannri();
+		bInp_bOnly_IND=p_allcandle.get_Inp_bOnly_IND();
+		Inp_Use_ind_lot_sikinkannri=p_allcandle.get_Inp_Use_ind_lot_sikinkannri();
+
 	};
 	~TradeMethodbase(void){kekka_calc();};
 	
@@ -160,6 +168,7 @@ public:
 			chk_mem_hyouka_data(hyouka_data_num+1);
 			hyouka_data[hyouka_data_num].status = 1;//状態初期へ
 			hyouka_data[hyouka_data_num].reg_ikey = para_ikey;
+			hyouka_data[hyouka_data_num].sl_v = 0.0;
 			hyouka_data_num++;
 
        	// view mark 
@@ -270,16 +279,27 @@ public:
    }//end func kekka_calc
 	
 
-
+	void entry_syori(int hyouka_idx,double v,datetime t,int para_dir,double tp_v,double sl_v){
+		hyouka_data[hyouka_idx].tp_v=tp_v;hyouka_data[hyouka_idx].sl_v=sl_v;
+		entry_syori(hyouka_idx,v,t,para_dir);
+	}
 	void entry_syori(int hyouka_idx,double v,datetime t,int para_dir){
 		hyouka_data[hyouka_idx].entry_v = v;hyouka_data[hyouka_idx].entry_t = t;hyouka_data[hyouka_idx].dir = para_dir;
 		datetime now_time = candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
 		double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
 		view_entry(now,now_time,"entry"+IntegerToString(hyouka_data_num));
 
+		entry_shikinkannri(hyouka_idx);
+		double sl_pips=chgPrice2Pips(MathAbs(hyouka_data[hyouka_idx].sl_v-hyouka_data[hyouka_idx].entry_v));
+		double o_lot=0.1;
+//		if(bInp_bOnly_IND==true){
+		if(Inp_Use_ind_lot_sikinkannri==true){
+			o_lot=calc_lot_by_sl(sl_pips,hyouka_data[hyouka_idx].entry_v);
+			printf("Inp_Use_ind_lot_sikinkannri= true  ");
+		}else{printf("Inp_Use_ind_lot_sikinkannri= false  ");}
 		//Entry Send for EA
 		//void SetSendData_forEntry_sokuji(int EntryDirect,int hyoukaNo,int hyoukaSyuhouNo,double EntryPrice,double Tp_Price,double Sl_Price,double lots){
-		SetSendData_forEntry_sokuji(para_dir,0,0,0.0,0.0,0.0,0.1);// lot は固定で0.1　（変更したい場合は、任意に変えること）
+		SetSendData_forEntry_sokuji(para_dir,0,0,0.0,0.0,0.0,o_lot);// lot は固定で0.1　（変更したい場合は、任意に変えること）
 		hyouka_data[hyouka_idx].Ind_EntryNo = Ind_EntryNo;//指定のエントリーのIDを記憶しておく
 		
 
@@ -368,6 +388,142 @@ void set_EntryData(int i,int kekkano){
     datetime test =  candle.time[0];
     datetime test2 = candle.time[299];       
 }
+
+
+/////////
+//資産、トレード中含めた損益
+
+#ifdef commenttttt//コメント
+	//entry中の損益計算方法
+		エントリー中の評価データを取得して下記を加算する
+			エントリー金額、Lot
+			エントリー金額、Lot
+			平均エントリーの算出、Lot　不採用→単純に現在地と保有ポジションを探して
+				購入時の金額(エントリー時の金額＊oneLotSize*dlot)、損益を算出((現在価格とエントリーの差額)＊Onelotsize*Lot)
+					//1lot何通貨か
+					double oneLotSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
+
+
+					購入時の金額=hyouka_data[i].entry_v*oneLotSize*dlot;//[金額]
+					保持ポジションの損益を算出 hoyuu_position_sonneki =(now_v-hyouka_data[i].entry_v)*oneLotSize*dlot*idir;//[金額]
+					購入方向で＋－異なる。
+
+				idir=hyouka_data[i].dir;
+				dlot=hyouka_data[i].dlot;
+
+
+	//entry中の購入金額算出方法
+
+	Exit時の金額（トータルいくら戻るか、利益、手数料）
+		初期費用からの損益の変化分（Exitの損益額）を反映
+			//確定損益を算出 
+			kakutei_sonneki=(hyouka_data[i].exit_v-hyouka_data[i].entry_v)*oneLotSize*dlot*idir;//[金額]
+		現在購入中の資産の金額の更新（Exit分減らす）
+			kounyuuji_kinngaku =hyouka_data[i].entry_v*oneLotSize*dlot;//[金額] 購入時の金額
+			
+
+		//過去の損益金額+=確定損益を算出;
+		kako_sonneki+=kakutei_sonneki;
+
+		//確定後の使える金額
+			現在の購入余力金額=初期金額＋過去の損益金額-購入時の金額（保持中のポジション買った金額）-保持ポジションの損益（現在保持中のポジションの損益）
+			freeMargin= init_syokikinngaku	//初期金額
+						+kako_sonneki//過去の損益金額
+						-kounyuuji_kinngaku//購入時の金額（保持中のポジション買った金額）
+						+hoyuu_position_sonneki//保持ポジションの損益（現在保持中のポジションの損益）
+
+	現在の資産（評価含めた金額）
+
+	現在の購入余力金額=初期金額＋確定損益-必要証拠金（保持中のポジション買った金額）-現在保持中のポジションの損益
+	freeMargin
+
+	Exitしたときentry_syoriのとき、資産を計算する。
+	Exitsyori後で999にステイタス変えるため、Exitのものはトレード中となっている。そのidxは
+	Exit_syoriの引数でわかる。
+
+	Exit_syoriで対象の結果の損益を確定損益に計上する。また、必要証拠金を減らすし、その分を使用可能な証拠金の残りの金額へもどす。
+		（有効証拠金（使用可能な証拠金の残り金額）freeMarginに戻す。）
+
+
+	エントリーするときに必要証拠金に加算、
+	結果確定したら、証拠金が戻ってくるイメージで、使用可能な証拠金の残りの金額もどす。
+		有効証拠金（使用可能な証拠金の残り金額）freeMarginに戻す。
+	// 純資産
+	//double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+
+	// 必要証拠金（ポジションや予約注文のために使用している証拠金）
+	//double margin = AccountInfoDouble(ACCOUNT_MARGIN);
+
+	// 有効証拠金（使用可能な証拠金の残り金額）
+	//double freeMargin = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
+
+	// 証拠金残高（ポジションを取っても変化せず、決済した時点で増減する）
+	//double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+
+	// 評価損益（ポジションを閉じると証拠金残高に反映される）
+	//double profit = AccountInfoDouble(ACCOUNT_PROFIT);
+
+
+#endif //comment
+//データ
+	double init_syokikinngaku;//初期金額
+	double kako_sonneki;//過去の損益金額
+	double freeMargin;//有効証拠金（使用可能な証拠金の残り金額）
+
+	void init_shikinkannri(void){
+		init_syokikinngaku=10000;
+		freeMargin=init_syokikinngaku;
+		kako_sonneki=0.0;
+	}
+	void exit_shikinkannri(int i){//i exitのidx　評価データの添え字
+		double oneLotSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
+		int idir=hyouka_data[i].dir;
+		double dlot = hyouka_data[i].dlot;
+		double kakutei_sonneki=(hyouka_data[i].exit_v-hyouka_data[i].entry_v)*oneLotSize*dlot*idir;//[金額]
+		double kounyuuji_kinngaku =hyouka_data[i].entry_v*oneLotSize*dlot;//[金額] 購入時の金額
+		freeMargin=freeMargin+kounyuuji_kinngaku+kakutei_sonneki;
+		kako_sonneki = kako_sonneki + kakutei_sonneki;
+	}
+	void entry_shikinkannri(int i){//i entryのidx　評価データの添え字
+		double oneLotSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
+		double dlot = hyouka_data[i].dlot;
+		double kounyuuji_kinngaku =hyouka_data[i].entry_v*oneLotSize*dlot;//[金額] 購入時の金額
+		freeMargin=freeMargin-kounyuuji_kinngaku;
+	}
+	double calc_lot_by_sl(double sl_pips,double entry_v){
+		double Lot=0.0;
+		double d_ret=0.0;
+		if(sl_pips == 0.0){return d_ret;}
+		//1lot何通貨か
+		double oneLotSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
+		//lotの刻み幅(0.01lotずつ調整できるなど)
+		double volume_step = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);//*oneLotSize;
+		//最小ロット
+		double volume_min = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+		//最大ロット
+		double volume_max = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX);
+
+		//Lot＝余裕資産/(１Lotの1Pips当たりの金額＊SLのPips）					
+		//	コンタクトサイズが1lotの通貨数				
+			double contact_size = SymbolInfoDouble(_Symbol,SYMBOL_TRADE_CONTRACT_SIZE);			
+		//	1PIPS当たりの金額				
+		//		1Pipsの価格/1通貨			
+				double one_tuuka_kakaku=chgPips2price(1.0);		
+							
+		//			１Lotの1Pips当たりの金額		
+					//one_tuuka_kakaku*contact_size		
+		//余裕資産		// 有効証拠金（使用可能な証拠金の残り金額）			
+		//		double freeMargin = AccountInfoDouble(ACCOUNT_MARGIN_FREE);			
+							
+		Lot=	freeMargin*0.01*entry_v/(one_tuuka_kakaku*contact_size*sl_pips);
+
+
+		if(Lot>volume_max){Lot=volume_max;}
+		if(Lot<volume_min){Lot=0.0;printf("ワーニング:Lotが小さすぎます:指定="+DoubleToString(Lot)+", volume_min="+DoubleToString(volume_min));}
+		Lot=((int)(Lot/volume_step))*volume_step;
+		d_ret = Lot;
+		return d_ret;
+	}	
 
 
 
