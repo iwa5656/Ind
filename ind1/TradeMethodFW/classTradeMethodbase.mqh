@@ -80,6 +80,11 @@ public:
 	//PF
 	double pf;
 
+	//勝ちLot＊Pips合計
+	double sum_win_lotPips;
+	//負けLot＊Pips合計
+	double sum_loss_lotPips;
+	
 
 	//#define NUMOFMAX_HYOUKA_DATA 100000
 	#define NUM_YOBI_HYOUKA_DATA_MEM 10 // Mem予備
@@ -210,6 +215,11 @@ public:
    	sum_win_Pips=0.0;
    	//負けPips合計
    	sum_loss_Pips=0.0;
+   	//勝ちlot*Pips合計
+   	sum_win_lotPips=0.0;
+   	//負けlot*Pips合計
+   	sum_loss_lotPips=0.0;
+		   
    	//PF
    	pf=0.0;
        double ddd=0.0;
@@ -225,10 +235,14 @@ public:
    			if(hyouka_data[i].winloss==1){
    				//win
    				sum_win_Pips=sum_win_Pips+MathAbs(hyouka_data[i].entry_v-hyouka_data[i].exit_v);
+				sum_win_lotPips=sum_win_lotPips+hyouka_data[i].dlot*
+					chgPrice2Pips(MathAbs(hyouka_data[i].entry_v-hyouka_data[i].exit_v));
    				count_of_win++;
    
    			}else if(hyouka_data[i].winloss==-1){
    				sum_loss_Pips=sum_loss_Pips+MathAbs(hyouka_data[i].entry_v-hyouka_data[i].exit_v);
+   				sum_loss_lotPips=sum_loss_lotPips+hyouka_data[i].dlot*
+				    chgPrice2Pips(MathAbs(hyouka_data[i].entry_v-hyouka_data[i].exit_v));
    				//loss
    				count_of_loss++;
    			}
@@ -237,7 +251,7 @@ public:
    
    	//syouritu
    	double syouritu = 99999;
-   	if((count_of_win+count_of_loss)>0){syouritu = (double)count_of_win/ (double)(count_of_win+count_of_loss);	}	
+    	if((count_of_win+count_of_loss)>0){syouritu = (double)count_of_win/ (double)(count_of_win+count_of_loss);	}	
    	//makeritu
    	double makeritu = 1.0-syouritu;
    	//期待値
@@ -246,6 +260,12 @@ public:
    		kitaichi =(double)sum_win_Pips/((double)count_of_win)  *  syouritu  
    		-(double)sum_loss_Pips/((double)count_of_loss) * makeritu;
    	}
+	double kitaichi_lotPips = 999999;
+   	if(count_of_win!=0 && count_of_loss!=0){
+   		kitaichi_lotPips =(double)sum_win_lotPips/((double)count_of_win)  *  syouritu  
+   		-(double)sum_loss_lotPips/((double)count_of_loss) * makeritu;
+   	}
+
    	//pf
    	if(sum_loss_Pips!=0){	pf=sum_win_Pips/sum_loss_Pips; }
    
@@ -254,7 +274,9 @@ public:
     if(sum_loss_Pips!=0){   tapu_kitaichi =kitaichi/(sum_loss_Pips); }
 	
 	//"タープ期待値" ：負けトレード１通貨あたりの期待値="+DoubleToString(kitaichi/(losspips*(-1)))); }else{printf("");}
-        
+
+	//1lot何通貨か
+	double oneLotSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);        
    	
    	if(count_of_win!=0 && count_of_loss!=0){
 		printf("★TimeFrame="+EnumToString(candle.Inp_base_time_frame));
@@ -271,8 +293,24 @@ public:
    				
    				)+" ; "+
    		"Pf="+DoubleToString(pf,2)+" ; "+
-		"タープ期待値="+ DoubleToString(tapu_kitaichi)
+		"タープ期待値="+ DoubleToString(tapu_kitaichi)+" ; "
+
    		);
+   		printf(
+                "★損益金額[表示通貨]（0.1固定Lot）="+DoubleToString((sum_win_Pips-sum_loss_Pips)*0.1*oneLotSize,2)+";" //価格差額＊０．１Lot＊1Lot当たりの通貨数
+		    );
+		
+   		printf(
+   		"★結果2:"+
+   		"勝LotPips="+DoubleToString(sum_win_lotPips,2)+" ; "+
+   		"負LotPips="+DoubleToString(sum_loss_lotPips,2)+" ; "+
+   		"期待値="+DoubleToString( kitaichi_lotPips,2)+" ; "+
+			"損益金額[表示通貨]="+DoubleToString(
+				(chgPips2price(sum_win_lotPips-sum_loss_lotPips))*oneLotSize// 価格差とLotの損益（Price*lot）＊1Lot当たりの通貨数
+				,2)+";"
+		   );
+
+
    	}
    
        
@@ -289,7 +327,6 @@ public:
 		double now = candle.close[ZIGZAG_BUFFER_MAX_NUM-1];
 		view_entry(now,now_time,"entry"+IntegerToString(hyouka_data_num));
 
-		entry_shikinkannri(hyouka_idx);
 		double sl_pips=chgPrice2Pips(MathAbs(hyouka_data[hyouka_idx].sl_v-hyouka_data[hyouka_idx].entry_v));
 		double o_lot=0.1;
 //		if(bInp_bOnly_IND==true){
@@ -297,6 +334,8 @@ public:
 			o_lot=calc_lot_by_sl(sl_pips,hyouka_data[hyouka_idx].entry_v);
 			printf("Inp_Use_ind_lot_sikinkannri= true  ");
 		}else{printf("Inp_Use_ind_lot_sikinkannri= false  ");}
+		hyouka_data[hyouka_idx].dlot=o_lot;
+		entry_shikinkannri(hyouka_idx);
 		//Entry Send for EA
 		//void SetSendData_forEntry_sokuji(int EntryDirect,int hyoukaNo,int hyoukaSyuhouNo,double EntryPrice,double Tp_Price,double Sl_Price,double lots){
 		SetSendData_forEntry_sokuji(para_dir,0,0,0.0,0.0,0.0,o_lot);// lot は固定で0.1　（変更したい場合は、任意に変えること）
@@ -314,6 +353,7 @@ public:
 		//Exit Send For EA
 		SetSendData_forExit(hyouka_data[hyouka_idx].Ind_EntryNo,hyouka_data[hyouka_idx].dir);
 		
+		exit_shikinkannri(hyouka_idx);
 
 	}
    void view_entryToExit(int idx);
@@ -479,15 +519,36 @@ void set_EntryData(int i,int kekkano){
 		double oneLotSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
 		int idir=hyouka_data[i].dir;
 		double dlot = hyouka_data[i].dlot;
-		double kakutei_sonneki=(hyouka_data[i].exit_v-hyouka_data[i].entry_v)*oneLotSize*dlot*idir;//[金額]
-		double kounyuuji_kinngaku =hyouka_data[i].entry_v*oneLotSize*dlot;//[金額] 購入時の金額
+		double kakutei_sonneki=(hyouka_data[i].exit_v-hyouka_data[i].entry_v)*oneLotSize*dlot*idir;//[金額]　　証拠金の通貨に合わすべき。
+		ENUM_ORDER_TYPE order_type = ORDER_TYPE_BUY;if(idir==-1){order_type = ORDER_TYPE_SELL;}
+		//損益を証拠金の通貨で算出する関数を使用
+		int er=0;
+		bool bret = 
+		OrderCalcProfit(
+					order_type,//ENUM_ORDER_TYPE      action,          // 注文の種類 （ORDER_TYPE_BUY または ORDER_TYPE_SELL）
+					_Symbol,//string                symbol,          // 銘柄名
+					dlot,//double                volume,          // ボリューム
+					hyouka_data[i].entry_v,//double                price_open,      // 始値
+					hyouka_data[i].exit_v,//double                price_close,      // 終値
+					kakutei_sonneki//double&               profit            // 利益値の取得に使用される変数
+					);
+					if(bret==false){
+						er=GetLastError();
+
+					}
+		double margin_initial = SymbolInfoDouble(_Symbol, SYMBOL_MARGIN_INITIAL);//必要証拠金：１Lotの証拠金額
+//		double kounyuuji_kinngaku =hyouka_data[i].entry_v*oneLotSize*dlot;//[金額] 購入時の金額
+		double kounyuuji_kinngaku =margin_initial*dlot;//[金額] 購入時の金額
 		freeMargin=freeMargin+kounyuuji_kinngaku+kakutei_sonneki;
 		kako_sonneki = kako_sonneki + kakutei_sonneki;
 	}
 	void entry_shikinkannri(int i){//i entryのidx　評価データの添え字
 		double oneLotSize = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
 		double dlot = hyouka_data[i].dlot;
-		double kounyuuji_kinngaku =hyouka_data[i].entry_v*oneLotSize*dlot;//[金額] 購入時の金額
+		double margin_initial = SymbolInfoDouble(_Symbol, SYMBOL_MARGIN_INITIAL);//必要証拠金：１Lotの証拠金額
+		
+//		double kounyuuji_kinngaku =hyouka_data[i].entry_v*oneLotSize*dlot;//[金額] 購入時の金額
+		double kounyuuji_kinngaku =margin_initial*dlot;//[金額] 購入時の金額
 		freeMargin=freeMargin-kounyuuji_kinngaku;
 	}
 	double calc_lot_by_sl(double sl_pips,double entry_v){

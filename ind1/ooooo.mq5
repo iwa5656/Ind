@@ -392,6 +392,7 @@ void OnDeinit(const int reason)
 int OnInit()
   {
    //debug
+   //idebug=9876;
    //init_ema_bolinger();//Ing表示
    
     nobiritu =  Inp_nobiritu;// tp d12率

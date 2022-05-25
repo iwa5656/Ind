@@ -9,6 +9,7 @@
 #include "classTradeMethodbase.mqh"
 #include "..\candle_cal\cal_MA\MA_torimatome1.mqh"
 extern MA_torimatome1 *p_MA_torimatome1;
+extern int idebug;
 #ifdef commentttt
 エントリー
     パーフェクトオーダー（PO)の時に、EMA10をPO方向に抜けたた、支えられたとき
@@ -72,6 +73,9 @@ public:
         //if(timeframes_chg_to_upper_num==0){printf("not set timeframes_chg_to_upper_num");}
         pre_start_idx_hyouka=0;
 		init_mem_hyouka_data_koyuu();
+		
+		//debug 
+		//printf("debug ="+IntegerToString(idebug));
 	};
 	~TradeMethod_C1_1_PO(void){view_kekka_youso(1);};
 	//--- オブジェクトを初期化する
@@ -85,6 +89,19 @@ public:
       kekka_calc();printf("instant_C1_1_PO");
       candle_data *c=candle;//p_allcandle.get_updown_TimeFrame(timeframes_chg_to_upper_num,p_allcandle.Inp_base_time_frame);
       printf("★baseFrame="+EnumToString(c.period));
+
+      //Inpパラメータの表示
+      printf("★paradouble1="+DoubleToString(p_allcandle.get_Inp_para_double1(),2));
+      printf("★paradouble2="+DoubleToString(p_allcandle.get_Inp_para_double2(),2));
+      printf("★paradouble3="+DoubleToString(p_allcandle.get_Inp_para_double3(),2));
+      printf("★paradouble4="+DoubleToString(p_allcandle.get_Inp_para_double4(),2));
+      printf("★paraint1="+IntegerToString(p_allcandle.get_Inp_para_int1()));
+      printf("★paraint2="+IntegerToString(p_allcandle.get_Inp_para_int2()));
+      printf("★paraint3="+IntegerToString(p_allcandle.get_Inp_para_int3()));
+//      printf("★paraint4="+IntegerToString(p_allcandle.get_Inp_para_int4()));
+        printf("★bInp_bOnly_IND="+IntegerToString((int)bInp_bOnly_IND));
+        printf("★Inp_Use_ind_lot_sikinkannri="+IntegerToString((int)Inp_Use_ind_lot_sikinkannri));
+
    }
     //関数
 //	int		hyouka(void);//　評価・状態遷移含む処理
@@ -111,68 +128,6 @@ public:
       //double tp_v;//exit価格　dir 1 なら　現在価格が左記をうわまわるとExit。　dir-1なら現在価格がした回るとExit
    };
    struct_hyouka_data_TradeMethodbaseA1 hyouka_data_koyuu[];
-
-//各処理
-	int		hyouka(void){//　評価・状態遷移含む処理
-		if(bTorihikikikannNai==false){return -1;}//取引外の期間は評価しないように変更
-        
-		//bool isnew_bar=p_allcandle.flagchgbarM15;//　tbd ★★どのの時間軸使用するかは。。。使用するcandleのフラグにした方が良い
-        bool isnew_bar=p_allcandle.get_candle_flagchgbar(this.period);
-  		if(isnew_bar == true){
-			hyouka_kakutei();
-		
-
-   	    }
-
-   		//if(candle.zigzag_chg_flag==true&&      
-   		//  (candle.zigzag_chg_flag_status==1||candle.zigzag_chg_flag_status==0||candle.zigzag_chg_flag_status==-1)){
-   			  hyouka_zig_kakutei();
-   		//}
-
-        hyouka_tick();// 
-		return 0;
-	}
-
-//void hyouka_zig_kakutei(void); // 足確定で呼ばれる想定
-//void hyouka_kakutei(void);// 足確定で呼ばれる想定
-
-#ifdef delll
- void SetSendData_forEntry(int a,int a2,int b,int c,double d,double e,double f){
-	GlobalVariableSet("Ind_EntryNo",a);
-	GlobalVariableSet("Ind_EntryDirect",a2);
-	GlobalVariableSet("Ind_hyoukaNo",b);
-	GlobalVariableSet("Ind_hyoukaSyuhouNo",c);
-	GlobalVariableSet("Ind_EntryPrice",d);
-	GlobalVariableSet("Ind_Tp_Price",e);
-	GlobalVariableSet("Ind_Sl_Price",f);
- }
-void set_EntryData(int i,int kekkano){
-    SetSendData_forEntry(
-        EntryNo++,
-        (int)hyouka_data[i].kekka[kekkano][37],
-        i,kekkano,
-        hyouka_data[i].kekka[kekkano][40],
-        hyouka_data[i].kekka[kekkano][38],
-        hyouka_data[i].kekka[kekkano][39]);
-    datetime Time_cur = TimeCurrent();    
-    hyouka_data[i].kekka[kekkano][44]=(double)candle.time[ZIGZAG_BUFFER_MAX_NUM-1];
-    datetime test =  candle.time[0];
-    datetime test2 = candle.time[299];       
-}
-#endif //delll
-//mem
-void init_mem_hyouka_data_koyuu(void){
-	ArrayResize(hyouka_data_koyuu,1,NUM_YOBI_HYOUKA_DATA_MEM); 
-	//int i=0;
-	//i=sizeof(hyouka_data[0]);printf("hyouka_data 1   :sizeof="+IntegerToString(i));
-}
-void chk_mem_hyouka_data_koyuu(int i){
-	int m=hyouka_data_koyuu_num;
-	if(hyouka_data_koyuu_num < i){
-		m=i+1;
-	}
-	ArrayResize(hyouka_data_koyuu,i,NUM_YOBI_HYOUKA_DATA_MEM);	
-}
 
 
 void hyouka_kakutei(void){ // 足確定で呼ばれる想定
@@ -553,10 +508,8 @@ bool    add_hyouka_data_koyuu(int para_refidx){
 //}
 bool    Is_pattern(int base_idx){  //  基準となるzigzagcountからー１した値　　　　 int base_idx = candle.zigzagdata_count-1;
     bool ret = false;
-    
    //初回の前提条件が成立したかどうか確認
    //　成立時、キーも取得・保持が必要（キーとする）　　　AorE点のどちらかのZigＺａｇＣｏｕｎｔ
-    
     ret = Is_pattern();
     return(ret);
 }
@@ -784,6 +737,46 @@ void debug_C1_1_PO_tp_sl_idx(int idx){
      getPips(dd_F_B_sl)
      );
 }
+
+
+//各処理
+	int		hyouka(void){//　評価・状態遷移含む処理
+		if(bTorihikikikannNai==false){return -1;}//取引外の期間は評価しないように変更
+        
+		//bool isnew_bar=p_allcandle.flagchgbarM15;//　tbd ★★どのの時間軸使用するかは。。。使用するcandleのフラグにした方が良い
+        bool isnew_bar=p_allcandle.get_candle_flagchgbar(this.period);
+  		if(isnew_bar == true){
+			hyouka_kakutei();
+		
+
+   	    }
+
+   		//if(candle.zigzag_chg_flag==true&&      
+   		//  (candle.zigzag_chg_flag_status==1||candle.zigzag_chg_flag_status==0||candle.zigzag_chg_flag_status==-1)){
+   			  hyouka_zig_kakutei();
+   		//}
+
+        hyouka_tick();// 
+		return 0;
+	}
+
+
+//mem
+void init_mem_hyouka_data_koyuu(void){
+	ArrayResize(hyouka_data_koyuu,1,NUM_YOBI_HYOUKA_DATA_MEM); 
+	//int i=0;
+	//i=sizeof(hyouka_data[0]);printf("hyouka_data 1   :sizeof="+IntegerToString(i));
+}
+void chk_mem_hyouka_data_koyuu(int i){
+	int m=hyouka_data_koyuu_num;
+	if(hyouka_data_koyuu_num < i){
+		m=i+1;
+	}
+	ArrayResize(hyouka_data_koyuu,i,NUM_YOBI_HYOUKA_DATA_MEM);	
+}
+
+
+
 
 };//end class def
 
