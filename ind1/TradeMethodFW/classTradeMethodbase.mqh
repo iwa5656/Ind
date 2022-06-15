@@ -6,6 +6,8 @@
 #include <_inc\\My_function_lib2.mqh>
 #define USE_debug_view_pattern_exit
 //extern datetime pre_timeM1;
+extern datetime test_start_time;
+extern datetime test_end_time;
 class TradeMethodbase
 {
 public:
@@ -280,6 +282,7 @@ public:
    	
    	if(count_of_win!=0 && count_of_loss!=0){
 		printf("★TimeFrame="+EnumToString(candle.Inp_base_time_frame));
+        printf("★テスト期間開始："+TimeToString(test_start_time)+"、　　終了"+TimeToString(test_end_time));
    		printf(
    		"★結果:name="+ name+" ; "+
    		"数="+IntegerToString((int)count_of_win + count_of_loss)+" ; "+

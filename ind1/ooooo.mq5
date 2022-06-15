@@ -97,6 +97,8 @@ input int Inp_MAPO_matype=1;//SMA:0,EMA:1
 input bool Inp_bOnly_IND=true;//Indのみで動作（true）。（EAはない前提とする）
 input bool Inp_Use_ind_lot_sikinkannri=true;//Lotを1回のトレードの負けが、資金の１％以内とするようにする。
 
+datetime test_start_time;
+datetime test_end_time;
 //#define Lib_iunima_mtf_ru
 
 int idebug;
@@ -265,7 +267,8 @@ MA_torimatome1 *p_MA_torimatome1;
 //#include "TradeMethodFW\classTradeMethod_B1_2.mqh"
 //#include "TradeMethodFW\classTradeMethod_B1_3.mqh"
 //#include "TradeMethodFW\classTradeMethod_B1_3_PO.mqh"
-#include "TradeMethodFW\classTradeMethod_C1_1_PO_only.mqh"
+//#include "TradeMethodFW\classTradeMethod_C1_1_PO_only.mqh"
+#include "TradeMethodFW\classTradeMethod_C1_1_PO_cci.mqh"
 
 
 #define NUM_OF_TMBs 7
@@ -366,7 +369,7 @@ void OnDeinit(const int reason)
     m_hyouka.view_kekka_youso_flag(n);
    }
 #endif//USE_HYOUKA   
-
+    test_end_time=TMBs[0].candle.time[299];
 #ifdef USE_tpsl_view_ctr
     tpsl_outall();
 #endif// USE_tpsl_view_ctr
@@ -391,8 +394,10 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 int OnInit()
   {
+    test_start_time=0;
+    test_end_time=0;  
    //debug
-   //idebug=9876;
+   init_cci();
    //init_ema_bolinger();//Ing表示
    
     nobiritu =  Inp_nobiritu;// tp d12率
@@ -590,6 +595,7 @@ int OnCalculate(const int rates_total,
                 b_during_test_piriod=true;
                 Notice_TorihikikikannNai_TMBs();//取引FWオブジェクトに期間内になったことを連絡
                 printf("b_during_test_piriod=true  計算がテスト期間内に入った★");
+                test_start_time=time[prev_calculated-1];
             }
         }
     }
@@ -2615,4 +2621,8 @@ bool	get_mesen_tyouten_mesenKirikawariKyoukai(
             
     }
     return ret;
+}
+
+void init_cci(void){
+    handle_cci=iCCI(_Symbol,PERIOD_CURRENT,14,PRICE_TYPICAL);
 }
